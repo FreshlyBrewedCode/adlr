@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>adler — Eagle eyes on your agents</title>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
 <style>
   :root {
     --bg:      #0b0b14;
@@ -148,8 +149,9 @@
   .prop-icon {
     width: 36px; height: 36px; border-radius: 8px;
     display: flex; align-items: center; justify-content: center;
-    font-size: 1.1rem; margin-bottom: 0.75rem;
+    margin-bottom: 0.75rem;
   }
+  .prop-icon svg { width: 18px; height: 18px; }
   .prop-card h3 { font-size: 0.95rem; margin-bottom: 0.4rem; }
   .prop-card p { font-size: 0.85rem; color: var(--muted); margin: 0; }
 
@@ -160,8 +162,8 @@
   }
   .arch-diagram {
     background: var(--bg2); border: 1px solid var(--border);
-    border-radius: 12px; padding: 2rem;
-    font-family: monospace; font-size: 0.8rem; line-height: 2.1;
+    border-radius: 12px; padding: 1.5rem;
+    overflow: hidden;
   }
   .arch-packages { display: flex; flex-direction: column; gap: 0.75rem; margin-top: 1rem; }
   .pkg-row {
@@ -181,6 +183,35 @@
   .pkg-name.muted { color: var(--muted2); }
   .pkg-name.yellow { color: var(--yellow); }
   .pkg-desc { font-size: 0.83rem; color: var(--muted); line-height: 1.5; }
+
+  /* ── File Tree ───────────────────────────────────── */
+  .file-tree {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 10px; overflow: hidden;
+    font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'SF Mono', monospace;
+  }
+  .file-tree-header {
+    background: var(--bg3); border-bottom: 1px solid var(--border);
+    padding: 0.45rem 0.85rem;
+    font-size: 0.68rem; letter-spacing: 0.09em; text-transform: uppercase;
+    color: var(--muted); display: flex; align-items: center; gap: 0.4rem;
+    user-select: none;
+  }
+  .file-tree-header svg { width: 13px; height: 13px; }
+  .ft-row {
+    display: flex; align-items: center; gap: 0.32rem;
+    padding: 0.3rem 0.75rem; cursor: default;
+    transition: background 0.1s;
+  }
+  .ft-row:hover { background: rgba(255,255,255,0.03); }
+  .ft-row svg { width: 14px; height: 14px; flex-shrink: 0; }
+  .ft-chevron { color: var(--muted); }
+  .ft-name { font-size: 0.8rem; }
+  .ft-desc { font-size: 0.7rem; color: var(--muted); margin-left: 0.5rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ft-indent-0 { padding-left: 0.75rem; }
+  .ft-indent-1 { padding-left: 1.65rem; }
+  .ft-indent-2 { padding-left: 2.55rem; }
+  .ft-indent-3 { padding-left: 3.45rem; }
 
   /* ── Data model ──────────────────────────────────── */
   .tables-grid {
@@ -504,17 +535,17 @@
   </div>
   <div class="props-grid">
     <div class="prop-card">
-      <div class="prop-icon" style="background:rgba(124,158,245,0.1);">🔭</div>
+      <div class="prop-icon" style="background:rgba(124,158,245,0.1);"><i data-lucide="eye" style="color:var(--blue);"></i></div>
       <h3>Full observability</h3>
       <p>Every agent run, log line, and context item traced in a structured span tree. Know exactly what happened and when.</p>
     </div>
     <div class="prop-card">
-      <div class="prop-icon" style="background:rgba(109,216,160,0.1);">⚡</div>
+      <div class="prop-icon" style="background:rgba(109,216,160,0.1);"><i data-lucide="zap" style="color:var(--green);"></i></div>
       <h3>Daemon-powered</h3>
       <p>A single background process owns all state. Agents survive terminal sessions. All clients get live push events.</p>
     </div>
     <div class="prop-card">
-      <div class="prop-icon" style="background:rgba(245,200,66,0.1);">🔧</div>
+      <div class="prop-icon" style="background:rgba(245,200,66,0.1);"><i data-lucide="wrench" style="color:var(--yellow);"></i></div>
       <h3>Your stack</h3>
       <p>Any CLI agent, any workflow. One TypeScript config file. Hooks, plugins, and attach scripts — all customizable.</p>
     </div>
@@ -532,21 +563,44 @@
   <div class="arch-grid">
     <div>
       <div class="arch-diagram">
-        <div style="color:var(--muted); margin-bottom:0.5rem; font-size:0.7rem;">COMPONENT MAP</div>
-        <div style="color:var(--muted2);">┌───────────┐&nbsp;&nbsp; ┌───────────┐</div>
-        <div style="color:var(--muted2);">│ adler CLI │&nbsp;&nbsp; │ adler TUI │</div>
-        <div style="color:var(--muted2);">└─────┬─────┘&nbsp;&nbsp; └─────┬─────┘</div>
-        <div style="color:var(--muted2);">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; └──Unix socket──┘</div>
-        <div style="color:var(--muted2);">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; │</div>
-        <div style="color:var(--blue);">&nbsp;&nbsp;&nbsp;&nbsp; ┌─────┴──────┐</div>
-        <div style="color:var(--blue);">&nbsp;&nbsp;&nbsp;&nbsp; │&nbsp; adlerd&nbsp;&nbsp;&nbsp; │ ← daemon</div>
-        <div style="color:var(--blue);">&nbsp;&nbsp;&nbsp;&nbsp; └──┬──────┬──┘</div>
-        <div style="color:var(--muted2);">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; │&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; │</div>
-        <div style="color:var(--green);">&nbsp;&nbsp; ┌──────┴─┐ ┌─┴────────┐</div>
-        <div style="color:var(--green);">&nbsp;&nbsp; │ SQLite │ │&nbsp; Agent&nbsp;&nbsp; │</div>
-        <div style="color:var(--green);">&nbsp;&nbsp; │(Storage│ │ Processes│</div>
-        <div style="color:var(--green);">&nbsp;&nbsp; │&nbsp;iface) │ │ (PTY)&nbsp;&nbsp;&nbsp; │</div>
-        <div style="color:var(--green);">&nbsp;&nbsp; └────────┘ └──────────┘</div>
+        <svg viewBox="0 0 320 245" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block;">
+          <defs>
+            <marker id="arch-arr" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
+              <path d="M0,0.5 L0,6.5 L7,3.5 z" fill="#6868a0"/>
+            </marker>
+          </defs>
+          <!-- Header label -->
+          <text x="160" y="13" text-anchor="middle" fill="#6868a0" font-family="monospace" font-size="8.5" letter-spacing="2">COMPONENT MAP</text>
+          <!-- CLI box -->
+          <rect x="14" y="22" width="102" height="36" rx="6" fill="#191928" stroke="#2e2e48"/>
+          <text x="65" y="44" text-anchor="middle" fill="#9090c0" font-family="monospace" font-size="11.5">adler CLI</text>
+          <!-- TUI box -->
+          <rect x="204" y="22" width="102" height="36" rx="6" fill="#191928" stroke="#2e2e48"/>
+          <text x="255" y="44" text-anchor="middle" fill="#9090c0" font-family="monospace" font-size="11.5">adler TUI</text>
+          <!-- Vertical lines from CLI and TUI down -->
+          <line x1="65" y1="58" x2="65" y2="84" stroke="#2e2e48" stroke-width="1.5"/>
+          <line x1="255" y1="58" x2="255" y2="84" stroke="#2e2e48" stroke-width="1.5"/>
+          <!-- Horizontal Unix socket connector (dashed) -->
+          <line x1="65" y1="84" x2="255" y2="84" stroke="#2e2e48" stroke-dasharray="5,3" stroke-width="1.5"/>
+          <text x="160" y="79" text-anchor="middle" fill="#6868a0" font-family="monospace" font-size="9">Unix socket</text>
+          <!-- Line from midpoint down to adlerd -->
+          <line x1="160" y1="84" x2="160" y2="108" stroke="#2e2e48" stroke-width="1.5" marker-end="url(#arch-arr)"/>
+          <!-- adlerd box -->
+          <rect x="96" y="108" width="128" height="42" rx="7" fill="rgba(124,158,245,0.12)" stroke="#7c9ef5" stroke-width="1.5"/>
+          <text x="160" y="126" text-anchor="middle" fill="#7c9ef5" font-family="monospace" font-size="12.5" font-weight="700">adlerd</text>
+          <text x="160" y="141" text-anchor="middle" fill="rgba(124,158,245,0.55)" font-family="monospace" font-size="8.5">daemon process</text>
+          <!-- Lines from adlerd to SQLite and Agent Procs -->
+          <line x1="130" y1="150" x2="68" y2="180" stroke="#2e2e48" stroke-width="1.5" marker-end="url(#arch-arr)"/>
+          <line x1="190" y1="150" x2="252" y2="180" stroke="#2e2e48" stroke-width="1.5" marker-end="url(#arch-arr)"/>
+          <!-- SQLite box -->
+          <rect x="10" y="180" width="116" height="54" rx="6" fill="rgba(109,216,160,0.07)" stroke="#6dd8a0"/>
+          <text x="68" y="203" text-anchor="middle" fill="#6dd8a0" font-family="monospace" font-size="11.5">SQLite</text>
+          <text x="68" y="220" text-anchor="middle" fill="#6868a0" font-family="monospace" font-size="8.5">Storage iface</text>
+          <!-- Agent Processes box -->
+          <rect x="194" y="180" width="116" height="54" rx="6" fill="rgba(109,216,160,0.07)" stroke="#6dd8a0"/>
+          <text x="252" y="200" text-anchor="middle" fill="#6dd8a0" font-family="monospace" font-size="11.5">Agent Procs</text>
+          <text x="252" y="217" text-anchor="middle" fill="#6868a0" font-family="monospace" font-size="8.5">PTY</text>
+        </svg>
       </div>
 
       <div style="margin-top:1.25rem; background:var(--bg2); border:1px solid var(--border); border-radius:10px; padding:1.25rem;">
@@ -563,26 +617,57 @@
     </div>
 
     <div>
-      <div class="arch-packages">
-        <div class="pkg-row">
-          <span class="pkg-name blue">packages/sdk</span>
-          <span class="pkg-desc">@adler/sdk — shared types, Storage interface, IPC protocol, typed client. The foundation everything else builds on.</span>
+      <div class="file-tree">
+        <div class="file-tree-header">
+          <i data-lucide="layout-list"></i> explorer
         </div>
-        <div class="pkg-row">
-          <span class="pkg-name purple">packages/daemon</span>
-          <span class="pkg-desc">adlerd — sole SQLite writer, spawns and owns agent processes (with PTY), pushes events to subscribers.</span>
+        <!-- adler root -->
+        <div class="ft-row ft-indent-0">
+          <i data-lucide="chevron-down" class="ft-chevron"></i>
+          <i data-lucide="folder-open" style="color:#9090c0;"></i>
+          <span class="ft-name" style="color:var(--text);">adler</span>
         </div>
-        <div class="pkg-row">
-          <span class="pkg-name muted">packages/cli</span>
-          <span class="pkg-desc">adler — thin CLI binary. Uses SDK client. Auto-starts daemon on first use.</span>
+        <!-- packages/ -->
+        <div class="ft-row ft-indent-1">
+          <i data-lucide="chevron-down" class="ft-chevron"></i>
+          <i data-lucide="folder-open" style="color:#9090c0;"></i>
+          <span class="ft-name" style="color:var(--muted2);">packages</span>
         </div>
-        <div class="pkg-row">
-          <span class="pkg-name yellow">packages/tui</span>
-          <span class="pkg-desc">Ink (React for terminals) dashboard. Subscribes to daemon, re-renders on push events. No polling.</span>
+        <!-- sdk -->
+        <div class="ft-row ft-indent-2">
+          <i data-lucide="folder" style="color:#7c9ef5;"></i>
+          <span class="ft-name" style="color:#7c9ef5;">sdk</span>
+          <span class="ft-desc">@adler/sdk · types · storage · IPC · typed client</span>
         </div>
-        <div class="pkg-row">
-          <span class="pkg-name green">packages/plugins/opencode</span>
-          <span class="pkg-desc">@adler/opencode — first-party plugin providing opencode agent definitions with subagent support.</span>
+        <!-- daemon -->
+        <div class="ft-row ft-indent-2">
+          <i data-lucide="folder" style="color:#c084fc;"></i>
+          <span class="ft-name" style="color:#c084fc;">daemon</span>
+          <span class="ft-desc">adlerd · sole SQLite writer · PTY spawn</span>
+        </div>
+        <!-- cli -->
+        <div class="ft-row ft-indent-2">
+          <i data-lucide="folder" style="color:#9090c0;"></i>
+          <span class="ft-name" style="color:#9090c0;">cli</span>
+          <span class="ft-desc">adler · thin CLI · auto-starts daemon</span>
+        </div>
+        <!-- tui -->
+        <div class="ft-row ft-indent-2">
+          <i data-lucide="folder" style="color:#f5c842;"></i>
+          <span class="ft-name" style="color:#f5c842;">tui</span>
+          <span class="ft-desc">Ink dashboard · live push · no polling</span>
+        </div>
+        <!-- plugins/ -->
+        <div class="ft-row ft-indent-2">
+          <i data-lucide="chevron-down" class="ft-chevron"></i>
+          <i data-lucide="folder-open" style="color:#9090c0;"></i>
+          <span class="ft-name" style="color:#9090c0;">plugins</span>
+        </div>
+        <!-- opencode -->
+        <div class="ft-row ft-indent-3">
+          <i data-lucide="folder" style="color:#6dd8a0;"></i>
+          <span class="ft-name" style="color:#6dd8a0;">opencode</span>
+          <span class="ft-desc">@adler/opencode · first-party plugin</span>
         </div>
       </div>
 
@@ -1141,6 +1226,10 @@
     });
     document.getElementById('footer-hotkeys').innerHTML = tabFooters[idx];
   }
+
+  lucide.createIcons({
+    attrs: { 'stroke-width': 1.5 }
+  });
 </script>
 
 </body>
