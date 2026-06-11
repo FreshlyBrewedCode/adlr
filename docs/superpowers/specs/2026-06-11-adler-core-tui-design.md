@@ -4,6 +4,21 @@
 **Scope:** Phase 1 + 2 — Core foundation, daemon, SDK, CLI, and TUI dashboard
 **Out of scope:** Workflows (Phase 3), adler Assistant (Phase 4), Plugin system (Phase 5)
 
+## Phase Map
+
+adler is designed as four sequential build phases. Each phase produces a working system and is a prerequisite for the next.
+
+| Phase | Focus | Key deliverables |
+|---|---|---|
+| **1 + 2** *(this spec)* | Core + TUI | Daemon, SDK, CLI, SQLite storage, Ink dashboard |
+| **3** | Workflows, Hooks, Plugins | YAML workflow engine, before/after hooks, npm plugin system |
+| **4** | adler Assistant | AI agent with full session awareness, auto-orchestration mode |
+| **Future** | Web UI, remote sessions | Browser dashboard using `@adler/sdk`, multi-user support |
+
+The span/event data model is designed to accommodate Phase 3 and 4 without schema changes. Workflow steps, hook runs, and assistant actions all become spans with the appropriate `kind`.
+
+> **Design artifact:** [scope-overview.html](.superpowers/brainstorm/81281-1781177532/content/scope-overview.html)
+
 ---
 
 ## 1. Overview
@@ -15,6 +30,8 @@ The central design principle is **daemon-as-source-of-truth**: a single backgrou
 ---
 
 ## 2. Architecture
+
+> **Design artifact:** [architecture.html](.superpowers/brainstorm/81281-1781177532/content/architecture.html)
 
 ```
 ┌───────────┐   ┌───────────┐
@@ -53,6 +70,8 @@ The `sdk` package is the foundation everything else builds on. It has no runtime
 ---
 
 ## 3. Data Model
+
+> **Design artifact:** [data-model-v2.html](.superpowers/brainstorm/81281-1781177532/content/data-model-v2.html)
 
 Four tables. Schema is intentionally open-ended: new span kinds and event types are conventions, not schema changes.
 
@@ -173,6 +192,8 @@ interface Storage {
 ---
 
 ## 4. Daemon
+
+> **Design artifact:** [daemon-cli.html](.superpowers/brainstorm/81281-1781177532/content/daemon-cli.html)
 
 ### Lifecycle
 
@@ -295,6 +316,11 @@ Sessions are resolved in priority order:
 
 ## 7. TUI
 
+> **Design artifacts:**
+> - [tui-tabs-v2.html](.superpowers/brainstorm/60777-1781183539/content/tui-tabs-v2.html) — all five tabs
+> - [context-tab-v2.html](.superpowers/brainstorm/60777-1781183539/content/context-tab-v2.html) — grouped compact context tab
+> - [tui-footer-hotkeys.html](.superpowers/brainstorm/60777-1781183539/content/tui-footer-hotkeys.html) — persistent footer and `?` dialog
+
 ### Technology
 
 Built with **Ink** (React for terminals). The `adler` CLI with no arguments mounts the Ink app.
@@ -407,14 +433,27 @@ The `agent.attach` hook is invoked when the user presses `o` on an agent in the 
 
 ---
 
-## 9. Out of Scope (future phases)
+## 9. Future Phases
 
-| Feature | Phase |
-|---|---|
-| Workflow engine (YAML steps, `adler run`) | 3 |
-| Hooks system (`agent.run.before/after`) | 3 |
-| Plugin system (npm packages) | 3 |
-| adler Assistant (AI orchestration) | 4 |
-| Web UI | Future |
+### Phase 3 — Workflows, Hooks, Plugins
 
-The span and event model is designed to accommodate all of these without schema changes. Workflow steps, hook runs, and assistant actions all map naturally to spans with the appropriate `kind`.
+**Workflow engine:** Reusable multi-step workflows defined in YAML or inline in `adler.ts`. Each step is a prompt that runs an agent. Steps can reference session context via shell interpolation (`$ adler context get --label docs`). Workflows are triggered via `adler run <workflow>` or from the TUI. Workflow and step spans are created automatically — the data model already accommodates them with no schema change.
+
+**Hooks system:** Before/after hooks for any adler event (`agent.run`, `session.create`, etc.). Hooks can be shell commands or full TypeScript functions with access to the adler SDK. Hook runs appear as `kind = "hook"` spans in the trace.
+
+**Plugin system:** npm packages that export an `AdlerConfig` object. Plugins contribute pre-built agent definitions, hooks, and workflows. Loaded and merged before local config. First-party plugin: `@adler/opencode`.
+
+### Phase 4 — adler Assistant
+
+An AI agent with full awareness of the current session. Receives the complete session state — spans, events, context, workflow status — as context.
+
+```bash
+adler assistant "what has been implemented so far?"
+adler assistant --auto "finish the current workflow"
+```
+
+In `--auto` mode the assistant reads the session, decides what to do next, runs agents, and iterates until the workflow completes or a human decision is required. The assistant appears as a span in the trace like any other agent.
+
+### Future — Web UI and Remote Sessions
+
+A browser-based dashboard built on `@adler/sdk`. Because the SDK abstracts all daemon communication, the web UI is another SDK consumer — no daemon changes needed. Remote daemon support (TCP socket + auth) would allow the web UI to connect to a daemon running on a different machine.
