@@ -104,16 +104,18 @@ Every unit of work is a span. Agents, workflow steps, hooks — all the same tab
 
 **`data` by kind:**
 
-- `agent`: `{ prompt, agent_type, pid, exit_code, name }`
+- `agent`: `{ prompt, agent_type, pid, exit_code, name, output? }` — `output` is written post-exit by the agent's `output` hook (see §8)
 - `workflow`: `{ workflow_name }` *(Phase 3)*
 - `step`: `{ workflow_name, step_name, index }` *(Phase 3)*
 - `hook`: `{ event, hook_name }` *(Phase 3)*
+
+`output` shape: `{ type: "text", content: string } | { type: "file", path: string }`
 
 Parallel agents appear as sibling spans (same `parent_id`, overlapping timestamps). The TUI uses this to render concurrent execution correctly.
 
 ### `events`
 
-Everything that happens is an event. Replaces both agent output logs and structured log entries.
+Structured notifications about things that have happened. Written to the database, consumed by the TUI and log tab. PTY output is **not** stored here — it is streamed live via a separate `attach` channel (see §4).
 
 | Column | Type | Notes |
 |---|---|---|
@@ -131,14 +133,27 @@ Everything that happens is an event. Replaces both agent output logs and structu
 | `span.started` | `{ span_id, kind, name }` |
 | `span.finished` | `{ span_id, exit_code? }` |
 | `span.failed` | `{ span_id, error }` |
-| `agent.output` | `{ span_id, line }` — one row per stdout line |
 | `log.info` | `{ message }` |
 | `log.warn` | `{ message }` |
 | `log.error` | `{ message }` |
 | `context.added` | `{ item_id, type, label }` |
 | `session.created` | `{ session_id }` |
 
+`agent.output` is intentionally absent — PTY output is never written to the events table.
+
 New event types can be added freely with no migration.
+
+### Hook triggers (Phase 3 preview)
+
+Hook triggers are conceptually separate from events. They fire at lifecycle points before or after actions, use a colon-separated naming convention, and are never stored in the database. Hook runs appear as `kind = "hook"` spans in the trace.
+
+| Trigger | When |
+|---|---|
+| `agent:start` | Before agent process is spawned |
+| `agent:finish` | After agent process exits |
+| `session:create` | Before session is written to storage |
+
+The naming convention (`agent:start` vs `agent.started`) makes the distinction immediately visible at a glance.
 
 ### `context_items`
 
@@ -227,8 +242,11 @@ Newline-delimited JSON over the Unix socket. Every message has a `type` field.
 ```json
 { "type": "snapshot", "payload": { "session": {...}, "spans": [...], "events": [...], "context": [...] } }
 { "type": "event", "event": "span.started", "payload": { ... } }
-{ "type": "event", "event": "agent.output", "payload": { "span_id": "...", "line": "Building..." } }
 ```
+
+**Daemon → attach client (raw PTY stream):**
+
+A client sends `{ "type": "agent.attach", "id": "req-5", "payload": { "span_id": "..." } }`. The daemon responds with raw PTY bytes for the lifetime of the agent process, then closes the stream. This is a separate connection optimised for throughput — no JSON framing, no event overhead.
 
 The TUI sends a `subscribe` command and receives a full snapshot followed by incremental push events for the lifetime of the connection.
 
@@ -244,8 +262,8 @@ The TUI sends a `subscribe` command and receives a full snapshot followed by inc
    ADLER_AGENT_PROMPT=<prompt>
    ADLER_CONTEXT=<JSON array of context_items>
    ```
-4. Daemon streams PTY output line-by-line, writing each line as an `agent.output` event to Storage and pushing it to all subscribed TUI clients.
-5. On process exit, daemon updates span status (`done` or `failed`), records `exit_code` in `data`, emits `span.finished` or `span.failed` event.
+4. Daemon streams PTY output to all clients currently attached to that span via the `attach` channel (see §4). PTY output is **not** written to the `events` table.
+5. On process exit, daemon runs the agent's configured `output` hook (if any), stores the result in `span.data.output`, updates span status (`done` or `failed`), records `exit_code` in `data`, emits `span.finished` or `span.failed` event.
 
 ### Span Context Propagation
 
@@ -264,6 +282,9 @@ import { createClient } from "@adler/sdk"
 
 const adler = createClient()  // auto-starts daemon if not running
 
+// Environment helpers — reads ADLER_SESSION, ADLER_SPAN_ID, ADLER_SOCKET
+const { sessionId, spanId, socketPath } = adler.env()
+
 // Sessions
 const session = await adler.session.create()
 await adler.session.list()
@@ -272,16 +293,41 @@ await adler.session.list()
 const span = await adler.agent.run({ agentType: "opencode:build", prompt: "...", name: "git-master" })
 await adler.agent.wait({ name: "git-master" })
 const status = await adler.agent.status({ name: "git-master" })
+const agents = await adler.agent.list()
+
+// Attach to a running agent's raw PTY stream (independent of the subscribe event stream)
+await adler.agent.attach("git-master")   // accepts name or span id; streams raw PTY to stdout
+
+// Spans
+await adler.span.update(spanId, { data: { opencode_session_id: "abc" } }, { merge: true })
 
 // Context
 await adler.context.add({ type: "url", label: "docs", value: { url: "https://..." } })
 const items = await adler.context.list()
 
-// TUI subscription
+// Structured event stream (state updates, TUI)
 adler.subscribe(sessionId, (event) => { /* handle push event */ })
+
+// SDK-level sugar — filtered aliases, no extra storage
+adler.on("agent.started", (event) => { /* span.started where kind === "agent" */ })
+adler.on("agent.finished", (event) => { /* span.finished where kind === "agent" */ })
 ```
 
 The SDK also exports all shared types (`Session`, `Span`, `Event`, `ContextItem`, `AdlerConfig`) and the `Storage` interface.
+
+### Span client
+
+```ts
+interface SpanClient {
+  create(data: CreateSpanInput): Promise<Span>
+  get(id: string): Promise<Span | null>
+  list(sessionId: string): Promise<Span[]>
+  update(id: string, data: Partial<Span>, options?: { merge?: boolean }): Promise<void>
+  // merge: true = deep merge data field into existing; false (default) = replace
+}
+```
+
+`span.data.output` is the standard location for final agent output. It is written by the daemon after the agent's `output` hook runs (see §8). No separate method — just `update` with `merge: true`.
 
 ---
 
@@ -304,7 +350,7 @@ Sessions are resolved in priority order:
 | `adler agent wait [--name <name>]` | Block until agent span is `done` or `failed` |
 | `adler agent status [--name <name>]` | Print current span status |
 | `adler agent list` | List all agent spans for current session |
-| `adler agent read [--name <name>]` | Stream agent PTY output to stdout (for use in scripts or hooks) |
+| `adler agent read [--name <name>]` | For a **completed** agent: retrieve and stream stored output from `span.data.output`. For a **running** agent: attach to live PTY stream (same as pressing `enter` in the TUI). |
 | `adler context add --type <type> [--label <l>] [--description <d>] <value>` | Add context item |
 | `adler context list` | List all context items for current session |
 | `adler context get [--type <type>] [--label <label>]` | Get filtered context items (used in workflow prompts) |
@@ -369,15 +415,15 @@ Hotkeys: `↑↓` navigate.
 
 Flat list of all agent spans for the current session. Each row: status indicator, agent type, prompt preview (truncated), duration / exit code. The selected item is highlighted.
 
-- `enter` on a **running** agent: suspend Ink, stream live PTY output to the terminal. `ctrl+c` returns to TUI.
-- `enter` on a **completed/failed** agent: suspend Ink, replay stored PTY output. Any key returns.
+- `enter` on a **running** agent: suspend Ink, attach to live PTY stream via `adler.agent.attach()`. `ctrl+c` returns to TUI.
+- `enter` on a **completed/failed** agent: suspend Ink, retrieve and stream stored output from `span.data.output`. Any key returns.
 - `o`: invoke the configurable `agent.attach` hook (e.g. `tmux new-window ...`). No-op if not configured.
 
 Hotkeys: `↑↓` navigate, `enter` attach, `o` open external.
 
 **4 — Traces**
 
-Full span tree rooted at the session. All span kinds rendered (agent, and in Phase 3: workflow, step, hook). Parent–child relationships shown as indented tree. Parallel spans appear as siblings. Selected span shows its most recent output lines inline.
+Full span tree rooted at the session. All span kinds rendered (agent, and in Phase 3: workflow, step, hook). Parent–child relationships shown as indented tree. Parallel spans appear as siblings. Selected agent span shows `span.data.output` inline if available; otherwise shows span metadata (status, duration, exit code).
 
 Hotkeys: `↑↓` navigate, `enter` expand/collapse.
 
@@ -420,7 +466,15 @@ import type { AdlerConfig } from "@adler/sdk"
 const config: AdlerConfig = {
   agent: {
     agents: {
-      opencode: ({ prompt, subagent }) => `opencode run --agent ${subagent} "${prompt}"`,
+      opencode: {
+        command: ({ prompt, subagent }) => `opencode run --agent ${subagent} "${prompt}"`,
+        // Runs after agent exits. Return value is stored in span.data.output.
+        // If omitted, no output is stored.
+        output: ({ span }) => ({
+          type: "text",
+          content: Bun.spawnSync(["opencode", "export", "--session", span.data.opencode_session_id]).stdout.toString(),
+        }),
+      },
     },
     attach: ({ agentId }) => `tmux new-window "adler agent read --name ${agentId}"`,
   },
@@ -428,6 +482,8 @@ const config: AdlerConfig = {
 
 export default config
 ```
+
+The `output` hook receives the completed span and returns a `SpanOutput` value (`{ type: "text", content }` or `{ type: "file", path }`). The daemon stores this in `span.data.output`. If no `output` hook is defined for an agent type, `span.data.output` is left unset and `adler agent read` on a completed agent will indicate no output is available.
 
 The `agent.attach` hook is invoked when the user presses `o` on an agent in the TUI. It receives the agent span data and returns a shell command string.
 
@@ -439,7 +495,7 @@ The `agent.attach` hook is invoked when the user presses `o` on an agent in the 
 
 **Workflow engine:** Reusable multi-step workflows defined in YAML or inline in `adler.ts`. Each step is a prompt that runs an agent. Steps can reference session context via shell interpolation (`$ adler context get --label docs`). Workflows are triggered via `adler run <workflow>` or from the TUI. Workflow and step spans are created automatically — the data model already accommodates them with no schema change.
 
-**Hooks system:** Before/after hooks for any adler event (`agent.run`, `session.create`, etc.). Hooks can be shell commands or full TypeScript functions with access to the adler SDK. Hook runs appear as `kind = "hook"` spans in the trace.
+**Hooks system:** Before/after hooks for any adler lifecycle trigger (`agent:start`, `agent:finish`, `session:create`, etc.). Hook triggers use colon-separated naming and fire at lifecycle points — distinct from the dot-separated event log. Hooks can be shell commands or full TypeScript functions with access to the adler SDK. Hook runs appear as `kind = "hook"` spans in the trace.
 
 **Plugin system:** npm packages that export an `AdlerConfig` object. Plugins contribute pre-built agent definitions, hooks, and workflows. Loaded and merged before local config. First-party plugin: `@adler/opencode`.
 
