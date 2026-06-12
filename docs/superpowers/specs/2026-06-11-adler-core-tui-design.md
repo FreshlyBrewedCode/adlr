@@ -97,7 +97,7 @@ Every unit of work is a span. Agents, workflow steps, hooks — all the same tab
 | `parent_id` | TEXT FK? | → spans (nullable) |
 | `kind` | TEXT | `agent \| workflow \| step \| hook \| ...` |
 | `name` | TEXT | Human-readable name |
-| `status` | TEXT | `pending \| running \| done \| failed` |
+| `status` | TEXT | `pending \| running \| done \| failed \| blocked` |
 | `started_at` | INTEGER | Unix timestamp ms |
 | `finished_at` | INTEGER | Unix timestamp ms, nullable |
 | `data` | JSON | Kind-specific fields (see below) |
@@ -263,7 +263,10 @@ The TUI sends a `subscribe` command and receives a full snapshot followed by inc
    ADLER_CONTEXT=<JSON array of context_items>
    ```
 4. Daemon streams PTY output to all clients currently attached to that span via the `attach` channel (see §4). PTY output is **not** written to the `events` table.
-5. On process exit, daemon runs the agent's configured `output` hook (if any), stores the result in `span.data.output`, updates span status (`done` or `failed`), records `exit_code` in `data`, emits `span.finished` or `span.failed` event.
+5. **Process completion** depends on the agent's `interactive` flag:
+   - `interactive: false` (default): daemon waits for the process to exit naturally, then proceeds to step 6.
+   - `interactive: true`: process is not expected to exit on its own. The daemon polls the agent's `status` hook at `statusPollInterval` ms. If no `status` hook is provided, the daemon watches stdout — once no output is received for `interactiveTimeout` ms, `proc.stdoutIdle` is set to `true` and status is inferred as `completed`. The process is **not killed** when completion is detected; it remains running (e.g. an opencode TUI session stays open).
+6. On completion, daemon runs the agent's `output` hook (if any), stores the result in `span.data.output`, updates span status (`done`, `failed`, or `blocked`), records `exit_code` in `data` where applicable, emits `span.finished` or `span.failed` event.
 
 ### Span Context Propagation
 
@@ -467,25 +470,78 @@ const config: AdlerConfig = {
   agent: {
     agents: {
       opencode: {
-        command: ({ prompt, subagent }) => `opencode run --agent ${subagent} "${prompt}"`,
-        // Runs after agent exits. Return value is stored in span.data.output.
+        // Command to start a new agent session
+        run: ({ prompt, subagent }) => `opencode run --agent ${subagent} "${prompt}"`,
+
+        // Command to re-attach to an existing session (e.g. after process is gone but session persists)
+        open: ({ span, proc, $ }) => `opencode --session ${span.data.opencode_session_id}`,
+
+        // Runs after agent completes. Return value stored in span.data.output.
         // If omitted, no output is stored.
-        output: ({ span }) => ({
+        output: async ({ span, proc, $ }) => ({
           type: "text",
-          content: Bun.spawnSync(["opencode", "export", "--session", span.data.opencode_session_id]).stdout.toString(),
+          content: await $`opencode export --session ${span.data.opencode_session_id}`,
         }),
+
+        // Called on each poll interval to determine agent status.
+        // proc.stdoutIdle: true when no stdout change for interactiveTimeout ms.
+        // proc.lastStdout: raw last N bytes of PTY buffer (approximation of current screen state).
+        // $ is a Bun shell helper.
+        // Returns: "working" | "completed" | "failed" | "blocked"
+        status: async ({ span, currentStatus, proc, $ }) => {
+          if (proc.stdoutIdle) {
+            if (proc.lastStdout.includes("permission needed")) return "blocked"
+            return "completed"
+          }
+          return "working"
+        },
+
+        // How often the status hook is polled (ms)
+        statusPollInterval: 3000,
+
+        // "tui": stdout is escape-sequence-heavy, not useful as plain text output
+        // "log": stdout can be treated as readable span output directly
+        mode: "tui",
+
+        // true: process is not expected to exit on its own (e.g. an interactive TUI).
+        // Completion is detected via the status hook, or via interactiveTimeout if no status hook.
+        // Process is NOT killed on completion.
+        interactive: true,
+
+        // ms of no stdout change before proc.stdoutIdle = true.
+        // Only used when interactive: true and no status hook is provided.
+        interactiveTimeout: 3000,
       },
     },
-    attach: ({ agentId }) => `tmux new-window "adler agent read --name ${agentId}"`,
+
+    // Wraps the attach command for external display (e.g. in a tmux window).
+    // readCmd: `adler agent read --name <id>` — direct PTY stream
+    // openCmd: result of the agent's open hook, if defined; undefined otherwise
+    attach: ({ agentId, readCmd, openCmd }) => `tmux new-window "${openCmd ?? readCmd}"`,
   },
 }
 
 export default config
 ```
 
-The `output` hook receives the completed span and returns a `SpanOutput` value (`{ type: "text", content }` or `{ type: "file", path }`). The daemon stores this in `span.data.output`. If no `output` hook is defined for an agent type, `span.data.output` is left unset and `adler agent read` on a completed agent will indicate no output is available.
+**Hook context arguments** (`proc`, `$`) are available in all per-agent hooks (`run`, `open`, `output`, `status`):
 
-The `agent.attach` hook is invoked when the user presses `o` on an agent in the TUI. It receives the agent span data and returns a shell command string.
+- `proc.stdoutIdle` — `true` when no stdout change has occurred for `interactiveTimeout` ms
+- `proc.lastStdout` — raw last N bytes of the PTY buffer; useful for substring matching against current screen content. Note: this is a raw byte approximation, not a fully rendered terminal frame. Terminal emulation for accurate frame capture is a known limitation and may be addressed in a future phase.
+- `$` — Bun shell helper for running subprocesses inline
+
+**`status` hook return values:**
+
+| Value | Meaning |
+|---|---|
+| `"working"` | Agent is still running normally |
+| `"completed"` | Agent has finished successfully |
+| `"failed"` | Agent has finished with an error |
+| `"blocked"` | Agent requires human input before it can continue |
+
+When no `status` hook is provided and `interactive: true`, the daemon uses `interactiveTimeout` as a fallback: once `proc.stdoutIdle` is true, status is set to `completed`.
+
+The `agent.attach` hook is invoked when the user presses `o` on an agent in the TUI. `openCmd` is `undefined` if the agent type does not define an `open` hook.
 
 ---
 
