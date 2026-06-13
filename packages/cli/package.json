@@ -10,6 +10,7 @@
     "test": "bun test"
   },
   "dependencies": {
-    "@adler/sdk": "workspace:*"
+    "@adler/sdk": "workspace:*",
+    "adlerd": "workspace:*"
   }
 }
