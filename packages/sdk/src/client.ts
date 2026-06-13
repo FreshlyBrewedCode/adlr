@@ -39,64 +39,27 @@ export interface Client {
 }
 
 export function createClient(socketPath: string = SOCKET_PATH): Client {
-  let socket: ReturnType<typeof connect> | null = null
+  let socket = connect(socketPath)
   let pending = new Map<string, PendingRequest>()
   let eventHandlers: Array<{ event: string; handler: (event: unknown) => void }> = []
   let closed = false
   let reqId = 0
-  let buffer = ""
-
-  function getSocket() {
-    if (socket) return socket
-    socket = connect(socketPath)
-    socket.on("error", () => {})
-    socket.on("data", (data) => {
-      buffer += data.toString()
-      let lines: string[]
-      while ((lines = buffer.split("\n")).length > 1) {
-        buffer = lines.pop()!
-        const line = lines[0]
-        if (!line) continue
-        try {
-          const msg = JSON.parse(line) as IpcMessage
-          if (msg.type === "response" || msg.type === "error") {
-            const req = pending.get(msg.id)
-            if (req) {
-              pending.delete(msg.id)
-              if (msg.type === "error") req.reject(new Error(msg.error))
-              else req.resolve(msg.payload)
-            }
-          } else {
-            for (const h of eventHandlers) {
-              if (h.event === "*" || h.event === msg.type) {
-                h.handler(msg)
-              }
-            }
-          }
-        } catch (e) {
-          // ignore malformed lines
-        }
-      }
-    })
-    return socket
-  }
 
   function nextId(): string {
     return `req-${++reqId}`
   }
 
   function ensureConnection(): Promise<void> {
-    const s = getSocket()
-    if (s.readyState === "open") return Promise.resolve()
+    if (socket.readyState === "open") return Promise.resolve()
     return new Promise((resolve, reject) => {
       const onOpen = () => { cleanup(); resolve() }
       const onError = (err: Error) => { cleanup(); reject(err) }
       const cleanup = () => {
-        s.removeListener("connect", onOpen)
-        s.removeListener("error", onError)
+        socket.removeListener("connect", onOpen)
+        socket.removeListener("error", onError)
       }
-      s.once("connect", onOpen)
-      s.once("error", onError)
+      socket.once("connect", onOpen)
+      socket.once("error", onError)
     })
   }
 
@@ -106,10 +69,40 @@ export function createClient(socketPath: string = SOCKET_PATH): Client {
     return new Promise((resolve, reject) => {
       pending.set(id, { resolve: resolve as (v: unknown) => void, reject })
       ensureConnection().then(() => {
-        getSocket().write(JSON.stringify({ type, id, payload }) + "\n")
+        socket.write(JSON.stringify({ type, id, payload }) + "\n")
       }).catch(reject)
     })
   }
+
+  let buffer = ""
+  socket.on("data", (data) => {
+    buffer += data.toString()
+    let lines: string[]
+    while ((lines = buffer.split("\n")).length > 1) {
+      buffer = lines.pop()!
+      const line = lines[0]
+      if (!line) continue
+      try {
+        const msg = JSON.parse(line) as IpcMessage
+        if (msg.type === "response" || msg.type === "error") {
+          const req = pending.get(msg.id)
+          if (req) {
+            pending.delete(msg.id)
+            if (msg.type === "error") req.reject(new Error(msg.error))
+            else req.resolve(msg.payload)
+          }
+        } else {
+          for (const h of eventHandlers) {
+            if (h.event === "*" || h.event === msg.type) {
+              h.handler(msg)
+            }
+          }
+        }
+      } catch (e) {
+        // ignore malformed lines
+      }
+    }
+  })
 
   const client: Client = {
     env() {
@@ -154,7 +147,7 @@ export function createClient(socketPath: string = SOCKET_PATH): Client {
     },
     close() {
       closed = true
-      if (socket) socket.end()
+      socket.end()
     },
   }
 
