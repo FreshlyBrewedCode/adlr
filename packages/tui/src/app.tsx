@@ -1,6 +1,6 @@
 import { useEffect, useReducer } from "react"
 import { Box, useInput, useApp } from "ink"
-import { createClient } from "@adler/sdk"
+import { createClient, type EventType } from "@adler/sdk"
 import { initialState, reducer } from "./types"
 import { Header } from "./components/Header"
 import { Footer } from "./components/Footer"
@@ -31,7 +31,7 @@ export function App({ sessionId }: { sessionId: string }) {
                 id: Date.now(),
                 session_id: sessionId,
                 span_id: (msg.payload as any)?.span_id ?? null,
-                type: msg.event,
+                type: msg.event as EventType,
                 data: msg.payload as any,
                 timestamp: Date.now(),
               },
