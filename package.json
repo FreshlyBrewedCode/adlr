@@ -1,0 +1,13 @@
+{
+  "name": "adler",
+  "private": true,
+  "workspaces": ["packages/*", "packages/plugins/*"],
+  "scripts": {
+    "test": "bun test"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.0",
+    "@types/react": "^18.3.0",
+    "@types/node": "^20.0.0"
+  }
+}

@@ -1,0 +1,162 @@
+import { connect } from "net"
+import { SOCKET_PATH } from "./paths"
+import type { Session, Span, Event, ContextItem, CreateSessionInput, CreateSpanInput, CreateEventInput, AddContextItemInput, EventFilter, ContextFilter, SpanStatus } from "./types"
+
+type IpcMessage =
+  | { type: "response"; id: string; payload: unknown }
+  | { type: "error"; id: string; error: string }
+  | { type: "snapshot"; payload: { session: Session; spans: Span[]; events: Event[]; context: ContextItem[] } }
+  | { type: "event"; event: string; payload: unknown }
+
+type PendingRequest = {
+  resolve: (value: unknown) => void
+  reject: (err: Error) => void
+}
+
+export interface Client {
+  env(): { sessionId: string | undefined; spanId: string | undefined; socketPath: string }
+  session: {
+    create(data?: CreateSessionInput): Promise<Session>
+    list(): Promise<Session[]>
+  }
+  agent: {
+    run(data: { sessionId: string; agentType: string; prompt: string; name?: string; parentSpanId?: string }): Promise<Span>
+    wait(data: { name: string }): Promise<Span>
+    status(data: { name: string }): Promise<SpanStatus>
+    list(): Promise<Span[]>
+    attach(nameOrId: string): Promise<void>
+  }
+  span: {
+    update(id: string, data: Record<string, unknown>, options?: { merge?: boolean }): Promise<void>
+  }
+  context: {
+    add(data: AddContextItemInput): Promise<ContextItem>
+    list(): Promise<ContextItem[]>
+  }
+  subscribe(sessionId: string, handler: (event: IpcMessage) => void): Promise<() => void>
+  on(event: string, handler: (event: unknown) => void): () => void
+  close(): void
+}
+
+export function createClient(socketPath: string = SOCKET_PATH): Client {
+  let socket: ReturnType<typeof connect> | null = null
+  let pending = new Map<string, PendingRequest>()
+  let eventHandlers: Array<{ event: string; handler: (event: unknown) => void }> = []
+  let closed = false
+  let reqId = 0
+  let buffer = ""
+
+  function getSocket() {
+    if (socket) return socket
+    socket = connect(socketPath)
+    socket.on("error", () => {})
+    socket.on("data", (data) => {
+      buffer += data.toString()
+      let lines: string[]
+      while ((lines = buffer.split("\n")).length > 1) {
+        buffer = lines.pop()!
+        const line = lines[0]
+        if (!line) continue
+        try {
+          const msg = JSON.parse(line) as IpcMessage
+          if (msg.type === "response" || msg.type === "error") {
+            const req = pending.get(msg.id)
+            if (req) {
+              pending.delete(msg.id)
+              if (msg.type === "error") req.reject(new Error(msg.error))
+              else req.resolve(msg.payload)
+            }
+          } else {
+            for (const h of eventHandlers) {
+              if (h.event === "*" || h.event === msg.type) {
+                h.handler(msg)
+              }
+            }
+          }
+        } catch (e) {
+          // ignore malformed lines
+        }
+      }
+    })
+    return socket
+  }
+
+  function nextId(): string {
+    return `req-${++reqId}`
+  }
+
+  function ensureConnection(): Promise<void> {
+    const s = getSocket()
+    if (s.readyState === "open") return Promise.resolve()
+    return new Promise((resolve, reject) => {
+      const onOpen = () => { cleanup(); resolve() }
+      const onError = (err: Error) => { cleanup(); reject(err) }
+      const cleanup = () => {
+        s.removeListener("connect", onOpen)
+        s.removeListener("error", onError)
+      }
+      s.once("connect", onOpen)
+      s.once("error", onError)
+    })
+  }
+
+  function send<T>(type: string, payload: unknown): Promise<T> {
+    if (closed) return Promise.reject(new Error("Client is closed"))
+    const id = nextId()
+    return new Promise((resolve, reject) => {
+      pending.set(id, { resolve: resolve as (v: unknown) => void, reject })
+      ensureConnection().then(() => {
+        getSocket().write(JSON.stringify({ type, id, payload }) + "\n")
+      }).catch(reject)
+    })
+  }
+
+  const client: Client = {
+    env() {
+      return {
+        sessionId: process.env.ADLER_SESSION,
+        spanId: process.env.ADLER_SPAN_ID,
+        socketPath: process.env.ADLER_SOCKET ?? SOCKET_PATH,
+      }
+    },
+    session: {
+      create: (data) => send("session.create", data),
+      list: () => send("session.list", {}),
+    },
+    agent: {
+      run: (data) => send("agent.run", data),
+      wait: (data) => send("agent.wait", data),
+      status: (data) => send("agent.status", data),
+      list: () => send("agent.list", {}),
+      attach: (nameOrId) => send("agent.attach", { span_id: nameOrId }),
+    },
+    span: {
+      update: (id, data, options) => send("span.update", { id, data, options }),
+    },
+    context: {
+      add: (data) => send("context.add", data),
+      list: () => send("context.list", {}),
+    },
+    async subscribe(sessionId, handler) {
+      await send("subscribe", { session_id: sessionId })
+      const wrapped = (msg: unknown) => handler(msg as IpcMessage)
+      const entry = { event: "*", handler: wrapped }
+      eventHandlers.push(entry)
+      return () => {
+        eventHandlers = eventHandlers.filter(h => h !== entry)
+      }
+    },
+    on(event, handler) {
+      eventHandlers.push({ event, handler })
+      return () => {
+        eventHandlers = eventHandlers.filter(h => h.handler !== handler)
+      }
+    },
+    close() {
+      closed = true
+      if (socket) socket.end()
+    },
+  }
+
+  return client
+}
