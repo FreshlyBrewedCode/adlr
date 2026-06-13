@@ -191,6 +191,21 @@ export class SQLiteStorage implements Storage {
     })))
   }
 
+  listAllSpans(): Promise<Span[]> {
+    const rows = this.db.query("SELECT * FROM spans ORDER BY started_at ASC").all() as Record<string, unknown>[]
+    return Promise.resolve(rows.map(r => ({
+      id: String(r.id),
+      session_id: String(r.session_id),
+      parent_id: r.parent_id != null ? String(r.parent_id) : null,
+      kind: String(r.kind) as SpanKind,
+      name: String(r.name),
+      status: String(r.status) as SpanStatus,
+      started_at: Number(r.started_at),
+      finished_at: r.finished_at != null ? Number(r.finished_at) : null,
+      data: JSON.parse(String(r.data)),
+    })))
+  }
+
   createEvent(data: CreateEventInput): Promise<Event> {
     const now = data.timestamp ?? Date.now()
     const id = this.db.run(

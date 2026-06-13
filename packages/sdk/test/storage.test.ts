@@ -210,4 +210,15 @@ describe("SQLiteStorage", () => {
     const events = await storage.listEvents(session.id, { type: undefined })
     expect(events.length).toBe(1)
   })
+
+  test("listAllSpans returns spans across all sessions", async () => {
+    const sessionA = await storage.createSession({ working_dir: "/tmp/a" })
+    const sessionB = await storage.createSession({ working_dir: "/tmp/b" })
+    await storage.createSpan({ session_id: sessionA.id, kind: "agent", name: "agent-a" })
+    await storage.createSpan({ session_id: sessionB.id, kind: "agent", name: "agent-b" })
+    const spans = await storage.listAllSpans()
+    expect(spans.length).toBe(2)
+    const names = spans.map(s => s.name).sort()
+    expect(names).toEqual(["agent-a", "agent-b"])
+  })
 })

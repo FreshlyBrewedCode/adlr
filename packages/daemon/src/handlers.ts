@@ -49,7 +49,7 @@ export async function handleCommand(ctx: HandlerContext, type: string, payload: 
 
     case "agent.wait": {
       const { name } = payload as { name: string }
-      const spans = await ctx.storage.listSpans("") // we need to search by name across all sessions
+      const spans = await ctx.storage.listAllSpans()
       const span = spans.find(s => s.name === name)
       if (!span) throw new Error(`Agent not found: ${name}`)
       while (true) {
@@ -64,7 +64,7 @@ export async function handleCommand(ctx: HandlerContext, type: string, payload: 
 
     case "agent.status": {
       const { name } = payload as { name: string }
-      const spans = await ctx.storage.listSpans("")
+      const spans = await ctx.storage.listAllSpans()
       const span = spans.find(s => s.name === name)
       if (!span) throw new Error(`Agent not found: ${name}`)
       return span.status

@@ -58,7 +58,7 @@ export class InactivityTimer {
 
   addClient(): void {
     this.clientCount++
-    this.touch()
+    this.check()
   }
 
   removeClient(): void {
@@ -68,7 +68,7 @@ export class InactivityTimer {
 
   addAgent(): void {
     this.runningAgents++
-    this.touch()
+    this.check()
   }
 
   removeAgent(): void {

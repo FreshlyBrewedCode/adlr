@@ -3,13 +3,11 @@ import type { Storage } from "@adler/sdk"
 import { SOCKET_PATH } from "@adler/sdk"
 import { ProcessManager } from "./process-manager"
 import { handleCommand } from "./handlers"
-import { InactivityTimer } from "./lifecycle"
+import type { InactivityTimer } from "./lifecycle"
 
-export function startServer(storage: Storage, processManager: ProcessManager, onShutdown: () => void): { close: () => void } {
+export function startServer(storage: Storage, getProcessManager: () => ProcessManager, inactivity: InactivityTimer): { close: () => void; broadcast: (sessionId: string, event: { type: string; payload: unknown }) => void } {
   const subscribers = new Map<string, Set<{ write: (data: string) => void }>>()
   const clients = new Set<Socket>()
-
-  const inactivity = new InactivityTimer(onShutdown)
 
   function broadcast(sessionId: string, event: { type: string; payload: unknown }) {
     const set = subscribers.get(sessionId)
@@ -23,7 +21,7 @@ export function startServer(storage: Storage, processManager: ProcessManager, on
 
   const ctx = {
     storage,
-    processManager,
+    get processManager() { return getProcessManager() },
     subscribers,
     broadcast,
   }
@@ -35,8 +33,18 @@ export function startServer(storage: Storage, processManager: ProcessManager, on
     let buffer = ""
     let subscribedSessionId: string | null = null
     let subscriberEntry: { write: (data: string) => void } | null = null
+    let rawMode = false
+    let attachedSpanId: string | null = null
 
     socket.on("data", async (data) => {
+      if (rawMode && attachedSpanId) {
+        const agent = getProcessManager().getAgent(attachedSpanId)
+        if (agent) {
+          agent.pty.write(data.toString())
+        }
+        return
+      }
+
       buffer += data.toString()
       let lines: string[]
       while ((lines = buffer.split("\n")).length > 1) {
@@ -61,12 +69,16 @@ export function startServer(storage: Storage, processManager: ProcessManager, on
 
             if (msg.type === "agent.attach") {
               const { span_id } = msg.payload as { span_id: string }
-              const cleanup = processManager.addAttachListener(span_id, (data) => {
+              const cleanup = getProcessManager().addAttachListener(span_id, (data) => {
                 socket.write(data)
               })
               socket.on("close", () => {
                 cleanup()
+                rawMode = false
+                attachedSpanId = null
               })
+              rawMode = true
+              attachedSpanId = span_id
               socket.write(JSON.stringify({ type: "response", id: msg.id, payload: { attached: true } }) + "\n")
               continue
             }
@@ -103,11 +115,11 @@ export function startServer(storage: Storage, processManager: ProcessManager, on
 
   return {
     close() {
-      inactivity.stop()
       for (const client of clients) {
         client.end()
       }
       server.close()
     },
+    broadcast,
   }
 }

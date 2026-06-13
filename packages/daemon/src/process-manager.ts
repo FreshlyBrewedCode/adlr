@@ -1,6 +1,7 @@
 import { spawn as spawnPty } from "node-pty"
 import type { Storage, Span, SpanStatus, AdlerConfig } from "@adler/sdk"
 import { SOCKET_PATH } from "@adler/sdk"
+import type { InactivityTimer } from "./lifecycle"
 
 export interface AgentProcess {
   spanId: string
@@ -22,6 +23,7 @@ export class ProcessManager {
     private storage: Storage,
     private config: AdlerConfig,
     private onEvent: (event: { type: string; payload: unknown }) => void,
+    private inactivity?: InactivityTimer,
   ) {}
 
   async spawnAgent(data: {
@@ -77,6 +79,7 @@ export class ProcessManager {
     }
 
     this.agents.set(span.id, agent)
+    this.inactivity?.addAgent()
 
     pty.onData((data) => {
       agent.stdoutBuffer += data
@@ -192,6 +195,7 @@ export class ProcessManager {
     })
 
     agent.status = status
+    this.inactivity?.removeAgent()
     this.onEvent({
       type: status === "done" ? "span.finished" : "span.failed",
       payload: { span_id: spanId, exit_code: exitCode },
@@ -211,8 +215,9 @@ export class ProcessManager {
     return this.agents.get(spanId)
   }
 
-  listAgents(sessionId: string): Promise<Span[]> {
-    return this.storage.listSpans(sessionId)
+  async listAgents(sessionId: string): Promise<Span[]> {
+    const spans = await this.storage.listSpans(sessionId)
+    return spans.filter(s => s.kind === "agent")
   }
 
   async stop(): Promise<void> {
@@ -224,6 +229,9 @@ export class ProcessManager {
       }
     }
     this.statusIntervals.clear()
+    for (const _ of this.agents.keys()) {
+      this.inactivity?.removeAgent()
+    }
     this.agents.clear()
   }
 }

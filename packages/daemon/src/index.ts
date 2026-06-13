@@ -2,7 +2,7 @@ import { SQLiteStorage, DB_PATH } from "@adler/sdk"
 import { startServer } from "./server"
 import { ProcessManager } from "./process-manager"
 import { loadConfig } from "./config-loader"
-import { writePid, removePid, removeSocket, isDaemonRunning } from "./lifecycle"
+import { writePid, removePid, removeSocket, isDaemonRunning, InactivityTimer } from "./lifecycle"
 
 async function main() {
   if (isDaemonRunning()) {
@@ -12,21 +12,29 @@ async function main() {
 
   const storage = new SQLiteStorage(DB_PATH)
   const config = await loadConfig()
-  const processManager = new ProcessManager(storage, config, (event) => {
-    // Events are broadcast by the server via subscribers map
-    // The processManager callback is a placeholder for future extensibility
-  })
 
-  writePid()
-
-  const server = startServer(storage, processManager, () => {
+  const inactivity = new InactivityTimer(() => {
     console.log("Shutting down due to inactivity")
     shutdown()
   })
 
+  let processManager: ProcessManager
+
+  const server = startServer(storage, () => processManager, inactivity)
+
+  processManager = new ProcessManager(storage, config, (event) => {
+    const sessionId = (event.payload as any)?.session_id
+    if (sessionId) {
+      server.broadcast(sessionId, event)
+    }
+  }, inactivity)
+
+  writePid()
+
   function shutdown() {
     server.close()
     processManager.stop()
+    inactivity.stop()
     storage.close()
     removePid()
     removeSocket()

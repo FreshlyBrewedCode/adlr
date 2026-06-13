@@ -21,6 +21,7 @@ export interface Storage {
   updateSpan(id: string, data: Partial<Span>): Promise<void>
   getSpan(id: string): Promise<Span | null>
   listSpans(sessionId: string): Promise<Span[]>
+  listAllSpans(): Promise<Span[]>
 
   createEvent(data: CreateEventInput): Promise<Event>
   listEvents(sessionId: string, filter?: EventFilter): Promise<Event[]>

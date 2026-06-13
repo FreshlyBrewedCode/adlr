@@ -6,11 +6,13 @@ import { ProcessManager } from "../src/process-manager"
 import { unlinkSync, existsSync, mkdirSync } from "fs"
 import { dirname } from "path"
 import { SOCKET_PATH } from "@adler/sdk"
+import { InactivityTimer } from "../src/lifecycle"
 
 describe("Daemon server", () => {
   let storage: SQLiteStorage
   let pm: ProcessManager
   let server: ReturnType<typeof startServer>
+  let inactivity: InactivityTimer
 
   beforeEach(async () => {
     if (existsSync(SOCKET_PATH)) unlinkSync(SOCKET_PATH)
@@ -18,13 +20,15 @@ describe("Daemon server", () => {
     if (!existsSync(socketDir)) mkdirSync(socketDir, { recursive: true })
     storage = new SQLiteStorage(":memory:")
     pm = new ProcessManager(storage, {}, () => {})
-    server = startServer(storage, pm, () => {})
+    inactivity = new InactivityTimer(() => {})
+    server = startServer(storage, () => pm, inactivity)
     // Wait for socket to be ready
     await new Promise(r => setTimeout(r, 100))
   })
 
   afterEach(() => {
     server.close()
+    inactivity.stop()
     storage.close()
     if (existsSync(SOCKET_PATH)) unlinkSync(SOCKET_PATH)
   })
