@@ -33,10 +33,11 @@ export async function runCli(argv: string[] = process.argv): Promise<void> {
   try {
     await program.parseAsync(argv)
   } catch (err) {
-    if (err instanceof AdlerCliError) {
+    if (err instanceof Error) {
       console.error(err.message)
-      process.exit(1)
+    } else {
+      console.error(err)
     }
-    throw err
+    process.exit(1)
   }
 }
