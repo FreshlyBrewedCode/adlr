@@ -1,13 +1,23 @@
-import { readFileSync } from "node:fs"
+import { readFileSync, existsSync } from "node:fs"
 import { join } from "node:path"
 
-export function resolveSessionId(args: { session?: string }): string | undefined {
-  if (args.session) return args.session
-  if (process.env.ADLER_SESSION) return process.env.ADLER_SESSION
-  const localFile = join(process.cwd(), ".adler", ".session")
-  try {
-    return readFileSync(localFile, "utf-8").trim()
-  } catch {
-    return undefined
+export function resolveSessionId(options: { session?: string }): string | undefined {
+  if (options.session) {
+    return options.session
   }
+
+  if (process.env.ADLER_SESSION) {
+    return process.env.ADLER_SESSION
+  }
+
+  const sessionFile = join(process.cwd(), ".adler", ".session")
+  try {
+    if (existsSync(sessionFile)) {
+      return readFileSync(sessionFile, "utf-8").trim()
+    }
+  } catch {
+    // ignore file I/O errors
+  }
+
+  return undefined
 }
