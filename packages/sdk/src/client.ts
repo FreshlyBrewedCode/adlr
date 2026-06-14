@@ -151,7 +151,10 @@ export function createClient(socketPath: string = SOCKET_PATH): Client {
       const entry = { event: "*", handler: wrapped }
       eventHandlers.push(entry)
       try {
-        await send("subscribe", { session_id: sessionId })
+        const snapshot = await send("subscribe", { session_id: sessionId })
+        if (snapshot && (snapshot as any).type === "snapshot") {
+          wrapped(snapshot)
+        }
       } catch (err) {
         eventHandlers = eventHandlers.filter(h => h !== entry)
         throw err

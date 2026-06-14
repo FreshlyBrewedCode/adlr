@@ -6,11 +6,10 @@ async function main(argv: string[] = process.argv.slice(2)) {
     // Launch TUI
     await ensureDaemon()
     try {
-      // @ts-expect-error — TUI package not yet implemented
       const { runTui } = await import("@adler/tui")
       await runTui()
     } catch (err) {
-      console.error("TUI not yet available:", err)
+      console.error("TUI failed to start:", err)
       process.exit(1)
     }
     return

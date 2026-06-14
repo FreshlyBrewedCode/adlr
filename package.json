@@ -3,7 +3,8 @@
   "private": true,
   "workspaces": ["packages/*", "packages/plugins/*"],
   "scripts": {
-    "test": "bun test"
+    "test": "bun test",
+    "adler": "bun run packages/cli/src/index.ts"
   },
   "devDependencies": {
     "typescript": "^5.5.0",
