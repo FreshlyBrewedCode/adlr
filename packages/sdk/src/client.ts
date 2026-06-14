@@ -63,13 +63,31 @@ export function createClient(socketPath: string = SOCKET_PATH): Client {
     })
   }
 
+  function toSnakeCase(value: unknown): unknown {
+    if (Array.isArray(value)) {
+      return value.map(toSnakeCase)
+    }
+    if (value !== null && typeof value === "object") {
+      const result: Record<string, unknown> = {}
+      for (const [key, val] of Object.entries(value)) {
+        const snakeKey = key
+          .replace(/([A-Z]+)([A-Z][a-z])/g, "$1_$2")
+          .replace(/([a-z\d])([A-Z])/g, "$1_$2")
+          .toLowerCase()
+        result[snakeKey] = toSnakeCase(val)
+      }
+      return result
+    }
+    return value
+  }
+
   function send<T>(type: string, payload: unknown): Promise<T> {
     if (closed) return Promise.reject(new Error("Client is closed"))
     const id = nextId()
     return new Promise((resolve, reject) => {
       pending.set(id, { resolve: resolve as (v: unknown) => void, reject })
       ensureConnection().then(() => {
-        socket.write(JSON.stringify({ type, id, payload }) + "\n")
+        socket.write(JSON.stringify({ type, id, payload: toSnakeCase(payload) }) + "\n")
       }).catch(reject)
     })
   }

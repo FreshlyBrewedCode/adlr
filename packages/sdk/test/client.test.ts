@@ -29,6 +29,8 @@ const server = createServer((socket) => {
           socket.write(JSON.stringify({ type: "event", event: "test", payload: { foo: 1 } }) + "\n")
         } else if (msg.type === "agent.list") {
           socket.write(JSON.stringify({ type: "response", id: msg.id, payload: [] }) + "\n")
+        } else if (msg.type === "agent.run") {
+          socket.write(JSON.stringify({ type: "response", id: msg.id, payload: { id: "span-1", session_id: msg.payload.session_id, name: msg.payload.name, kind: "agent", status: "running", parent_id: null, started_at: 0, finished_at: null, data: {} } }) + "\n")
         } else {
           socket.write(JSON.stringify({ type: "response", id: msg.id, payload: {} }) + "\n")
         }
@@ -178,6 +180,51 @@ describe("Client", () => {
     expect(client.context.list).toBeFunction()
     expect(client.subscribe).toBeFunction()
     expect(client.on).toBeFunction()
+    client.close()
+  })
+
+  test("agent.run converts camelCase keys to snake_case", async () => {
+    const client = createClient(FAKE_SOCK)
+    const socket = await waitForSocket()
+
+    let receivedPayload: unknown
+    const originalOnData = socket.listeners("data")[0] as (data: Buffer) => void
+    socket.removeListener("data", originalOnData)
+    socket.on("data", (data) => {
+      const text = data.toString()
+      for (const line of text.trim().split("\n")) {
+        if (!line) continue
+        try {
+          const msg = JSON.parse(line)
+          if (msg.type === "agent.run") {
+            receivedPayload = msg.payload
+            socket.write(JSON.stringify({ type: "response", id: msg.id, payload: { id: "span-1", session_id: msg.payload.session_id, name: msg.payload.name, kind: "agent", status: "running", parent_id: null, started_at: 0, finished_at: null, data: {} } }) + "\n")
+            return
+          }
+        } catch {
+          // ignore
+        }
+      }
+      originalOnData(data)
+    })
+
+    const result = await client.agent.run({
+      sessionId: "sess-1",
+      agentType: "test",
+      prompt: "hello",
+      name: "test-agent",
+      parentSpanId: "span-0",
+    })
+
+    expect(result.id).toBe("span-1")
+    expect(receivedPayload).toEqual({
+      session_id: "sess-1",
+      agent_type: "test",
+      prompt: "hello",
+      name: "test-agent",
+      parent_span_id: "span-0",
+    })
+
     client.close()
   })
 })
