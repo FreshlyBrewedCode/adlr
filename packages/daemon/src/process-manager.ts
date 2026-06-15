@@ -1,4 +1,3 @@
-import { spawn as spawnPty } from "node-pty"
 import type { Storage, Span, SpanStatus } from "@adler/sdk"
 import { SOCKET_PATH } from "@adler/sdk"
 import type { InactivityTimer } from "./lifecycle"
@@ -6,7 +5,8 @@ import type { ConfigLoader } from "./config-loader"
 
 export interface AgentProcess {
   spanId: string
-  pty: ReturnType<typeof spawnPty>
+  proc: Bun.Subprocess
+  terminal: Bun.Terminal
   stdoutBuffer: string
   lastStdoutTime: number
   stdoutIdle: boolean
@@ -69,14 +69,64 @@ export class ProcessManager {
       ADLER_CONTEXT: JSON.stringify(contextItems),
     }
 
-    const pty = spawnPty("sh", ["-c", runCmd], {
-      env,
-      cwd: process.cwd(),
-    })
+    // Declare agent before spawn so terminal callbacks can close over it
+    let agent: AgentProcess
+    const attachListeners = this.attachListeners
 
-    const agent: AgentProcess = {
+    let proc: Bun.Subprocess
+    try {
+      proc = Bun.spawn(["sh", "-c", runCmd], {
+        env: env as Record<string, string>,
+        cwd: session.working_dir,
+        terminal: {
+          cols: 80,
+          rows: 24,
+          data(_terminal, data) {
+            const str = Buffer.from(data).toString()
+            agent.stdoutBuffer += str
+            if (agent.stdoutBuffer.length > 4096) {
+              agent.stdoutBuffer = agent.stdoutBuffer.slice(-4096)
+            }
+            agent.lastStdoutTime = Date.now()
+            agent.stdoutIdle = false
+
+            const listeners = attachListeners.get(span.id)
+            if (listeners) {
+              for (const cb of listeners) {
+                cb(Buffer.from(str))
+              }
+            }
+          },
+          exit: (_terminal, ptyExitCode, _signal) => {
+            // PTY stream closed with error (ptyExitCode 1 = error).
+            // Only used as fallback if proc.exited doesn't resolve first.
+            // completeAgent is idempotent — it will no-op if proc.exited already ran.
+            if (ptyExitCode === 1) {
+              this.completeAgent(span.id, 1)
+            }
+          },
+        },
+      })
+    } catch (err) {
+      await this.storage.updateSpan(span.id, {
+        status: "failed",
+        finished_at: Date.now(),
+        data: { ...span.data, exit_code: -1 },
+      })
+      this.inactivity?.removeAgent()
+      throw err
+    }
+
+    if (!proc.terminal) {
+      proc.kill()
+      throw new Error("Bun.spawn did not create a PTY terminal")
+    }
+
+    // Now assign agent — terminal callbacks fire asynchronously, so agent is set before any data arrives
+    agent = {
       spanId: span.id,
-      pty,
+      proc,
+      terminal: proc.terminal,
       stdoutBuffer: "",
       lastStdoutTime: Date.now(),
       stdoutIdle: false,
@@ -88,26 +138,12 @@ export class ProcessManager {
     this.agents.set(span.id, agent)
     this.inactivity?.addAgent()
 
-    pty.onData((data) => {
-      agent.stdoutBuffer += data
-      if (agent.stdoutBuffer.length > 4096) {
-        agent.stdoutBuffer = agent.stdoutBuffer.slice(-4096)
-      }
-      agent.lastStdoutTime = Date.now()
-      agent.stdoutIdle = false
-
-      const listeners = this.attachListeners.get(span.id)
-      if (listeners) {
-        for (const cb of listeners) {
-          cb(Buffer.from(data))
-        }
-      }
-    })
-
-    pty.onExit(async ({ exitCode }) => {
+    proc.exited.then(async (exitCode) => {
       agent.exited = true
       agent.exitCode = exitCode ?? null
       await this.completeAgent(span.id, exitCode ?? 0)
+    }).catch(err => {
+      console.error(`Agent ${span.id} exit handler failed:`, err instanceof Error ? err.message : String(err))
     })
 
     if (agentDef.interactive) {
@@ -241,15 +277,13 @@ export class ProcessManager {
   }
 
   async stop(): Promise<void> {
-    for (const [spanId, interval] of this.statusIntervals) {
+    for (const interval of this.statusIntervals.values()) {
       clearInterval(interval)
-      const agent = this.agents.get(spanId)
-      if (agent) {
-        agent.pty.kill()
-      }
     }
     this.statusIntervals.clear()
-    for (const spanId of this.agents.keys()) {
+
+    for (const [spanId, agent] of this.agents) {
+      try { agent.proc.kill() } catch (e) { /* already exited */ }
       this.agents.delete(spanId)
       this.attachListeners.delete(spanId)
       this.inactivity?.removeAgent()

@@ -6,6 +6,10 @@ import { writeFileSync, mkdirSync, rmSync, existsSync } from "fs"
 import { join } from "path"
 import { tmpdir } from "os"
 
+// Type guard: AgentProcess must have proc and terminal, not pty
+import type { AgentProcess } from "../src/process-manager"
+type _Check = AgentProcess extends { proc: Bun.Subprocess; terminal: Bun.Terminal } ? true : never
+
 function createTestDir(): string {
   const dir = join(tmpdir(), `adler-test-${Date.now()}-${Math.random().toString(36).slice(2)}`)
   mkdirSync(dir, { recursive: true })
@@ -71,5 +75,67 @@ describe("ProcessManager", () => {
         name: "test-agent",
       })
     ).rejects.toThrow("Unknown agent type: nonexistent")
+  })
+
+  test("spawned agent uses session working_dir as cwd", async () => {
+    const adlerDir = join(testDir, ".adler")
+    mkdirSync(adlerDir, { recursive: true })
+    writeFileSync(
+      join(adlerDir, "adler.ts"),
+      `export default { agent: { agents: { "cwd-test": { run: () => "pwd" } } } }`,
+      "utf-8"
+    )
+
+    pm = new ProcessManager(storage, loader, () => {})
+    const session = await storage.createSession({ working_dir: testDir })
+    const span = await pm.spawnAgent({
+      sessionId: session.id,
+      agentType: "cwd-test",
+      prompt: "test",
+      name: "cwd-test-agent",
+    })
+
+    // Wait for process to finish
+    await new Promise<void>((resolve) => {
+      const check = setInterval(async () => {
+        const s = await storage.getSpan(span.id)
+        if (s?.status === "done" || s?.status === "failed") {
+          clearInterval(check)
+          resolve()
+        }
+      }, 50)
+    })
+
+    const finished = await storage.getSpan(span.id)
+    expect(finished?.status).toBe("done")
+    expect(finished?.data?.exit_code).toBe(0)
+  })
+
+  test("stop() kills all tracked agents regardless of mode", async () => {
+    const adlerDir = join(testDir, ".adler")
+    mkdirSync(adlerDir, { recursive: true })
+    writeFileSync(
+      join(adlerDir, "adler.ts"),
+      `export default { agent: { agents: { sleeper: { run: () => "sleep 60" } } } }`,
+      "utf-8"
+    )
+
+    pm = new ProcessManager(storage, loader, () => {})
+    const session = await storage.createSession({ working_dir: testDir })
+    const span = await pm.spawnAgent({
+      sessionId: session.id,
+      agentType: "sleeper",
+      prompt: "test",
+      name: "sleeper-agent",
+    })
+
+    // Agent should be tracked
+    expect(pm.getAgent(span.id)).toBeDefined()
+
+    // stop() should kill it without hanging
+    await pm.stop()
+
+    // Agent should be removed from tracking
+    expect(pm.getAgent(span.id)).toBeUndefined()
   })
 })

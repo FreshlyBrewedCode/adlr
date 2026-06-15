@@ -43,7 +43,7 @@ export function startServer(storage: Storage, getProcessManager: () => ProcessMa
       if (rawMode && attachedSpanId) {
         const agent = getProcessManager().getAgent(attachedSpanId)
         if (agent) {
-          agent.pty.write(data.toString())
+          agent.terminal.write(data.toString())
         }
         return
       }

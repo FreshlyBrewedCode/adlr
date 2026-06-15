@@ -11,10 +11,10 @@
     "start": "bun src/index.ts"
   },
   "dependencies": {
-    "@adler/sdk": "workspace:*",
-    "node-pty": "^1.1.0"
+    "@adler/sdk": "workspace:*"
   },
   "devDependencies": {
-    "@types/node": "^20.0.0"
+    "@types/node": "^20.0.0",
+    "bun-types": "latest"
   }
 }
