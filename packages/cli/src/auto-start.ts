@@ -26,13 +26,18 @@ export async function ensureDaemon(): Promise<void> {
   const daemonPath = new URL("../../daemon/src/index.ts", import.meta.url).pathname
   const proc = spawn(process.execPath, [daemonPath], {
     detached: true,
-    stdio: "ignore",
+    stdio: ["ignore", "ignore", "pipe"],
   })
   proc.unref()
 
   let spawnError: Error | null = null
   let exitCode: number | null = null
   let exitSignal: string | null = null
+  let stderrOutput = ""
+
+  proc.stderr?.on("data", (chunk: Buffer) => {
+    stderrOutput += chunk.toString()
+  })
 
   proc.on("error", (err) => {
     spawnError = err
@@ -54,14 +59,26 @@ export async function ensureDaemon(): Promise<void> {
       throw spawnError
     }
     if (exitCode !== null) {
-      throw new Error(`Daemon exited with code ${exitCode}`)
+      const detail = stderrOutput.trim()
+      const msg = detail
+        ? `Daemon exited with code ${exitCode}:\n${detail}`
+        : `Daemon exited with code ${exitCode}`
+      throw new Error(msg)
     }
     if (exitSignal !== null) {
-      throw new Error(`Daemon was killed by signal ${exitSignal}`)
+      const detail = stderrOutput.trim()
+      const msg = detail
+        ? `Daemon was killed by signal ${exitSignal}:\n${detail}`
+        : `Daemon was killed by signal ${exitSignal}`
+      throw new Error(msg)
     }
     if (await canConnect(SOCKET_PATH)) {
       return
     }
   }
-  throw new Error("Daemon failed to start within 5 seconds")
+  const detail = stderrOutput.trim()
+  const msg = detail
+    ? `Daemon failed to start within 5 seconds:\n${detail}`
+    : "Daemon failed to start within 5 seconds"
+  throw new Error(msg)
 }

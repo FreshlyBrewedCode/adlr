@@ -2,13 +2,15 @@ import { SQLiteStorage, DB_PATH } from "@adler/sdk"
 import { startServer } from "./server"
 import { ProcessManager } from "./process-manager"
 import { ConfigLoader } from "./config-loader"
-import { writePid, removePid, removeSocket, isDaemonRunning, InactivityTimer } from "./lifecycle"
+import { writePid, removePid, removeSocket, isDaemonRunning, InactivityTimer, ensureAdlerDir } from "./lifecycle"
 
 async function main() {
   if (isDaemonRunning()) {
     console.error("Daemon is already running")
     process.exit(1)
   }
+
+  ensureAdlerDir()
 
   const storage = new SQLiteStorage(DB_PATH)
   const configLoader = new ConfigLoader()
