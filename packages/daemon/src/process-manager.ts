@@ -270,8 +270,11 @@ export class ProcessManager {
     agent.status = status
     if (status === "done") {
       this.logger?.info("Agent completed", { agent: String(span.data.agent_type), exit_code: exitCode }, { session_id: span.session_id, span_id: spanId })
+    } else if (status === "failed") {
+      this.logger?.error("Agent failed", { agent: String(span.data.agent_type), exit_code: exitCode }, { session_id: span.session_id, span_id: spanId })
     } else {
-      this.logger?.error("Agent failed", { agent: String(span.data.agent_type), exit_code: exitCode, signal: null }, { session_id: span.session_id, span_id: spanId })
+      // blocked or other terminal status
+      this.logger?.info("Agent blocked", { agent: String(span.data.agent_type), exit_code: exitCode, status }, { session_id: span.session_id, span_id: spanId })
     }
     this.agents.delete(spanId)
     this.attachListeners.delete(spanId)
