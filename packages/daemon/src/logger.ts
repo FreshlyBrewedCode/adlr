@@ -1,6 +1,7 @@
 import type { Storage } from "@adler/sdk"
 import { DAEMON_SESSION_ID } from "@adler/sdk"
-import type { SQLiteStorage } from "@adler/sdk"
+
+export type StorageWithDaemonSession = Storage & { upsertDaemonSession(): void }
 
 export type LogContext = {
   session_id?: string
@@ -13,13 +14,12 @@ export type DaemonLogger = {
   error(message: string, data?: Record<string, unknown>, ctx?: LogContext): Promise<void>
 }
 
-export function createLogger(storage: Storage): DaemonLogger {
+export function createLogger(storage: StorageWithDaemonSession): DaemonLogger {
   let sentinelReady = false
 
   function ensureSentinel(): void {
     if (sentinelReady) return
-    // SQLiteStorage exposes upsertDaemonSession; cast to access it
-    ;(storage as SQLiteStorage).upsertDaemonSession()
+    storage.upsertDaemonSession()
     sentinelReady = true
   }
 
