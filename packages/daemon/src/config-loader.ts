@@ -17,6 +17,10 @@ export class ConfigLoader {
     }
 
     const config = await this.resolveConfig(absDir)
+    const files = [GLOBAL_CONFIG, join(absDir, ".adler/adler.ts")].filter(existsSync)
+    if (Object.keys(config).length === 0 && files.length === 0) {
+      return config
+    }
     this.cache.set(absDir, config)
     this.watchConfig(absDir)
     return config

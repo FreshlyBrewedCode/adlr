@@ -1,5 +1,5 @@
 import { spawn as spawnPty } from "node-pty"
-import type { Storage, Span, SpanStatus, AdlerConfig, AgentConfig } from "@adler/sdk"
+import type { Storage, Span, SpanStatus } from "@adler/sdk"
 import { SOCKET_PATH } from "@adler/sdk"
 import type { InactivityTimer } from "./lifecycle"
 import type { ConfigLoader } from "./config-loader"
@@ -114,7 +114,7 @@ export class ProcessManager {
       const interval = agentDef.statusPollInterval ?? 3000
       if (agentDef.status) {
         this.statusIntervals.set(span.id, setInterval(() => {
-          this.pollStatus(span.id, agentDef.status!)
+          this.pollStatus(span.id)
         }, interval))
       } else {
         const timeout = agentDef.interactiveTimeout ?? 3000
@@ -135,7 +135,7 @@ export class ProcessManager {
     return span
   }
 
-  private async pollStatus(spanId: string, statusHook: NonNullable<AgentConfig["status"]>) {
+  private async pollStatus(spanId: string) {
     const agent = this.agents.get(spanId)
     if (!agent || agent.exited) return
 
@@ -147,10 +147,12 @@ export class ProcessManager {
 
     const config = await this.configLoader.loadConfig(session.working_dir)
     const agentDef = config.agent?.agents?.[span.data.agent_type as string]
+    if (!agentDef?.status) return
+
     const timeout = agentDef?.interactiveTimeout ?? 3000
     agent.stdoutIdle = Date.now() - agent.lastStdoutTime > timeout
 
-    const result = await statusHook({
+    const result = await agentDef.status({
       span,
       currentStatus: agent.status,
       proc: { stdoutIdle: agent.stdoutIdle, lastStdout: agent.stdoutBuffer },

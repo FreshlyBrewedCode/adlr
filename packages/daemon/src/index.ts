@@ -12,7 +12,6 @@ async function main() {
 
   const storage = new SQLiteStorage(DB_PATH)
   const configLoader = new ConfigLoader()
-  const config = await configLoader.loadConfig(process.cwd())
 
   const inactivity = new InactivityTimer(() => {
     console.log("Shutting down due to inactivity")
