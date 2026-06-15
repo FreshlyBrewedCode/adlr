@@ -2,12 +2,15 @@ import { existsSync, watch, type FSWatcher } from "fs"
 import { join, resolve } from "path"
 import { homedir } from "os"
 import type { AdlerConfig } from "@adler/sdk"
+import type { DaemonLogger } from "./logger"
 
 const GLOBAL_CONFIG = join(homedir(), ".config/adler/adler.ts")
 
 export class ConfigLoader {
   private cache = new Map<string, AdlerConfig>()
   private watchers = new Map<string, FSWatcher>()
+
+  constructor(private logger?: DaemonLogger) {}
 
   async loadConfig(dir: string): Promise<AdlerConfig> {
     const absDir = resolve(dir)
@@ -29,25 +32,36 @@ export class ConfigLoader {
   private async resolveConfig(dir: string): Promise<AdlerConfig> {
     let globalConfig: AdlerConfig = {}
     let projectConfig: AdlerConfig = {}
+    const globalPath = existsSync(GLOBAL_CONFIG) ? GLOBAL_CONFIG : null
+    const projectConfigPath = join(dir, ".adler/adler.ts")
+    const projectPath = existsSync(projectConfigPath) ? projectConfigPath : null
 
-    if (existsSync(GLOBAL_CONFIG)) {
+    if (globalPath) {
       try {
-        const mod = await import(`${GLOBAL_CONFIG}?t=${Date.now()}`)
+        const mod = await import(`${globalPath}?t=${Date.now()}`)
         globalConfig = mod.default ?? {}
       } catch (e) {
-        console.error(`Failed to load global config ${GLOBAL_CONFIG}:`, e instanceof Error ? e.message : String(e))
+        const error = e instanceof Error ? e.message : String(e)
+        console.error(`Failed to load global config ${globalPath}:`, error)
+        this.logger?.warn("Failed to load global config", { path: globalPath, error })
       }
     }
 
-    const projectConfigPath = join(dir, ".adler/adler.ts")
-    if (existsSync(projectConfigPath)) {
+    if (projectPath) {
       try {
-        const mod = await import(`${projectConfigPath}?t=${Date.now()}`)
+        const mod = await import(`${projectPath}?t=${Date.now()}`)
         projectConfig = mod.default ?? {}
       } catch (e) {
-        console.error(`Failed to load project config ${projectConfigPath}:`, e instanceof Error ? e.message : String(e))
+        const error = e instanceof Error ? e.message : String(e)
+        console.error(`Failed to load project config ${projectPath}:`, error)
+        this.logger?.warn("Failed to load project config", { path: projectPath, error })
       }
     }
+
+    this.logger?.info("Config loaded", {
+      global_path: globalPath,
+      project_path: projectPath,
+    })
 
     return mergeConfig(globalConfig, projectConfig)
   }
@@ -60,7 +74,8 @@ export class ConfigLoader {
     if (files.length === 0) return
 
     const fileWatchers = files.map((file) =>
-      watch(file, (eventType, filename) => {
+      watch(file, (_eventType, _filename) => {
+        this.logger?.info("Config reloaded", { path: file })
         this.invalidate(absDir)
       })
     )
