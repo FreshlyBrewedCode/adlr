@@ -4,8 +4,14 @@ import { SOCKET_PATH } from "@adler/sdk"
 import { ProcessManager } from "./process-manager"
 import { handleCommand } from "./handlers"
 import type { InactivityTimer } from "./lifecycle"
+import type { DaemonLogger } from "./logger"
 
-export function startServer(storage: Storage, getProcessManager: () => ProcessManager, inactivity: InactivityTimer): { close: () => void; broadcast: (sessionId: string, event: { type: string; payload: unknown }) => void } {
+export function startServer(
+  storage: Storage,
+  getProcessManager: () => ProcessManager,
+  inactivity: InactivityTimer,
+  logger?: DaemonLogger,
+): { close: () => void; broadcast: (sessionId: string, event: { type: string; payload: unknown }) => void } {
   const subscribers = new Map<string, Set<{ write: (data: string) => void }>>()
   const clients = new Set<Socket>()
 
@@ -15,7 +21,9 @@ export function startServer(storage: Storage, getProcessManager: () => ProcessMa
       const data = JSON.stringify({ type: "event", event: event.type, payload: event.payload }) + "\n"
       for (const client of set) {
         try { client.write(data) } catch (e) {
-          console.error("Failed to broadcast to client:", e instanceof Error ? e.message : String(e))
+          const error = e instanceof Error ? e.message : String(e)
+          console.error("Failed to broadcast to client:", error)
+          logger?.error("Failed to broadcast to client", { error })
         }
       }
     }
@@ -83,6 +91,14 @@ export function startServer(storage: Storage, getProcessManager: () => ProcessMa
               rawMode = true
               attachedSpanId = span_id
               socket.write(JSON.stringify({ type: "response", id: msg.id, payload: { attached: true } }) + "\n")
+              // Log the attach event (fire-and-forget, don't block response)
+              storage.getSpan(span_id).then(span => {
+                if (span) {
+                  logger?.info("Client attached to agent", {
+                    agent: String(span.data.agent_type ?? span.name),
+                  }, { session_id: span.session_id, span_id: span.id })
+                }
+              }).catch(() => {})
               continue
             }
 
