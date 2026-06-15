@@ -66,4 +66,62 @@ describe("Daemon server", () => {
     expect(payload.status).toBe("active")
     client.end()
   })
+
+  test("session.list excludes __daemon__ session", async () => {
+    // Create the daemon sentinel session
+    storage.upsertDaemonSession()
+
+    // Create a normal session
+    const client = connect(SOCKET_PATH)
+    await new Promise<void>((resolve, reject) => {
+      client.once("connect", resolve)
+      client.once("error", reject)
+    })
+
+    // Create a normal session
+    const createResponse = await new Promise<unknown>((resolve) => {
+      let buffer = ""
+      client.on("data", (data) => {
+        buffer += data.toString()
+        const lines = buffer.split("\n")
+        if (lines.length > 1) {
+          for (const line of lines) {
+            if (line) {
+              resolve(JSON.parse(line))
+              return
+            }
+          }
+        }
+      })
+      client.write(JSON.stringify({ type: "session.create", id: "req-create", payload: { working_dir: "/tmp" } }) + "\n")
+    })
+    const normalSessionId = (createResponse as any).payload.id
+
+    // Now call session.list
+    const listResponse = await new Promise<unknown>((resolve) => {
+      let buffer = ""
+      client.removeAllListeners("data")
+      client.on("data", (data) => {
+        buffer += data.toString()
+        const lines = buffer.split("\n")
+        if (lines.length > 1) {
+          for (const line of lines) {
+            if (line) {
+              resolve(JSON.parse(line))
+              return
+            }
+          }
+        }
+      })
+      client.write(JSON.stringify({ type: "session.list", id: "req-list", payload: {} }) + "\n")
+    })
+
+    const sessions = (listResponse as any).payload as Array<{ id: string }>
+    const ids = sessions.map(s => s.id)
+
+    expect(ids).toContain(normalSessionId)
+    expect(ids).not.toContain("__daemon__")
+
+    client.end()
+  })
 })
