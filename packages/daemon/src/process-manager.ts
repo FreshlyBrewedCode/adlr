@@ -2,6 +2,7 @@ import type { Storage, Span, SpanStatus } from "@adler/sdk"
 import { SOCKET_PATH } from "@adler/sdk"
 import type { InactivityTimer } from "./lifecycle"
 import type { ConfigLoader } from "./config-loader"
+import type { DaemonLogger } from "./logger"
 
 export interface AgentProcess {
   spanId: string
@@ -25,6 +26,7 @@ export class ProcessManager {
     private configLoader: ConfigLoader,
     private onEvent: (event: { type: string; payload: unknown }) => void,
     private inactivity?: InactivityTimer,
+    private logger?: DaemonLogger,
   ) {}
 
   async spawnAgent(data: {
@@ -144,12 +146,21 @@ export class ProcessManager {
     this.agents.set(span.id, agent)
     this.inactivity?.addAgent()
 
+    this.logger?.info("Agent started", {
+      agent: data.agentType,
+      command: runCmd,
+      args: ["sh", "-c", runCmd],
+      cwd: session.working_dir,
+    }, { session_id: data.sessionId, span_id: span.id })
+
     proc.exited.then(async (exitCode) => {
       agent.exited = true
       agent.exitCode = exitCode ?? null
       await this.completeAgent(span.id, exitCode ?? 0)
     }).catch(err => {
-      console.error(`Agent ${span.id} exit handler failed:`, err instanceof Error ? err.message : String(err))
+      const error = err instanceof Error ? err.message : String(err)
+      console.error(`Agent ${span.id} exit handler failed:`, error)
+      this.logger?.error("Agent exit handler failed", { agent: span.id, error }, { session_id: data.sessionId, span_id: span.id })
     })
 
     if (agentDef.interactive) {
@@ -235,7 +246,9 @@ export class ProcessManager {
         })
         outputData = output as Record<string, unknown>
       } catch (e) {
-        console.error("Agent output hook failed:", e instanceof Error ? e.message : String(e))
+        const error = e instanceof Error ? e.message : String(e)
+        console.error("Agent output hook failed:", error)
+        this.logger?.error("Agent output hook failed", { agent: String(span.data.agent_type), error }, { session_id: span.session_id, span_id: spanId })
       }
     }
 
@@ -255,6 +268,11 @@ export class ProcessManager {
     })
 
     agent.status = status
+    if (status === "done") {
+      this.logger?.info("Agent completed", { agent: String(span.data.agent_type), exit_code: exitCode }, { session_id: span.session_id, span_id: spanId })
+    } else {
+      this.logger?.error("Agent failed", { agent: String(span.data.agent_type), exit_code: exitCode, signal: null }, { session_id: span.session_id, span_id: spanId })
+    }
     this.agents.delete(spanId)
     this.attachListeners.delete(spanId)
     this.inactivity?.removeAgent()
