@@ -90,14 +90,22 @@ export class ConfigLoader {
 }
 
 function mergeConfig(base: AdlerConfig, override: AdlerConfig): AdlerConfig {
-  return {
+  const merged: AdlerConfig = {
     ...base,
     ...override,
-    agent: {
+  }
+
+  const agents = { ...base.agent?.agents, ...override.agent?.agents }
+  const attach = override.agent?.attach ?? base.agent?.attach
+
+  if (Object.keys(agents).length > 0 || attach !== undefined) {
+    merged.agent = {
       ...base.agent,
       ...override.agent,
-      agents: { ...base.agent?.agents, ...override.agent?.agents },
-      attach: override.agent?.attach ?? base.agent?.attach,
-    },
+      agents,
+      attach,
+    }
   }
+
+  return merged
 }
