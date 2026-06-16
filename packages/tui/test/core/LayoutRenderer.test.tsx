@@ -29,7 +29,7 @@ describe("LayoutRenderer", () => {
         onFocusChange={() => {}}
       />
     )
-    expect(lastFrame()).toContain("Overview")
+    expect(lastFrame()).toContain("Session")
   })
 
   test("renders layout node with children", () => {
@@ -50,7 +50,7 @@ describe("LayoutRenderer", () => {
         onFocusChange={() => {}}
       />
     )
-    expect(lastFrame()).toContain("Overview")
+    expect(lastFrame()).toContain("Session")
   })
 
   test("renders error for unknown panel", () => {
@@ -109,7 +109,7 @@ describe("LayoutRenderer", () => {
         onFocusChange={() => {}}
       />
     )
-    expect(lastFrame()).toContain("Overview")
-    expect(lastFrame()).toContain("Agents")
+    expect(lastFrame()).toContain("Session")
+    expect(lastFrame()).toContain("Recent Agents")
   })
 })
