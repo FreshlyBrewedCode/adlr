@@ -31,6 +31,9 @@ export const Theme = {
     border: "gray",
     activeBorder: "cyan",
   },
+  card: {
+    base: "#222222",
+  },
 
   // Data
   status: {

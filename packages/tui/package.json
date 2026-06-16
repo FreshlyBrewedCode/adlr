@@ -11,8 +11,8 @@
   },
   "dependencies": {
     "@adler/sdk": "workspace:*",
-    "ink": "^4.4.0",
-    "react": "^18.3.0"
+    "ink": "7",
+    "react": "^19.2.7"
   },
   "devDependencies": {
     "@types/react": "^18.3.0",

@@ -22,19 +22,25 @@ export function Card({
   return (
     <Box
       width={width}
-      borderStyle="round"
-      borderColor={isSelected ? Theme.primary : undefined}
-      flexDirection="row"
+      flexDirection="column"
+      borderStyle={{
+        left: "┃",
+        topLeft: '',
+        top: '',
+        topRight: '',
+        bottomLeft: '',
+        bottom: '',
+        bottomRight: '',
+        right: '',
+      }}
+      borderLeftColor={statusColor}
+      backgroundColor={Theme.card.base}
+      padding={1}
     >
-      <Box width={2} flexDirection="column">
-        <Text color={statusColor}>│</Text>
-      </Box>
-      <Box flexDirection="column" padding={1}>
         <Text bold color={statusColor}>{title}</Text>
         {description && <Text dimColor>{description}</Text>}
         {children}
         {hint && <Text dimColor> {hint}</Text>}
-      </Box>
     </Box>
   )
 }
