@@ -1,24 +1,30 @@
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { Box, Text } from "ink"
 import { useInput } from "ink"
+import type { ContextItem } from "@adler/sdk"
 import type { PanelProps } from "../../core/types"
 import { TypeBadge } from "../TypeBadge"
 
 export function ContextPanel({ state, width, height }: PanelProps) {
   const [selectedIndex, setSelectedIndex] = useState(0)
-  const grouped = state.context.reduce((acc, item) => {
-    acc[item.type] = acc[item.type] ?? []
-    acc[item.type].push(item)
-    return acc
-  }, {} as Record<string, typeof state.context>)
+  const grouped = useMemo(() => {
+    return state.context.reduce<Record<string, ContextItem[]>>((acc, item) => {
+      acc[item.type] = acc[item.type] ?? []
+      acc[item.type].push(item)
+      return acc
+    }, {})
+  }, [state.context])
 
-  const itemIndexMap = new Map<string, number>()
-  let index = 0
-  Object.entries(grouped).forEach(([_, items]) => {
-    items.forEach(item => {
-      itemIndexMap.set(item.id, index++)
+  const itemIndexMap = useMemo(() => {
+    const map = new Map<string, number>()
+    let index = 0
+    Object.entries(grouped).forEach(([_, items]) => {
+      items.forEach(item => {
+        map.set(item.id, index++)
+      })
     })
-  })
+    return map
+  }, [grouped])
 
   useInput((input, key) => {
     if (key.upArrow) {

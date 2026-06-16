@@ -10,6 +10,7 @@ export function registerPanels() {
     id: "overview",
     title: "Overview",
     component: OverviewPanel,
+    hotkeys: [],
   })
 
   PanelRegistry.register({
