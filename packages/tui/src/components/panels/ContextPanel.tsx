@@ -12,13 +12,19 @@ export function ContextPanel({ state, width, height }: PanelProps) {
     return acc
   }, {} as Record<string, typeof state.context>)
 
-  let globalIndex = 0
+  const itemIndexMap = new Map<string, number>()
+  let index = 0
+  Object.entries(grouped).forEach(([_, items]) => {
+    items.forEach(item => {
+      itemIndexMap.set(item.id, index++)
+    })
+  })
 
   useInput((input, key) => {
     if (key.upArrow) {
       setSelectedIndex(i => Math.max(0, i - 1))
     } else if (key.downArrow) {
-      setSelectedIndex(i => Math.min(state.context.length - 1, i + 1))
+      setSelectedIndex(i => Math.max(0, Math.min(state.context.length - 1, i + 1)))
     }
   })
 
@@ -29,8 +35,7 @@ export function ContextPanel({ state, width, height }: PanelProps) {
           <TypeBadge type={type} />
           <Text dimColor> {items.length} items</Text>
           {items.map(item => {
-            const isSelected = globalIndex === selectedIndex
-            globalIndex++
+            const isSelected = (itemIndexMap.get(item.id) ?? -1) === selectedIndex
             const valueText = item.value?.text ?? item.value?.url ?? item.value?.path ?? JSON.stringify(item.value)
             return (
               <Box key={item.id} borderStyle={isSelected ? "single" : undefined}>

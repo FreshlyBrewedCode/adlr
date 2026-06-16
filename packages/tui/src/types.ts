@@ -5,22 +5,18 @@ export interface AppState {
   spans: Span[]
   events: Event[]
   context: ContextItem[]
-  daemonEvents: Event[]
 }
 
 export type AppAction =
   | { type: "setState"; payload: Partial<AppState> }
   | { type: "snapshot"; payload: { session: Session; spans: Span[]; events: Event[]; context: ContextItem[] } }
   | { type: "event"; payload: Event }
-  | { type: "daemonEvent"; payload: Event }
-  | { type: "daemonSnapshot"; payload: Event[] }
 
 export const initialState: AppState = {
   session: null,
   spans: [],
   events: [],
   context: [],
-  daemonEvents: [],
 }
 
 export function reducer(state: AppState, action: AppAction): AppState {
@@ -37,10 +33,6 @@ export function reducer(state: AppState, action: AppAction): AppState {
       }
     case "event":
       return { ...state, events: [action.payload, ...state.events] }
-    case "daemonEvent":
-      return { ...state, daemonEvents: [action.payload, ...state.daemonEvents] }
-    case "daemonSnapshot":
-      return { ...state, daemonEvents: action.payload }
     default:
       return state
   }

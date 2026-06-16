@@ -17,7 +17,7 @@ export function AgentsPanel({ state, width, height }: PanelProps) {
     if (key.upArrow) {
       setSelectedIndex(i => Math.max(0, i - 1))
     } else if (key.downArrow) {
-      setSelectedIndex(i => Math.min(agents.length - 1, i + 1))
+      setSelectedIndex(i => Math.max(0, Math.min(agents.length - 1, i + 1)))
     } else if (key.return) {
       const agent = agents[selectedIndex]
       if (agent) {
@@ -36,8 +36,8 @@ export function AgentsPanel({ state, width, height }: PanelProps) {
             <Text color={span.status === "done" ? "green" : span.status === "failed" ? "red" : span.status === "blocked" ? "yellow" : "blue"}>
               ● {" "}
             </Text>
-            <Text>{span.data?.agent_type as string} </Text>
-            <Text dimColor>{(span.data?.prompt as string)?.slice(0, 40)}… </Text>
+            <Text>{String(span.data?.agent_type ?? "")} </Text>
+            <Text dimColor>{String(span.data?.prompt ?? "").slice(0, 40)}… </Text>
             <Text>{duration}</Text>
             {span.data?.exit_code !== null && span.data?.exit_code !== undefined && (
               <Text> exit:{span.data.exit_code}</Text>

@@ -6,6 +6,17 @@ import type { Event } from "@adler/sdk"
 import type { PanelProps } from "../../core/types"
 import { LogLine } from "../LogLine"
 
+function isEvent(x: unknown): x is Event {
+  return (
+    typeof x === "object" &&
+    x !== null &&
+    "id" in x &&
+    "session_id" in x &&
+    "type" in x &&
+    "timestamp" in x
+  )
+}
+
 export function LogsPanel({ state, width, height }: PanelProps) {
   const [selectedIndex, setSelectedIndex] = useState(0)
   const [filter, setFilter] = useState<"all" | "info" | "warn" | "error">("all")
@@ -20,10 +31,12 @@ export function LogsPanel({ state, width, height }: PanelProps) {
       try {
         const unsub = await client.subscribe(DAEMON_SESSION_ID, (msg) => {
           if (msg.type === "snapshot") {
-            const snapshot = msg.payload as { events: Event[] }
-            setDaemonEvents(snapshot.events ?? [])
+            setDaemonEvents(msg.payload.events ?? [])
           } else if (msg.type === "event") {
-            setDaemonEvents(prev => [msg.payload as Event, ...prev])
+            const ev = msg.payload
+            if (isEvent(ev)) {
+              setDaemonEvents(prev => [ev, ...prev])
+            }
           }
         })
         cleanup = unsub
@@ -71,7 +84,7 @@ export function LogsPanel({ state, width, height }: PanelProps) {
     } else if (key.upArrow) {
       setSelectedIndex(i => Math.max(0, i - 1))
     } else if (key.downArrow) {
-      setSelectedIndex(i => Math.min(display.length - 1, i + 1))
+      setSelectedIndex(i => Math.max(0, Math.min(display.length - 1, i + 1)))
     }
   })
 

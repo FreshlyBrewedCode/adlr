@@ -17,7 +17,7 @@ function levelFromType(type: string): "info" | "warn" | "error" | "other" {
 
 export function LogLine({ event, isSelected }: { event: Event; isSelected: boolean }) {
   const level = levelFromType(event.type)
-  const message = (event.data?.message as string) ?? JSON.stringify(event.data)
+  const message = typeof event.data?.message === 'string' ? event.data.message : JSON.stringify(event.data)
   return (
     <Box borderStyle={isSelected ? "single" : undefined}>
       <Text dimColor>{new Date(event.timestamp).toLocaleTimeString()}</Text>

@@ -46,7 +46,7 @@ export function LogsTab({
       {display.map((event, i) => {
         const isSelected = i === safeIndex
         const level = levelFromType(event.type)
-        const message = (event.data?.message as string) ?? JSON.stringify(event.data)
+        const message = typeof event.data?.message === 'string' ? event.data.message : JSON.stringify(event.data)
         return (
           <Box key={event.id} borderStyle={isSelected ? "single" : undefined}>
             <Text dimColor>{new Date(event.timestamp).toLocaleTimeString()}</Text>

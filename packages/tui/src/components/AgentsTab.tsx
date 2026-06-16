@@ -20,8 +20,8 @@ export function AgentsTab({ spans, selectedIndex }: { spans: Span[]; selectedInd
             <Text color={span.status === "done" ? "green" : span.status === "failed" ? "red" : span.status === "blocked" ? "yellow" : "blue"}>
               ● {" "}
             </Text>
-            <Text>{span.data?.agent_type as string} </Text>
-            <Text dimColor>{(span.data?.prompt as string)?.slice(0, 40)}… </Text>
+            <Text>{String(span.data?.agent_type ?? "")} </Text>
+            <Text dimColor>{String(span.data?.prompt ?? "").slice(0, 40)}… </Text>
             <Text>{duration}</Text>
             {span.data?.exit_code !== null && span.data?.exit_code !== undefined && (
               <Text> exit:{span.data.exit_code}</Text>

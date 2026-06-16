@@ -26,14 +26,15 @@ export function App({ sessionId }: { sessionId: string }) {
           if (msg.type === "snapshot") {
             dispatch({ type: "snapshot", payload: msg.payload })
           } else if (msg.type === "event") {
+            const payload = typeof msg.payload === 'object' && msg.payload !== null ? (msg.payload as Record<string, unknown>) : {}
             dispatch({
               type: "event",
               payload: {
                 id: Date.now(),
                 session_id: sessionId,
-                span_id: (msg.payload as any)?.span_id ?? null,
+                span_id: typeof payload.span_id === 'string' ? payload.span_id : null,
                 type: msg.event as EventType,
-                data: msg.payload as any,
+                data: payload,
                 timestamp: Date.now(),
               },
             })
@@ -60,45 +61,6 @@ export function App({ sessionId }: { sessionId: string }) {
       client.close()
     }
   }, [sessionId])
-
-  // Subscribe to daemon events
-  useEffect(() => {
-    const client = createClient()
-    let cleanup: (() => void) | undefined
-
-    ;(async () => {
-      try {
-        const unsub = await client.subscribe(DAEMON_SESSION_ID, (msg) => {
-          if (msg.type === "snapshot") {
-            const snapshot = msg.payload as { session: any; spans: any[]; events: any[]; context: any[] }
-            dispatch({ type: "daemonSnapshot", payload: snapshot.events ?? [] })
-          } else if (msg.type === "event") {
-            dispatch({
-              type: "daemonEvent",
-              payload: {
-                id: Date.now(),
-                session_id: DAEMON_SESSION_ID,
-                span_id: null,
-                type: msg.event as EventType,
-                data: msg.payload as any,
-                timestamp: Date.now(),
-              },
-            })
-          }
-        })
-        cleanup = unsub
-      } catch {
-        // Daemon events are best-effort; silently ignore connection errors
-      }
-    })()
-
-    return () => {
-      cleanup?.()
-      client.close()
-    }
-  }, [])
-
-  const logsEvents = state.logsView === "daemon" ? state.daemonEvents : state.events
 
   useInput((input, key) => {
     if (state.isHelpOpen) {
@@ -138,7 +100,7 @@ export function App({ sessionId }: { sessionId: string }) {
       if (key.upArrow) {
         dispatch({ type: "selectAgent", index: Math.max(0, state.agentsSelectedIndex - 1) })
       } else if (key.downArrow) {
-        dispatch({ type: "selectAgent", index: Math.min(agents.length - 1, state.agentsSelectedIndex + 1) })
+        dispatch({ type: "selectAgent", index: Math.max(0, Math.min(agents.length - 1, state.agentsSelectedIndex + 1)) })
       } else if (key.return) {
         const agent = agents[state.agentsSelectedIndex]
         if (agent) {
@@ -150,7 +112,7 @@ export function App({ sessionId }: { sessionId: string }) {
       if (key.upArrow) {
         dispatch({ type: "selectTrace", index: Math.max(0, state.tracesSelectedIndex - 1) })
       } else if (key.downArrow) {
-        dispatch({ type: "selectTrace", index: Math.min(state.spans.length - 1, state.tracesSelectedIndex + 1) })
+        dispatch({ type: "selectTrace", index: Math.max(0, Math.min(state.spans.length - 1, state.tracesSelectedIndex + 1)) })
       }
     } else if (state.activeTab === 4) {
       // Logs tab
@@ -167,7 +129,7 @@ export function App({ sessionId }: { sessionId: string }) {
       } else if (key.upArrow) {
         dispatch({ type: "selectLog", index: Math.max(0, state.logsSelectedIndex - 1) })
       } else if (key.downArrow) {
-        dispatch({ type: "selectLog", index: Math.min(logsEvents.length - 1, state.logsSelectedIndex + 1) })
+        dispatch({ type: "selectLog", index: Math.max(0, Math.min(state.events.length - 1, state.logsSelectedIndex + 1)) })
       }
     }
   })
@@ -190,7 +152,7 @@ export function App({ sessionId }: { sessionId: string }) {
         )}
         {state.activeTab === 4 && (
           <LogsTab
-            events={logsEvents}
+            events={state.events}
             selectedIndex={state.logsSelectedIndex}
             filter={state.logsFilter}
             logsView={state.logsView}
