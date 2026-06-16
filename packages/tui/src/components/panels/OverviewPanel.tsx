@@ -1,5 +1,7 @@
 import { Box, Text } from "ink"
 import type { PanelProps } from "../../core/types"
+import { Theme } from "../../theme"
+import { StatusBadge } from "../StatusBadge"
 
 export function OverviewPanel({ state, width, height }: PanelProps) {
   const recentAgents = state.spans
@@ -18,10 +20,8 @@ export function OverviewPanel({ state, width, height }: PanelProps) {
         </Box>
         {recentAgents.map(a => (
           <Box key={a.id}>
-            <Text color={a.status === "done" ? "green" : a.status === "failed" ? "red" : "yellow"}>
-              ● {" "}
-            </Text>
-            <Text>{a.name} ({a.status})</Text>
+            <StatusBadge status={a.status} />
+            <Text> {a.name}</Text>
           </Box>
         ))}
       </Box>
@@ -29,7 +29,7 @@ export function OverviewPanel({ state, width, height }: PanelProps) {
         <Text bold>Context</Text>
         {state.context.map(item => (
           <Box key={item.id}>
-            <Text color={item.type === "goal" ? "green" : item.type === "url" ? "blue" : "white"}>
+            <Text color={Theme.type[item.type as keyof typeof Theme.type] ?? Theme.muted}>
               {item.type}
             </Text>
             <Text> {item.label ?? "—"}</Text>
