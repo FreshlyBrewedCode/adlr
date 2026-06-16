@@ -1,4 +1,4 @@
-import type { TreeNode } from "./types"
+import type { TreeNode, PanelNode, LayoutNode } from "./types"
 import { PanelRegistry } from "./PanelRegistry"
 import { LayoutRegistry } from "./LayoutRegistry"
 
@@ -6,27 +6,29 @@ export function validateLayout(node: TreeNode): string[] {
   const errors: string[] = []
 
   if ("panel" in node) {
-    if (!PanelRegistry.get(node.panel)) {
-      errors.push(`Unknown panel: ${node.panel}`)
+    const panelNode = node as PanelNode
+    if (!PanelRegistry.get(panelNode.panel)) {
+      errors.push(`Unknown panel: ${panelNode.panel}`)
     }
     return errors
   }
 
-  const layout = LayoutRegistry.get(node.layout)
+  const layoutNode = node as LayoutNode
+  const layout = LayoutRegistry.get(layoutNode.layout)
   if (!layout) {
-    errors.push(`Unknown layout: ${node.layout}`)
+    errors.push(`Unknown layout: ${layoutNode.layout}`)
     return errors
   }
 
-  if (node.content.length === 0) {
-    errors.push(`Layout ${node.layout} must have at least one child`)
+  if (layoutNode.content.length === 0) {
+    errors.push(`Layout ${layoutNode.layout} must have at least one child`)
   }
 
-  if (node.layout === "split" && node.content.length !== 2) {
-    errors.push(`Split layout must have exactly 2 children, got ${node.content.length}`)
+  if (layoutNode.layout === "split" && layoutNode.content.length !== 2) {
+    errors.push(`Split layout must have exactly 2 children, got ${layoutNode.content.length}`)
   }
 
-  for (const child of node.content) {
+  for (const child of layoutNode.content) {
     errors.push(...validateLayout(child as TreeNode))
   }
 
