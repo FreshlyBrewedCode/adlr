@@ -45,6 +45,7 @@ export interface LayoutProps {
   dispatch: React.Dispatch<AppAction>
   focusPath: number[]
   onFocusChange: (path: number[]) => void
+  childNodes?: ContentNode[]
 }
 
 export interface LayoutDefinition {

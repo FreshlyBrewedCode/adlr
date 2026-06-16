@@ -49,7 +49,7 @@ describe("App with custom layout", () => {
     const frame = lastFrame()
     expect(frame).toContain("adler")
     expect(frame).toContain("Overview")
-    // Default tabs layout shows [1] for the first tab
-    expect(frame).toContain("[1]")
+    // Default tabs layout shows "1: Overview" for the first tab
+    expect(frame).toContain("1: Overview")
   })
 })

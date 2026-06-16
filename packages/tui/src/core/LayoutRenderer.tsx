@@ -3,6 +3,7 @@ import type { TreeNode, LayoutNode, PanelNode } from "./types"
 import { PanelRegistry } from "./PanelRegistry"
 import { LayoutRegistry } from "./LayoutRegistry"
 import { PanelChrome } from "../components/PanelChrome"
+import { Theme } from "../theme"
 import type { AppState, AppAction } from "../types"
 import React from "react"
 
@@ -33,7 +34,7 @@ export function LayoutRenderer({
     if (!panel) {
       return (
         <Box width={width} height={height}>
-          <Text color="red">Unknown panel: {panelNode.panel}</Text>
+          <Text color={Theme.error}>Unknown panel: {panelNode.panel}</Text>
         </Box>
       )
     }
@@ -47,7 +48,7 @@ export function LayoutRenderer({
         height={height}
         isFocused={isFocused}
       >
-        <panel.component state={state} dispatch={dispatch} width={width} height={height} />
+        <panel.component state={state} dispatch={dispatch} width={width} height={Math.max(1, height - 1)} />
       </PanelChrome>
     )
   }
@@ -57,7 +58,7 @@ export function LayoutRenderer({
   if (!layout) {
     return (
       <Box width={width} height={height}>
-        <Text color="red">Unknown layout: {layoutNode.layout}</Text>
+          <Text color={Theme.error}>Unknown layout: {layoutNode.layout}</Text>
       </Box>
     )
   }
@@ -102,6 +103,7 @@ export function LayoutRenderer({
       dispatch={dispatch}
       focusPath={focusPath}
       onFocusChange={onFocusChange}
+      childNodes={layoutNode.content}
     >
       {children}
     </layout.component>

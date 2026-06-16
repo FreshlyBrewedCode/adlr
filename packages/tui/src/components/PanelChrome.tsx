@@ -21,9 +21,9 @@ export function PanelChrome({
       height={height}
       borderStyle="round"
       borderColor={isFocused ? Theme.panel.activeBorder : Theme.panel.border}
-      label={<Text color={Theme.panel.title}>{title}</Text>}
       padding={1}
     >
+      <Text bold color={Theme.panel.title}>{title}</Text>
       {children}
     </Box>
   )

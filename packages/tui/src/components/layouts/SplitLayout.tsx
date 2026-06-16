@@ -10,6 +10,7 @@ export function SplitLayout({
   onFocusChange: _onFocusChange,
   state: _state,
   dispatch: _dispatch,
+  childNodes: _childNodes,
 }: LayoutProps) {
   const ratio = (layoutProps.ratio as number) ?? 0.5
   const direction = (layoutProps.direction as "horizontal" | "vertical") ?? "horizontal"

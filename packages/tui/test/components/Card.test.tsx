@@ -23,6 +23,6 @@ describe("Card", () => {
     const { lastFrame } = render(
       <Card title="test" status="failed" />
     )
-    expect(lastFrame()).toContain("│")
+    expect(lastFrame()).toContain("┃")
   })
 })
