@@ -1,8 +1,10 @@
-import { describe, test, expect } from "bun:test"
+import { describe, test, expect, beforeEach } from "bun:test"
 import { PanelRegistry } from "../../src/core/PanelRegistry"
 import type { PanelDefinition } from "../../src/core/types"
 
 describe("PanelRegistry", () => {
+  beforeEach(() => PanelRegistry.clear())
+
   test("register and get panel", () => {
     const panel: PanelDefinition = { id: "test", title: "Test", component: () => null }
     PanelRegistry.register(panel)
@@ -13,7 +15,12 @@ describe("PanelRegistry", () => {
     PanelRegistry.register({ id: "a", title: "A", component: () => null })
     PanelRegistry.register({ id: "b", title: "B", component: () => null })
     const all = PanelRegistry.getAll()
-    expect(all.length).toBeGreaterThanOrEqual(2)
+    expect(all).toHaveLength(2)
+    expect(all.map(p => p.id)).toEqual(["a", "b"])
+  })
+
+  test("get returns undefined for unknown id", () => {
+    expect(PanelRegistry.get("unknown-id")).toBeUndefined()
   })
 
   test("duplicate id throws", () => {
