@@ -46,6 +46,13 @@ export function LogsPanel({ state, width, height }: PanelProps) {
   const display = filtered.slice(0, 50)
   const safeIndex = Math.min(selectedIndex, display.length - 1)
 
+  // Auto-scroll to the latest log when new events arrive
+  useEffect(() => {
+    if (autoScroll && display.length > 0) {
+      setSelectedIndex(display.length - 1)
+    }
+  }, [events.length, autoScroll, logsView, filter])
+
   useInput((input, key) => {
     if (input === "d") {
       setLogsView(v => v === "session" ? "daemon" : "session")

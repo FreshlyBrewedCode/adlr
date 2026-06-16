@@ -16,6 +16,9 @@ export function registerPanels() {
     id: "context",
     title: "Context",
     component: ContextPanel,
+    hotkeys: [
+      { key: "↑↓", description: "navigate" },
+    ]
   })
 
   PanelRegistry.register({
