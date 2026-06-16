@@ -13,7 +13,7 @@ export function SelectList({
   return (
     <Box flexDirection="column">
       {items.map((item, i) => (
-        <Box key={i} borderStyle={i === selectedIndex ? "single" : undefined}>
+        <Box key={i} backgroundColor={i === selectedIndex ? "gray" : undefined}>
           {renderItem(item, i, i === selectedIndex)}
         </Box>
       ))}
