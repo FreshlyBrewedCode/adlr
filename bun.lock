@@ -5,6 +5,7 @@
     "": {
       "name": "adler",
       "devDependencies": {
+        "@adler/sdk": "workspace:*",
         "@types/node": "^20.0.0",
         "@types/react": "^18.3.0",
         "typescript": "^5.5.0",
