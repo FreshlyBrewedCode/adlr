@@ -40,7 +40,7 @@ export function AgentsPanel({ state, width, height }: PanelProps) {
             <Text dimColor>{String(span.data?.prompt ?? "").slice(0, 40)}… </Text>
             <Text>{duration}</Text>
             {span.data?.exit_code !== null && span.data?.exit_code !== undefined && (
-              <Text> exit:{span.data.exit_code}</Text>
+              <Text> exit:{String(span.data.exit_code)}</Text>
             )}
           </Box>
         )

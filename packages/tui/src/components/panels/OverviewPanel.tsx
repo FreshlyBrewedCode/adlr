@@ -13,7 +13,9 @@ export function OverviewPanel({ state, width, height }: PanelProps) {
         <Text bold>Session</Text>
         <Text>Status: {state.session?.status}</Text>
         <Text>Working dir: {state.session?.working_dir}</Text>
-        <Text bold marginTop={1}>Recent Agents</Text>
+        <Box marginTop={1}>
+          <Text bold>Recent Agents</Text>
+        </Box>
         {recentAgents.map(a => (
           <Box key={a.id}>
             <Text color={a.status === "done" ? "green" : a.status === "failed" ? "red" : "yellow"}>

@@ -4,3 +4,5 @@ bun.lock
 .env
 .DS_Store
 dist/
+.adler/
+tsconfig-check.json
