@@ -1,28 +1,23 @@
 import { Box, Text } from "ink"
+import { PanelRegistry } from "../core/PanelRegistry"
 
-const TAB_HOTKEYS: Record<number, string[]> = {
-  0: ["tab/shift+tab", "1-5"],
-  1: ["↑↓ navigate"],
-  2: ["↑↓ navigate", "enter attach", "o open external"],
-  3: ["↑↓ navigate", "enter expand"],
-  4: ["i/w/e filter", "f auto-scroll"],
-}
-
-export function Footer({ activeTab }: { activeTab: number }) {
-  const hotkeys = TAB_HOTKEYS[activeTab] ?? []
+export function Footer({ focusedPanelId }: { focusedPanelId: string | null }) {
+  const panel = focusedPanelId ? PanelRegistry.get(focusedPanelId) : null
+  const hotkeys = [
+    ...(panel?.hotkeys?.map(h => `${h.key}=${h.description}`) ?? []),
+    "? help",
+    "q quit"
+  ]
   return (
-    <Box justifyContent="space-between">
+    <Box height={1} justifyContent="space-between">
       <Box>
         {hotkeys.map((hk) => (
           <Text key={hk} backgroundColor="blue" color="white">
             {" "}{hk}{" "}
           </Text>
         ))}
-        <Text backgroundColor="blue" color="white">
-          {" "}? help{" "}
-        </Text>
       </Box>
-      <Text dimColor>Press ? for help</Text>
+      <Text dimColor>{panel?.title ?? "No panel focused"}</Text>
     </Box>
   )
 }
