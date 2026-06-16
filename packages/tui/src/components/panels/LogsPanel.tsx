@@ -5,6 +5,8 @@ import { createClient, DAEMON_SESSION_ID } from "@adler/sdk"
 import type { Event } from "@adler/sdk"
 import type { PanelProps } from "../../core/types"
 import { LogLine } from "../LogLine"
+import { SelectList } from "../SelectList"
+import { Theme } from "../../theme"
 
 function isEvent(x: unknown): x is Event {
   return (
@@ -59,7 +61,6 @@ export function LogsPanel({ state, width, height }: PanelProps) {
   const display = filtered.slice(0, 50)
   const safeIndex = Math.min(selectedIndex, display.length - 1)
 
-  // Auto-scroll to the latest log when new events arrive
   useEffect(() => {
     if (autoScroll && display.length > 0) {
       setSelectedIndex(display.length - 1)
@@ -92,15 +93,19 @@ export function LogsPanel({ state, width, height }: PanelProps) {
     <Box flexDirection="column" width={width} height={height}>
       <Box height={1} marginBottom={1}>
         <Text bold>View: </Text>
-        <Text color={logsView === "session" ? "cyan" : "magenta"}>
+        <Text color={logsView === "session" ? Theme.primary : Theme.info}>
           {logsView === "session" ? "[Session]" : "[Daemon]"}
         </Text>
         <Text dimColor>  d=toggle  i/w/e=filter  f=autoscroll</Text>
       </Box>
       <Box flexDirection="column" flexGrow={1} overflow="hidden">
-        {display.map((event, i) => (
-          <LogLine key={event.id} event={event} isSelected={i === safeIndex} />
-        ))}
+        <SelectList
+          items={display}
+          selectedIndex={safeIndex}
+          renderItem={(event, i, isSelected) => (
+            <LogLine event={event as Event} isSelected={isSelected} />
+          )}
+        />
       </Box>
     </Box>
   )
