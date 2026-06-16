@@ -52,6 +52,8 @@ Owns the runtime, registries, and renderer.
 - `PanelChrome` — shared wrapper for borders, titles, scroll indicators
 - `App` — bootstraps the store, loads the layout from config, and renders the root `LayoutRenderer`
 - `Fullscreen` — handles fullscreen mode, terminal resize events, and cleanup on exit
+- `Footer` — always-visible footer showing hotkeys for the focused panel
+- `HelpModal` — modal overlay dialog showing all hotkeys grouped by panel
 
 **Shared UI Components:**
 - `StatusBadge` — colored dot with status text
@@ -175,9 +177,104 @@ The TUI runs in fullscreen mode to maximize terminal real estate for the panel l
 - Each layout shell computes child dimensions based on its props (e.g., `SplitLayout` divides by `ratio`)
 - Panels adapt their content based on available space (e.g., fewer columns when narrow)
 
-## 6. Layout Registry & Renderer
+## 6. Footer & Help Modal
 
-### 6.1. Layout Definition
+### 6.1. Footer
+
+The **Footer** is always visible at the bottom of the screen. It displays:
+- **Hotkeys for the focused panel** — read from the panel's `hotkeys` metadata
+- **Global hotkeys** — `?` for help, `q` for quit
+- **Layout indicators** — current layout path or tab name
+
+The footer is rendered by the `App` component, not by any layout. It receives the current focus path and resolves the focused panel from the layout tree to read its hotkeys.
+
+### 6.2. Help Modal
+
+The **Help Modal** is an overlay dialog that appears when the user presses `?`. It displays:
+- **Global hotkeys** — app-level shortcuts (quit, help, tab navigation)
+- **Panel hotkeys** — grouped by panel title, showing all registered panels and their hotkeys
+- **Layout hotkeys** — shortcuts for the current layout (e.g., tab switching in `TabsLayout`)
+
+The modal is rendered as an overlay on top of the layout content using `ink`'s absolute positioning or a z-index-like approach with `Box` layering.
+
+### 6.3. Panel Hotkey Registration
+
+Panels register hotkeys in their `PanelDefinition`:
+
+```ts
+interface HotkeyDefinition {
+  key: string
+  description: string
+  handler?: (state: AppState, dispatch: Dispatch<AppAction>) => void
+}
+
+PanelRegistry.register({
+  id: "logs",
+  title: "Logs",
+  component: LogsPanel,
+  hotkeys: [
+    { key: "d", description: "Toggle daemon/session view" },
+    { key: "i", description: "Filter info" },
+    { key: "w", description: "Filter warn" },
+    { key: "e", description: "Filter error" },
+    { key: "f", description: "Toggle auto-scroll" },
+  ]
+})
+```
+
+The `handler` is optional. If provided, the `App` component dispatches the action when the key is pressed. If not provided, the panel handles the key internally via ink's `useInput` hook.
+
+### 6.4. Footer Rendering
+
+```tsx
+function Footer({ focusedPanel, layoutHotkeys }) {
+  const panel = PanelRegistry.get(focusedPanel)
+  const hotkeys = [
+    ...(panel?.hotkeys?.map(h => `${h.key}=${h.description}`) ?? []),
+    ...layoutHotkeys,
+    "? help",
+    "q quit"
+  ]
+  return (
+    <Box height={1}>
+      {hotkeys.map(hk => (
+        <Text key={hk} backgroundColor="blue" color="white"> {hk} </Text>
+      ))}
+    </Box>
+  )
+}
+```
+
+### 6.5. Help Modal Rendering
+
+```tsx
+function HelpModal({ onClose }) {
+  const panels = PanelRegistry.getAll()
+  return (
+    <Box borderStyle="round" padding={1} flexDirection="column">
+      <Text bold>Hotkeys</Text>
+      <Box marginTop={1}>
+        <Text bold underline>Global</Text>
+        <Text>tab / shift+tab — next / prev focus</Text>
+        <Text>q / ctrl+c — quit</Text>
+        <Text>? — toggle help</Text>
+      </Box>
+      {panels.map(panel => (
+        <Box key={panel.id} marginTop={1} flexDirection="column">
+          <Text bold underline>{panel.title}</Text>
+          {panel.hotkeys?.map(hk => (
+            <Text key={hk.key}>{hk.key} — {hk.description}</Text>
+          ))}
+        </Box>
+      ))}
+    </Box>
+  )
+}
+```
+
+## 7. Layout Registry & Renderer
+
+### 7.1. Layout Definition
 
 ```ts
 interface LayoutDefinition {
@@ -198,7 +295,7 @@ interface LayoutProps {
 }
 ```
 
-### 6.2. Built-in Layouts
+### 7.2. Built-in Layouts
 
 **`TabsLayout`** — renders children as tabs with a tab bar
 - Props: `{ tabPosition?: "top" | "bottom" }` (default: `"top"`)
@@ -211,7 +308,7 @@ interface LayoutProps {
 - Keyboard: No default navigation; focus is on the active child.
 - Focus: The active child index is the first element of the focus path.
 
-### 6.3. Layout Renderer
+### 7.3. Layout Renderer
 
 ```tsx
 function LayoutRenderer({ node, state, dispatch, width, height, focusPath, onFocusChange }) {
@@ -257,7 +354,7 @@ function LayoutRenderer({ node, state, dispatch, width, height, focusPath, onFoc
 }
 ```
 
-### 6.4. Focus Path
+### 7.4. Focus Path
 
 Focus is tracked as an array of indices into the tree. For example, `[1, 0]` means:
 - Root layout's child at index 1
@@ -265,7 +362,7 @@ Focus is tracked as an array of indices into the tree. For example, `[1, 0]` mea
 
 Each layout shell handles its own navigation (e.g., `TabsLayout` switches tabs on arrow keys, `SplitLayout` does not consume arrow keys). Focus is passed down the tree via `focusPath` and `onFocusChange`.
 
-### 6.5. Global Keyboard Handling
+### 7.5. Global Keyboard Handling
 
 The `App` component handles global hotkeys (not individual layouts):
 - `q` / `ctrl+c` — quit
@@ -276,9 +373,9 @@ Layouts consume keyboard events only for their own navigation. A `TabsLayout` co
 
 Panel-specific hotkeys (e.g., `d` for daemon view in Logs) are handled by the focused panel component directly using ink's `useInput` hook.
 
-## 7. Config Integration
+## 8. Config Integration
 
-### 7.1. Config Evaluation
+### 8.1. Config Evaluation
 
 The TUI config loader evaluates the `tui.layout` function:
 
@@ -315,7 +412,7 @@ const defaultLayout = {
 }
 ```
 
-### 7.2. Validation
+### 8.2. Validation
 
 Before rendering, the tree is validated:
 - Every panel node must reference a registered panel ID
@@ -326,9 +423,9 @@ Before rendering, the tree is validated:
 
 Validation errors are displayed in the TUI as a fallback panel with the error message.
 
-## 8. Data Flow
+## 9. Data Flow
 
-### 8.1. Central Store
+### 9.1. Central Store
 
 `StoreContext` holds shared data:
 - `session: Session | null`
@@ -339,7 +436,7 @@ Validation errors are displayed in the TUI as a fallback panel with the error me
 
 The `App` component subscribes to the SDK and updates the store. The central reducer is simplified: it only handles global state updates (snapshots, incoming events). Panel-specific state (selection indices, filters, scroll position) is removed from the reducer.
 
-### 8.2. Panel-Local State
+### 9.2. Panel-Local State
 
 Panels manage their own state using `useState`:
 - `AgentsPanel`: `selectedIndex`, `sortOrder`
@@ -347,7 +444,7 @@ Panels manage their own state using `useState`:
 - `TracesPanel`: `selectedIndex`, `expandedNodes`
 - `ContextPanel`: `selectedIndex`, `groupBy`
 
-### 8.3. Panel-Specific Subscriptions
+### 9.3. Panel-Specific Subscriptions
 
 The `LogsPanel` currently subscribes to daemon events. This moves into the panel component:
 
@@ -363,7 +460,7 @@ function LogsPanel({ state, dispatch, width, height }) {
 }
 ```
 
-## 9. Shared UI Components
+## 10. Shared UI Components
 
 These are extracted from existing tab components and made reusable:
 
@@ -400,9 +497,11 @@ The architecture is designed so that adding a plugin system later is straightfor
 - Convert each `*Tab.tsx` into a `panels/*Panel.tsx`:
   - Move panel-specific state from reducer into component local state
   - Extract panel-specific subscriptions into component hooks
-  - Register the panel in the registry
+  - Register the panel in the registry with `hotkeys` metadata
 - Update `Header.tsx` to read tab names from the layout tree instead of hardcoding
-- Update `Footer.tsx` to read hotkeys from the focused panel's metadata
+- Update `Footer.tsx` to be always visible and show hotkeys from the focused panel
+- Create `HelpModal` component that renders all hotkeys grouped by panel
+- Update `App.tsx` to handle `?` key for toggling the help modal overlay
 
 ### Phase 4: Create Layout Registry & Renderer
 - Create `LayoutRegistry` with built-in `TabsLayout` and `SplitLayout`
@@ -424,12 +523,14 @@ The architecture is designed so that adding a plugin system later is straightfor
 ## 12. Testing Strategy
 
 - **Unit tests:**
-  - `PanelRegistry` — register, get, duplicate ID handling
+  - `PanelRegistry` — register, get, duplicate ID handling, hotkeys registration
   - `LayoutRegistry` — register, get, defaultLayoutProps
   - `LayoutRenderer` — renders panel nodes, renders layout nodes, validates invalid panel IDs
   - Layout tree validation — missing children, invalid IDs, wrong child count for SplitLayout
   - Data constructors (`Layout`, `Panel`) — correct JSON output
   - Fullscreen — terminal state is restored on exit, resize events are captured
+  - Footer — shows hotkeys for focused panel, always visible
+  - HelpModal — renders all hotkeys grouped by panel, overlay on top of layout
 
 - **Integration tests:**
   - Config evaluation — `tui.layout` function receives primitives and returns valid tree
@@ -437,11 +538,15 @@ The architecture is designed so that adding a plugin system later is straightfor
   - Keyboard navigation — tabs switch with tab/shift-tab, split layout does not consume arrow keys
   - Panel-local state — panel state is isolated and does not leak into other panels
   - Fullscreen — app enters and exits fullscreen correctly
+  - Footer — updates hotkeys when focus changes
+  - Help modal — toggles on `?` key, shows all registered panel hotkeys
 
 - **Visual tests:**
   - Each layout shell renders correctly with ink's `render` + `stdout.columns/rows` mocked
   - Panel chrome renders borders and titles correctly
   - Fullscreen — app renders at full terminal dimensions
+  - Footer — renders at bottom of screen, shows correct hotkeys
+  - Help modal — renders as overlay, covers layout content
 
 ## 13. Example Configs
 
@@ -506,3 +611,6 @@ export default {
 | Layout abstraction? | `@adler/ui` package with JSX constructors (not needed; primitives are injected) |
 | Initial layouts? | `TabsLayout` and `SplitLayout` (with ratio) |
 | Fullscreen? | Yes, fullscreen is the default and only mode |
+| Footer? | Always visible, shows hotkeys for focused panel |
+| Help dialog? | Modal overlay, shows all hotkeys grouped by panel |
+| Hotkey registration? | Panels register hotkeys in PanelDefinition; TUI reads from registry for footer/help |
