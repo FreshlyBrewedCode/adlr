@@ -14,6 +14,7 @@ interface LayoutRendererProps {
   height: number
   focusPath: number[]
   onFocusChange: (path: number[]) => void
+  currentPath?: number[]
 }
 
 export function LayoutRenderer({
@@ -24,6 +25,7 @@ export function LayoutRenderer({
   height,
   focusPath,
   onFocusChange,
+  currentPath = [],
 }: LayoutRendererProps) {
   if ("panel" in node) {
     const panelNode = node as PanelNode
@@ -35,8 +37,16 @@ export function LayoutRenderer({
         </Box>
       )
     }
+    const isFocused =
+      currentPath.length === focusPath.length &&
+      currentPath.every((val, idx) => val === focusPath[idx])
     return (
-      <PanelChrome title={panel.title} width={width} height={height}>
+      <PanelChrome
+        title={panel.title}
+        width={width}
+        height={height}
+        isFocused={isFocused}
+      >
         <panel.component state={state} dispatch={dispatch} width={width} height={height} />
       </PanelChrome>
     )
@@ -78,6 +88,7 @@ export function LayoutRenderer({
         height={childHeight}
         focusPath={focusPath.slice(1)}
         onFocusChange={(subPath) => onFocusChange([i, ...subPath])}
+        currentPath={[...currentPath, i]}
       />
     )
   })
