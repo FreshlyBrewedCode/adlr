@@ -4,9 +4,6 @@ const layouts = new Map<string, LayoutDefinition>()
 
 export const LayoutRegistry = {
   register(def: LayoutDefinition): void {
-    if (layouts.has(def.id)) {
-      throw new Error(`Layout already registered: ${def.id}`)
-    }
     layouts.set(def.id, def)
   },
 

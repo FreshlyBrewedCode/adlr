@@ -4,9 +4,6 @@ const panels = new Map<string, PanelDefinition>()
 
 export const PanelRegistry = {
   register(def: PanelDefinition): void {
-    if (panels.has(def.id)) {
-      throw new Error(`Panel already registered: ${def.id}`)
-    }
     panels.set(def.id, def)
   },
 

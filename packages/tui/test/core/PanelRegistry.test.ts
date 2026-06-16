@@ -23,10 +23,11 @@ describe("PanelRegistry", () => {
     expect(PanelRegistry.get("unknown-id")).toBeUndefined()
   })
 
-  test("duplicate id throws", () => {
-    PanelRegistry.register({ id: "dup", title: "Dup", component: () => null })
-    expect(() => {
-      PanelRegistry.register({ id: "dup", title: "Dup2", component: () => null })
-    }).toThrow()
+  test("duplicate id overwrites", () => {
+    const first = { id: "dup", title: "Dup", component: () => null }
+    const second = { id: "dup", title: "Dup2", component: () => null }
+    PanelRegistry.register(first)
+    PanelRegistry.register(second)
+    expect(PanelRegistry.get("dup")).toBe(second)
   })
 })

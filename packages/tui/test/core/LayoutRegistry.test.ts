@@ -13,11 +13,12 @@ describe("LayoutRegistry", () => {
     expect(LayoutRegistry.get("test")).toBe(layout)
   })
 
-  test("duplicate id throws", () => {
-    LayoutRegistry.register({ id: "dup", component: () => null })
-    expect(() => {
-      LayoutRegistry.register({ id: "dup", component: () => null })
-    }).toThrow("Layout already registered: dup")
+  test("duplicate id overwrites", () => {
+    const first = { id: "dup", component: () => null }
+    const second = { id: "dup", component: () => null }
+    LayoutRegistry.register(first)
+    LayoutRegistry.register(second)
+    expect(LayoutRegistry.get("dup")).toBe(second)
   })
 
   test("get returns undefined for unknown id", () => {
