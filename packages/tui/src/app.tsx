@@ -136,7 +136,7 @@ export function App({ sessionId }: { sessionId: string }) {
 
   return (
     <Box flexDirection="column" height="100%">
-      <Header session={state.session} activeTab={state.activeTab} />
+      <Header session={state.session} />
       <Box flexGrow={1}>
         {state.activeTab === 0 && (
           <OverviewTab session={state.session} spans={state.spans} context={state.context} />
