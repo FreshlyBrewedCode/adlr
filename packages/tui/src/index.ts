@@ -12,6 +12,9 @@ let altScreenSetup = false
 
 // exported for testing only
 export function _resetAltScreenForTesting(): void {
+  process.removeAllListeners("exit")
+  process.removeAllListeners("SIGINT")
+  process.removeAllListeners("SIGTERM")
   altScreenSetup = false
 }
 
