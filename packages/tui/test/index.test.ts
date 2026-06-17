@@ -1,4 +1,4 @@
-import { describe, test, expect, mock, beforeEach, afterEach } from "bun:test"
+import { describe, test, expect, mock, beforeEach, afterEach, spyOn } from "bun:test"
 
 // Mock ink's render before importing runTui
 const mockWaitUntilExit = mock(() => Promise.resolve())
@@ -41,7 +41,7 @@ mock.module("../src/loadConfig", () => ({
 
 // Dynamic import after mocks are registered, so Bun's module loader sees the mocks
 // when resolving ink/jsx-dev-runtime from app.tsx
-const { runTui } = await import("../src/index")
+const { runTui, _resetAltScreenForTesting } = await import("../src/index")
 
 describe("runTui", () => {
   let originalEnv: string | undefined
@@ -49,6 +49,7 @@ describe("runTui", () => {
   let originalWrite: typeof process.stdout.write
 
   beforeEach(() => {
+    _resetAltScreenForTesting()
     originalEnv = process.env.ADLER_SESSION
     process.env.ADLER_SESSION = "test-session-123"
     writtenBytes = []
@@ -94,17 +95,23 @@ describe("runTui", () => {
     expect(writtenBytes[0]).toBe("\x1b[?1049l")
   })
 
-  test("registers SIGINT handler", async () => {
-    const before = process.listeners("SIGINT").length
+  test("SIGINT handler calls process.exit(0)", async () => {
+    const mockExit = spyOn(process, "exit").mockImplementation((() => {}) as any)
     await runTui()
-    const after = process.listeners("SIGINT").length
-    expect(after).toBeGreaterThan(before)
+    const listeners = process.listeners("SIGINT")
+    const handler = listeners[listeners.length - 1] as () => void
+    handler()
+    expect(mockExit).toHaveBeenCalledWith(0)
+    mockExit.mockRestore()
   })
 
-  test("registers SIGTERM handler", async () => {
-    const before = process.listeners("SIGTERM").length
+  test("SIGTERM handler calls process.exit(0)", async () => {
+    const mockExit = spyOn(process, "exit").mockImplementation((() => {}) as any)
     await runTui()
-    const after = process.listeners("SIGTERM").length
-    expect(after).toBeGreaterThan(before)
+    const listeners = process.listeners("SIGTERM")
+    const handler = listeners[listeners.length - 1] as () => void
+    handler()
+    expect(mockExit).toHaveBeenCalledWith(0)
+    mockExit.mockRestore()
   })
 })
