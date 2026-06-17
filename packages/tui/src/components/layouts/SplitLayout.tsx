@@ -1,5 +1,7 @@
 import { Box } from "ink"
 import type { LayoutProps } from "../../core/types"
+import React from "react"
+import { computeChildSize } from "../../core/splitUtils"
 
 export function SplitLayout({
   layoutProps,
@@ -10,38 +12,32 @@ export function SplitLayout({
   onFocusChange: _onFocusChange,
   state: _state,
   dispatch: _dispatch,
-  childNodes: _childNodes,
+  childNodes,
 }: LayoutProps) {
-  const ratio = (layoutProps.ratio as number) ?? 0.5
   const direction = (layoutProps.direction as "horizontal" | "vertical") ?? "horizontal"
+  const ratio = layoutProps.ratio
   const childArray = Array.isArray(children) ? children : [children]
-  const [first, second] = childArray
+  const count = childNodes?.length || childArray.length
 
   if (direction === "horizontal") {
-    const firstWidth = Math.floor(width * ratio)
-    const secondWidth = width - firstWidth
     return (
       <Box flexDirection="row" width={width} height={height}>
-        <Box width={firstWidth} height={height} overflow="hidden">
-          {first}
-        </Box>
-        <Box width={secondWidth} height={height} overflow="hidden">
-          {second}
-        </Box>
+        {childArray.map((child, i) => (
+          <Box key={i} width={computeChildSize(width, count, i, ratio)} height={height} overflow="hidden">
+            {child}
+          </Box>
+        ))}
       </Box>
     )
   }
 
-  const firstHeight = Math.floor(height * ratio)
-  const secondHeight = height - firstHeight
   return (
     <Box flexDirection="column" width={width} height={height}>
-      <Box width={width} height={firstHeight} overflow="hidden">
-        {first}
-      </Box>
-      <Box width={width} height={secondHeight} overflow="hidden">
-        {second}
-      </Box>
+      {childArray.map((child, i) => (
+        <Box key={i} width={width} height={computeChildSize(height, count, i, ratio)} overflow="hidden">
+          {child}
+        </Box>
+      ))}
     </Box>
   )
 }

@@ -45,9 +45,55 @@ describe("validateLayout", () => {
     expect(validateLayout(tree)).toContain("Layout tabs must have at least one child")
   })
 
-  test("detects split with wrong child count", () => {
+  test("validates split with 3 children", () => {
+    const tree = {
+      layout: "split",
+      content: [{ panel: "overview" }, { panel: "logs" }, { panel: "overview" }]
+    }
+    expect(validateLayout(tree)).toEqual([])
+  })
+
+  test("validates split with 1 child", () => {
     const tree = { layout: "split", content: [{ panel: "overview" }] }
-    expect(validateLayout(tree)).toContain("Split layout must have exactly 2 children, got 1")
+    expect(validateLayout(tree)).toEqual([])
+  })
+
+  test("validates split with ratio array matching child count", () => {
+    const tree = {
+      layout: "split",
+      ratio: [0.3, 0.7],
+      content: [{ panel: "overview" }, { panel: "logs" }]
+    }
+    expect(validateLayout(tree)).toEqual([])
+  })
+
+  test("validates split with ratio array shorter than child count", () => {
+    const tree = {
+      layout: "split",
+      ratio: [0.3, 0.3],
+      content: [{ panel: "overview" }, { panel: "logs" }, { panel: "overview" }]
+    }
+    expect(validateLayout(tree)).toEqual([])
+  })
+
+  test("detects split ratio array longer than child count", () => {
+    const tree = {
+      layout: "split",
+      ratio: [0.3, 0.4, 0.3],
+      content: [{ panel: "overview" }, { panel: "logs" }]
+    }
+    expect(validateLayout(tree)).toContain(
+      "Split layout ratio array length (3) exceeds child count (2)"
+    )
+  })
+
+  test("detects split ratio array with non-number values", () => {
+    const tree = {
+      layout: "split",
+      ratio: [0.3, "bad"] as unknown[],
+      content: [{ panel: "overview" }, { panel: "logs" }]
+    }
+    expect(validateLayout(tree)).toContain("Split layout ratio array must contain only numbers")
   })
 
   test("validates nested layouts recursively", () => {

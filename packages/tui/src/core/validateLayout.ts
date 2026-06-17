@@ -24,8 +24,16 @@ export function validateLayout(node: TreeNode): string[] {
     errors.push(`Layout ${layoutNode.layout} must have at least one child`)
   }
 
-  if (layoutNode.layout === "split" && layoutNode.content.length !== 2) {
-    errors.push(`Split layout must have exactly 2 children, got ${layoutNode.content.length}`)
+  if (layoutNode.layout === "split" && Array.isArray(layoutNode.ratio)) {
+    const ratio = layoutNode.ratio as unknown[]
+    if (ratio.some((r) => typeof r !== "number")) {
+      errors.push(`Split layout ratio array must contain only numbers`)
+    }
+    if (ratio.length > layoutNode.content.length) {
+      errors.push(
+        `Split layout ratio array length (${ratio.length}) exceeds child count (${layoutNode.content.length})`,
+      )
+    }
   }
 
   for (const child of layoutNode.content) {

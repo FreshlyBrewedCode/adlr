@@ -6,6 +6,7 @@ import { PanelChrome } from "../components/PanelChrome"
 import { Theme } from "../theme"
 import type { AppState, AppAction } from "../types"
 import React from "react"
+import { computeChildSize } from "./splitUtils"
 
 interface LayoutRendererProps {
   node: TreeNode
@@ -77,12 +78,13 @@ export function LayoutRenderer({
       // Tabs layout has a 1-row tab bar
       childHeight = Math.max(1, height - 1)
     } else if (layoutNode.layout === "split") {
-      const ratio = typeof layoutNode.ratio === "number" ? layoutNode.ratio : 0.5
       const direction = layoutNode.direction === "vertical" ? "vertical" : "horizontal"
+      const count = layoutNode.content.length
+      const ratio = layoutNode.ratio
       if (direction === "horizontal") {
-        childWidth = i === 0 ? Math.floor(width * ratio) : width - Math.floor(width * ratio)
+        childWidth = computeChildSize(width, count, i, ratio)
       } else {
-        childHeight = i === 0 ? Math.floor(height * ratio) : height - Math.floor(height * ratio)
+        childHeight = computeChildSize(height, count, i, ratio)
       }
     }
 
