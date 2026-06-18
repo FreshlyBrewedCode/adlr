@@ -4,7 +4,9 @@
     "jsx": "react-jsx",
     "jsxImportSource": "@opentui/react",
     "lib": ["ESNext", "DOM"],
-    "strict": true
+    "strict": true,
+    "allowImportingTsExtensions": true,
+    "noEmit": true
   },
   "include": ["src/**/*", "test/**/*"]
 }
