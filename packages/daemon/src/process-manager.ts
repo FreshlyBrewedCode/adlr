@@ -107,13 +107,10 @@ export class ProcessManager {
 							}
 						}
 					},
-					exit: (_terminal, ptyExitCode, _signal) => {
-						// PTY stream closed with error (ptyExitCode 1 = error).
-						// Only used as fallback if proc.exited doesn't resolve first.
-						// completeAgent is idempotent — it will no-op if proc.exited already ran.
-						if (ptyExitCode === 1) {
-							this.completeAgent(span.id, 1);
-						}
+					exit: (_terminal, _ptyExitCode, _signal) => {
+						// PTY stream closed (EOF or read error). The exitCode here is a PTY
+						// lifecycle status, NOT the subprocess exit code. Rely on
+						// proc.exited for the actual process exit code.
 					},
 				},
 			});
