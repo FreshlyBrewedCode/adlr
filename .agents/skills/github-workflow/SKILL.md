@@ -1,6 +1,6 @@
 ---
 name: github-workflow
-description: Guidelines for working on GitHub. Use when interacting directly with GitHub (Issues, PRs)
+description: Guidelines for working on GitHub. Use when interacting directly with GitHub (Issues, PRs) or when running in the context of a GitHub actions environment.
 ---
 
 # Issues/PR descriptions and comments
@@ -29,5 +29,5 @@ Example:
 </details>
 ```
 
-
+Note: when you are running in the context of a GitHub actions environment your response is posted on a comment and should follow the same guidelines.
 
