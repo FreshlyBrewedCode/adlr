@@ -1,8 +1,8 @@
-import { Command } from "commander"
-import { spanListCmd } from "./list"
-import { spanGetCmd } from "./get"
+import { Command } from "commander";
+import { spanGetCmd } from "./get";
+import { spanListCmd } from "./list";
 
 export const spanCmd = new Command("span")
-  .description("Span inspection commands")
-  .addCommand(spanListCmd)
-  .addCommand(spanGetCmd)
+	.description("Span inspection commands")
+	.addCommand(spanListCmd)
+	.addCommand(spanGetCmd);

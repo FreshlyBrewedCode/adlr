@@ -1,12 +1,13 @@
 {
-  "extends": "../../tsconfig.json",
-  "compilerOptions": {
-    "jsx": "react-jsx",
-    "jsxImportSource": "@opentui/react",
-    "lib": ["ESNext", "DOM"],
-    "strict": true,
-    "allowImportingTsExtensions": true,
-    "noEmit": true
-  },
-  "include": ["src/**/*", "test/**/*"]
+	"extends": "../../tsconfig.json",
+	"compilerOptions": {
+		"jsx": "react-jsx",
+		"jsxImportSource": "@opentui/react",
+		"lib": ["ESNext", "DOM"],
+		"strict": true,
+		"allowImportingTsExtensions": true,
+		"noEmit": true,
+		"types": ["bun-types"]
+	},
+	"include": ["src/**/*", "test/**/*"]
 }

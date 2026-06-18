@@ -1,20 +1,23 @@
 {
-  "name": "adlerd",
-  "version": "0.1.0",
-  "type": "module",
-  "main": "src/index.ts",
-  "bin": {
-    "adlerd": "src/index.ts"
-  },
-  "scripts": {
-    "test": "bun test",
-    "start": "bun src/index.ts"
-  },
-  "dependencies": {
-    "@adler/sdk": "workspace:*"
-  },
-  "devDependencies": {
-    "@types/node": "^20.0.0",
-    "bun-types": "latest"
-  }
+	"name": "adlerd",
+	"version": "0.1.0",
+	"type": "module",
+	"main": "src/index.ts",
+	"bin": {
+		"adlerd": "src/index.ts"
+	},
+	"scripts": {
+		"test": "bun test",
+		"start": "bun src/index.ts",
+		"lint": "biome check --fix .",
+		"typecheck": "tsgo --noEmit"
+	},
+	"dependencies": {
+		"@adler/sdk": "workspace:*"
+	},
+	"devDependencies": {
+		"@types/node": "^20.0.0",
+		"@typescript/native-preview": "catalog:",
+		"bun-types": "latest"
+	}
 }

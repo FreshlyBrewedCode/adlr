@@ -1,1 +1,1 @@
-export const DAEMON_SESSION_ID = "__daemon__"
+export const DAEMON_SESSION_ID = "__daemon__";

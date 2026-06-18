@@ -1,18 +1,25 @@
 {
-  "name": "adler-cli",
-  "version": "0.1.0",
-  "type": "module",
-  "main": "src/index.ts",
-  "bin": {
-    "adler": "src/index.ts"
-  },
-  "scripts": {
-    "test": "bun test"
-  },
-  "dependencies": {
-    "@adler/sdk": "workspace:*",
-    "@adler/tui": "workspace:*",
-    "adlerd": "workspace:*",
-    "commander": "^13.0.0"
-  }
+	"name": "adler-cli",
+	"version": "0.1.0",
+	"type": "module",
+	"main": "src/index.ts",
+	"bin": {
+		"adler": "src/index.ts"
+	},
+	"scripts": {
+		"test": "bun test",
+		"lint": "biome check --fix .",
+		"typecheck": "tsgo --noEmit"
+	},
+	"dependencies": {
+		"@adler/sdk": "workspace:*",
+		"@adler/tui": "workspace:*",
+		"adlerd": "workspace:*",
+		"commander": "^13.0.0"
+	},
+	"devDependencies": {
+		"@types/node": "^20.0.0",
+		"@typescript/native-preview": "catalog:",
+		"bun-types": "latest"
+	}
 }
