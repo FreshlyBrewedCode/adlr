@@ -1,4 +1,3 @@
-import { Box, Text } from "ink"
 import type { TreeNode, LayoutNode, PanelNode } from "./types"
 import { PanelRegistry } from "./PanelRegistry"
 import { LayoutRegistry } from "./LayoutRegistry"
@@ -34,9 +33,9 @@ export function LayoutRenderer({
     const panel = PanelRegistry.get(panelNode.panel)
     if (!panel) {
       return (
-        <Box width={width} height={height}>
-          <Text color={Theme.error}>Unknown panel: {panelNode.panel}</Text>
-        </Box>
+        <box style={{ width, height }}>
+          <text fg={Theme.error}>Unknown panel: {panelNode.panel}</text>
+        </box>
       )
     }
     const isFocused =
@@ -62,9 +61,9 @@ export function LayoutRenderer({
   const layout = LayoutRegistry.get(layoutNode.layout)
   if (!layout) {
     return (
-      <Box width={width} height={height}>
-          <Text color={Theme.error}>Unknown layout: {layoutNode.layout}</Text>
-      </Box>
+      <box style={{ width, height }}>
+          <text fg={Theme.error}>Unknown layout: {layoutNode.layout}</text>
+      </box>
     )
   }
 

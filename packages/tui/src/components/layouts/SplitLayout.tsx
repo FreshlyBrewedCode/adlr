@@ -1,4 +1,3 @@
-import { Box } from "ink"
 import type { LayoutProps } from "../../core/types"
 import React from "react"
 import { computeChildSize } from "../../core/splitUtils"
@@ -21,23 +20,23 @@ export function SplitLayout({
 
   if (direction === "horizontal") {
     return (
-      <Box flexDirection="row" width={width} height={height}>
+      <box style={{ flexDirection: "row", width, height }}>
         {childArray.map((child, i) => (
-          <Box key={i} width={computeChildSize(width, count, i, ratio)} height={height} overflow="hidden">
+          <box key={i} style={{ width: computeChildSize(width, count, i, ratio), height }}>
             {child}
-          </Box>
+          </box>
         ))}
-      </Box>
+      </box>
     )
   }
 
   return (
-    <Box flexDirection="column" width={width} height={height}>
+    <box style={{ flexDirection: "column", width, height }}>
       {childArray.map((child, i) => (
-        <Box key={i} width={width} height={computeChildSize(height, count, i, ratio)} overflow="hidden">
+        <box key={i} style={{ width, height: computeChildSize(height, count, i, ratio) }}>
           {child}
-        </Box>
+        </box>
       ))}
-    </Box>
+    </box>
   )
 }
