@@ -3,9 +3,13 @@
 	"compilerOptions": {
 		"outDir": "./dist",
 		"types": ["bun-types"],
+		"jsx": "react-jsx",
+		"jsxImportSource": "@opentui/react",
+		"allowImportingTsExtensions": true,
+		"noEmit": true,
 		"paths": {
 			"@adler/sdk": ["../../packages/sdk/src/index.ts"],
-			"@adler/tui": ["./src/types.d.ts"]
+			"@adler/tui": ["../../packages/tui/src/index.ts"]
 		}
 	},
 	"include": ["src/**/*", "test/**/*"],

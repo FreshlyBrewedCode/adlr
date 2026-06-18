@@ -1,4 +1,6 @@
 #!/usr/bin/env bun
+import { runTui } from "@adler/tui";
+import { ensureDaemon } from "./auto-start";
 import { runCli } from "./cli";
 
 async function main() {
@@ -6,10 +8,8 @@ async function main() {
 
 	if (args.length === 0) {
 		// Launch TUI
-		const { ensureDaemon } = await import("./auto-start");
 		await ensureDaemon();
 		try {
-			const { runTui } = await import("@adler/tui");
 			await runTui();
 		} catch (err) {
 			const msg = err instanceof Error ? err.message : String(err);
