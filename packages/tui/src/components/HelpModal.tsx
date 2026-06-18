@@ -4,19 +4,19 @@ import { Theme } from "../theme"
 export function HelpModal({ onClose }: { onClose: () => void }) {
   const panels = PanelRegistry.getAll()
   return (
-    <box
+    <scrollbox
       border={true}
       borderStyle={"rounded"}
       borderColor={Theme.primary}
       padding={1}
       width={60}
-      maxHeight={10}
+      maxHeight={20}
       overflow="scroll"
       shouldFill={true}
       backgroundColor={Theme.background}
     >
       <box
-        style={{ flexDirection: "column", width: "100%" }}
+        style={{ flexDirection: "column", width: "100%", height: "auto" }}
       >
         <text content="HOTKEYS" />
         <box style={{ flexDirection: "column", marginTop: 1 }} >
@@ -33,6 +33,7 @@ export function HelpModal({ onClose }: { onClose: () => void }) {
             ))}
           </box>
         ))}
-      </box></box>
+      </box>
+    </scrollbox>
   )
 }
