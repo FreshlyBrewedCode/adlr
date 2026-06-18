@@ -1,119 +1,72 @@
-import { describe, test, expect, mock, beforeEach, afterEach, spyOn } from "bun:test"
+import { test, expect, mock, beforeEach, afterEach } from "bun:test"
 
-// Mock ink's render before importing runTui
-const mockWaitUntilExit = mock(() => Promise.resolve())
-const mockRender = mock(() => ({ waitUntilExit: mockWaitUntilExit }))
+// Set session env before any module is imported
+process.env.ADLER_SESSION = "test-session"
 
-// ink uses jsxImportSource: "ink", so Bun tries to load ink/jsx-dev-runtime for .tsx files.
-// These mocks must be registered before any dynamic import that loads .tsx files.
-mock.module("ink/jsx-dev-runtime", () => ({ jsxDEV: () => null }))
-mock.module("ink/jsx-runtime", () => ({ jsx: () => null, jsxs: () => null, Fragment: null }))
-mock.module("ink", () => ({
-  render: mockRender,
-  Box: () => null,
-  Text: () => null,
-  useInput: mock(() => {}),
-  useApp: mock(() => ({ exit: mock(() => {}) })),
-  useStdout: mock(() => ({ stdout: process.stdout })),
+// Mock OpenTUI before import
+const mockRenderer = {
+  destroy: mock(() => {}),
+  on: mock(() => {}),
+  isDestroyed: false,
+}
+
+const mockRoot = {
+  render: mock(() => {}),
+}
+
+mock.module("@opentui/core", () => ({
+  createCliRenderer: mock(async () => mockRenderer),
 }))
+
+mock.module("@opentui/react", () => ({
+  createRoot: mock(() => mockRoot),
+}))
+
+mock.module("../src/keymap.ts", () => ({
+  createAdlerKeymap: mock(() => ({})),
+}))
+
+mock.module("../src/loadConfig.ts", () => ({
+  loadConfig: mock(async () => ({})),
+}))
+
+mock.module("../src/app.tsx", () => ({
+  default: () => null,
+}))
+
 mock.module("@adler/sdk", () => ({
-  createClient: () => ({
-    subscribe: () => Promise.resolve(() => {}),
-    close: () => {},
-    on: () => () => {},
-    env: () => ({ sessionId: undefined, spanId: undefined, socketPath: "" }),
-    session: { create: () => Promise.resolve({}), list: () => Promise.resolve([]) },
-    agent: {
-      run: () => Promise.resolve({}),
-      wait: () => Promise.resolve({}),
-      status: () => Promise.resolve({}),
-      list: () => Promise.resolve([]),
-      attach: () => Promise.resolve(),
-    },
-    span: { update: () => Promise.resolve() },
-    context: { add: () => Promise.resolve({}), list: () => Promise.resolve([]) },
-  }),
-  DAEMON_SESSION_ID: "daemon",
+  resolveSessionId: mock(() => "test-session"),
 }))
 
-// Dynamic import after mocks are registered, so Bun's module loader sees the mocks
-// when resolving ink/jsx-dev-runtime from app.tsx
-const { runTui, _resetAltScreenForTesting } = await import("../src/index")
+beforeEach(() => {
+  process.env.ADLER_SESSION = "test-session"
+  mockRenderer.destroy.mockClear()
+  mockRoot.render.mockClear()
+})
 
-describe("runTui", () => {
-  let originalEnv: string | undefined
-  let writtenBytes: string[]
-  let originalWrite: typeof process.stdout.write
-  let mockExit: ReturnType<typeof spyOn>
+afterEach(() => {
+  delete process.env.ADLER_SESSION
+})
 
-  beforeEach(() => {
-    _resetAltScreenForTesting()
-    originalEnv = process.env.ADLER_SESSION
-    process.env.ADLER_SESSION = "test-session-123"
-    writtenBytes = []
-    originalWrite = process.stdout.write.bind(process.stdout)
-    // Capture writes without actually writing to stdout
-    process.stdout.write = ((chunk: string | Buffer) => {
-      if (typeof chunk === "string") writtenBytes.push(chunk)
-      return true
-    }) as typeof process.stdout.write
-    // Prevent process.exit(0) from actually terminating the test process
-    mockExit = spyOn(process, "exit").mockImplementation((() => {}) as any)
-    mockRender.mockClear()
-    mockWaitUntilExit.mockClear()
-  })
+test("runTui creates a renderer in alternate-screen mode", async () => {
+  const { runTui } = await import("../src/index.ts")
+  await runTui()
+  const { createCliRenderer } = await import("@opentui/core")
+  expect(createCliRenderer).toHaveBeenCalledWith(
+    expect.objectContaining({ screenMode: "alternate-screen" }),
+  )
+})
 
-  afterEach(() => {
-    process.stdout.write = originalWrite
-    mockExit.mockRestore()
-    if (originalEnv !== undefined) {
-      process.env.ADLER_SESSION = originalEnv
-    } else {
-      delete process.env.ADLER_SESSION
-    }
-  })
+test("runTui renders App into the root", async () => {
+  const { runTui } = await import("../src/index.ts")
+  await runTui()
+  expect(mockRoot.render).toHaveBeenCalled()
+})
 
-  test("writes enter-alt-screen escape code before rendering", async () => {
-    await runTui()
-    expect(writtenBytes[0]).toBe("\x1b[?1049h")
-  })
-
-  test("calls render after writing enter-alt-screen", async () => {
-    await runTui()
-    expect(mockRender).toHaveBeenCalledTimes(1)
-  })
-
-  test("registers exit handler that writes leave-alt-screen escape code", async () => {
-    await runTui()
-    // Simulate process exit event
-    const exitListeners = process.listeners("exit")
-    // Find our handler (it should have been registered during runTui)
-    expect(exitListeners.length).toBeGreaterThan(0)
-    // Invoke the last registered exit listener
-    const handler = exitListeners[exitListeners.length - 1] as () => void
-    writtenBytes = []
-    handler()
-    expect(writtenBytes[0]).toBe("\x1b[?1049l")
-  })
-
-  test("calls process.exit(0) after waitUntilExit resolves", async () => {
-    await runTui()
-    expect(mockExit).toHaveBeenCalledWith(0)
-  })
-
-  test("SIGINT handler calls process.exit(0)", async () => {
-    await runTui()
-    const listeners = process.listeners("SIGINT")
-    const handler = listeners[listeners.length - 1] as () => void
-    handler()
-    expect(mockExit).toHaveBeenCalledWith(0)
-  })
-
-  test("SIGTERM handler calls process.exit(0)", async () => {
-    await runTui()
-    const listeners = process.listeners("SIGTERM")
-    const handler = listeners[listeners.length - 1] as () => void
-    handler()
-    expect(mockExit).toHaveBeenCalledWith(0)
-  })
+test("runTui returns a cleanup function that destroys the renderer", async () => {
+  const { runTui } = await import("../src/index.ts")
+  const cleanup = await runTui()
+  expect(typeof cleanup).toBe("function")
+  cleanup()
+  expect(mockRenderer.destroy).toHaveBeenCalled()
 })
