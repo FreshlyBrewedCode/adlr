@@ -15,16 +15,16 @@ export function HelpModal({ onClose }: { onClose: () => void }) {
         height: 20,
       }}
     >
-      <text fg={Theme.primary} content="HOTKEYS" />
+      <text content="HOTKEYS" />
       <box style={{ flexDirection: "column", marginTop: 1 }}>
-        <text fg={Theme.primary} content="GLOBAL" />
+        <text content="--- GLOBAL ---" />
         <text content="tab / shift+tab — next / prev focus" />
         <text content="q / ctrl+c — quit" />
         <text content="? — toggle help" />
       </box>
       {panels.map(panel => (
         <box key={panel.id} style={{ marginTop: 1, flexDirection: "column" }}>
-          <text fg={Theme.primary} content={panel.title.toUpperCase()} />
+          <text content={`--- ${panel.title.toUpperCase()} ---`} />
           {panel.hotkeys?.map(hk => (
             <text key={hk.key} content={`${hk.key} — ${hk.description}`} />
           ))}
