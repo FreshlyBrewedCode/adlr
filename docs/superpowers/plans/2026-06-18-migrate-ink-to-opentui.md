@@ -849,7 +849,92 @@ The existing tests mock `ink` entirely. Now that `ink` is gone, the mocks are in
   Run: `grep -r '"ink"' packages/tui/package.json`
   Expected: no output
 
-- [ ] **Step 4: Final commit**
+- [ ] **Step 4: agent-tui live smoke test**
+
+  This step drives the real TUI through a terminal session using `agent-tui`. It proves the renderer initialises correctly, the default layout renders visible content, and keyboard navigation works end-to-end.
+
+  **Prerequisites:**
+  - An active adler session must exist. Check with `bun run adler session list`. If none exists, create one with `bun run adler new`.
+  - `agent-tui` must be installed (`agent-tui --version`). If missing, install with `bun add -g agent-tui`.
+
+  **Start the daemon if not already running:**
+
+  ```bash
+  if ! agent-tui sessions >/dev/null 2>&1; then
+    tmux kill-session -t agent-tui 2>/dev/null || true
+    agent-tui daemon stop 2>/dev/null || true
+    rm -f /tmp/agent-tui*
+    tmux new-session -d -s agent-tui 'agent-tui daemon start --foreground > /tmp/agent-tui-daemon.log 2>&1'
+    sleep 1
+  fi
+  ```
+
+  **Run the TUI and verify the header renders:**
+
+  ```bash
+  agent-tui run --cwd . bun -- run adler
+  ```
+
+  Wait for the TUI to appear — the header line (`adler ·`) must be visible:
+
+  ```bash
+  agent-tui wait "adler" --assert
+  ```
+
+  Expected: exits 0. Failure here means the renderer did not paint or crashed on startup.
+
+  **Take a screenshot and verify the tab bar is present:**
+
+  ```bash
+  agent-tui screenshot
+  ```
+
+  Expected output includes the tab labels: `overview`, `context`, `agents`, `traces`, `logs`.
+
+  **Press Tab and verify focus moves to the next tab:**
+
+  ```bash
+  agent-tui press Tab
+  agent-tui wait --stable
+  agent-tui screenshot
+  ```
+
+  Expected: the second tab (`context`) is now highlighted/active. If all tabs look the same, the `next-panel` keymap binding is not firing.
+
+  **Press `?` and verify the help modal opens:**
+
+  ```bash
+  agent-tui press '?'
+  agent-tui wait "Hotkeys" --assert
+  ```
+
+  Expected: a help modal containing the text `Hotkeys` (or the panel list) appears on screen.
+
+  **Press `?` again to dismiss the modal:**
+
+  ```bash
+  agent-tui press '?'
+  agent-tui wait "Hotkeys" --gone --assert
+  ```
+
+  Expected: modal disappears.
+
+  **Press `q` to quit cleanly:**
+
+  ```bash
+  agent-tui press 'q'
+  agent-tui wait --stable
+  ```
+
+  Expected: TUI exits, terminal returns to normal shell prompt. If it hangs, the `quit` command in `useBindings` is not wired to `renderer.destroy()` correctly.
+
+  **Clean up the agent-tui session:**
+
+  ```bash
+  agent-tui kill
+  ```
+
+- [ ] **Step 5: Final commit**
 
   ```bash
   git add -A
