@@ -35,4 +35,3 @@ jobs:
         with:
           model: opencode-go/kimi-k2.7-code
           share: false
-          agent: github-actions
