@@ -14,10 +14,12 @@ export function TreeNode({
   const indicator = span.kind === "agent" ? "●" : "○"
   return (
     <box style={{ backgroundColor: isSelected ? "gray" : undefined }}>
-      <text>{"  ".repeat(depth)}</text>
-      <text fg={statusColor}>{indicator} </text>
-      <text>{span.name}</text>
-      <text fg="#666"> {span.status}</text>
+      <text>
+        {"  ".repeat(depth)}
+        <span fg={statusColor}>{indicator} </span>
+        {span.name}
+        <span fg="#666"> {span.status}</span>
+      </text>
     </box>
   )
 }

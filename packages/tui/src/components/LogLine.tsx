@@ -14,10 +14,12 @@ export function LogLine({ event, isSelected, width }: { event: Event; isSelected
   const message = typeof event.data?.message === "string" ? event.data.message : JSON.stringify(event.data)
   return (
     <box style={{ width, overflow: "hidden" }}>
-      <text fg="#666">{new Date(event.timestamp).toLocaleTimeString()} </text>
-      <text bg={color} fg="black"> {level.toUpperCase()} </text>
-      <text> {event.type}</text>
-      <text fg="#666"> {message}</text>
+      <text>
+        <span fg="#666">{new Date(event.timestamp).toLocaleTimeString()} </span>
+        <span bg={color} fg="black"> {level.toUpperCase()} </span>
+        <span> {event.type}</span>
+        <span fg="#666"> {message}</span>
+      </text>
     </box>
   )
 }

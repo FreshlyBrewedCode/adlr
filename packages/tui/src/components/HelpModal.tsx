@@ -26,7 +26,7 @@ export function HelpModal({ onClose }: { onClose: () => void }) {
         <box key={panel.id} style={{ marginTop: 1, flexDirection: "column" }}>
           <text fg={Theme.primary}><b><u>{panel.title}</u></b></text>
           {panel.hotkeys?.map(hk => (
-            <text key={hk.key}>{hk.key} — {hk.description}</text>
+            <text key={hk.key}>{`${hk.key} — ${hk.description}`}</text>
           ))}
         </box>
       ))}
