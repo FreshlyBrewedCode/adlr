@@ -189,9 +189,9 @@ export function createClient(socketPath: string = SOCKET_PATH): Client {
 	const client: Client = {
 		env() {
 			return {
-				sessionId: process.env.ADLER_SESSION,
-				spanId: process.env.ADLER_SPAN_ID,
-				socketPath: process.env.ADLER_SOCKET ?? SOCKET_PATH,
+				sessionId: process.env.ADLR_SESSION,
+				spanId: process.env.ADLR_SPAN_ID,
+				socketPath: process.env.ADLR_SOCKET ?? SOCKET_PATH,
 			};
 		},
 		session: {

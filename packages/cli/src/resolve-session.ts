@@ -8,11 +8,11 @@ export function resolveSessionId(options: {
 		return options.session;
 	}
 
-	if (process.env.ADLER_SESSION) {
-		return process.env.ADLER_SESSION;
+	if (process.env.ADLR_SESSION) {
+		return process.env.ADLR_SESSION;
 	}
 
-	const sessionFile = join(process.cwd(), ".adler", ".session");
+	const sessionFile = join(process.cwd(), ".adlr", ".session");
 	try {
 		if (existsSync(sessionFile)) {
 			return readFileSync(sessionFile, "utf-8").trim();

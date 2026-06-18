@@ -2,7 +2,7 @@
 
 **Date:** 2026-06-16
 **Status:** Approved
-**Scope:** Visual redesign of the adler TUI panel shells, shared components, and header/footer chrome.
+**Scope:** Visual redesign of the adlr TUI panel shells, shared components, and header/footer chrome.
 
 ---
 
@@ -129,7 +129,7 @@ interface PanelChromeProps {
 
 ### Design
 Single row, clean, minimal:
-- `adler` in bold
+- `adlr` in bold
 - `session:` label dimmed
 - Session ID (6 chars) in `Theme.primary` (cyan)
 - Status colored: `active` = green, `completed` = gray
@@ -137,7 +137,7 @@ Single row, clean, minimal:
 
 ### Format
 ```
-adler · session: abc123 · active · ~/git/myapp
+adlr · session: abc123 · active · ~/git/myapp
 ```
 
 ### Code
@@ -148,7 +148,7 @@ export function Header({ session }: { session: Session | null }) {
     : Theme.header.status.completed
   return (
     <Box height={1}>
-      <Text bold>adler</Text>
+      <Text bold>adlr</Text>
       <Text dimColor> · session: </Text>
       <Text color={Theme.primary}>{session?.id.slice(0, 6)}</Text>
       <Text dimColor> · </Text>
@@ -567,6 +567,6 @@ This is a minor change to the existing renderer. The `isFocused` prop is passed 
 
 ## 17. Future Work
 
-- The `Theme` object could be made configurable via `adler.ts` (e.g., light mode, custom accent colors).
+- The `Theme` object could be made configurable via `adlr.ts` (e.g., light mode, custom accent colors).
 - The `Card` component could gain additional variants (compact, horizontal, with action buttons).
 - The `isFocused` handling in `LayoutRenderer` could be extended to support nested layouts (e.g., a `SplitLayout` with two panels, where only one is focused).

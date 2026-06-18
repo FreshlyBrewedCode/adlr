@@ -1,10 +1,10 @@
 {
-	"name": "adler-cli",
+	"name": "adlr-cli",
 	"version": "0.1.0",
 	"type": "module",
 	"main": "src/index.ts",
 	"bin": {
-		"adler": "src/index.ts"
+		"adlr": "src/index.ts"
 	},
 	"scripts": {
 		"test": "bun test",
@@ -12,9 +12,9 @@
 		"typecheck": "tsgo --noEmit"
 	},
 	"dependencies": {
-		"@adler/sdk": "workspace:*",
-		"@adler/tui": "workspace:*",
-		"adlerd": "workspace:*",
+		"@adlr/sdk": "workspace:*",
+		"@adlr/tui": "workspace:*",
+		"adlrd": "workspace:*",
 		"commander": "^13.0.0"
 	},
 	"devDependencies": {

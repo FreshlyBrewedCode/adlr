@@ -1,25 +1,25 @@
 import { existsSync } from "node:fs";
 import { homedir } from "node:os";
 import { join, resolve } from "node:path";
-import type { AdlerConfig } from "@adler/sdk";
+import type { AdlrConfig } from "@adlr/sdk";
 
-const GLOBAL_CONFIG_PATH = join(homedir(), ".config/adler/adler.ts");
+const GLOBAL_CONFIG_PATH = join(homedir(), ".config/adlr/adlr.ts");
 
 function findConfig(candidates: string[]): string | null {
 	return candidates.find(existsSync) ?? null;
 }
 
 function projectConfigCandidates(dir: string): string[] {
-	return [join(dir, ".adler/adler.ts")];
+	return [join(dir, ".adlr/adlr.ts")];
 }
 
-export async function loadConfig(dir: string): Promise<AdlerConfig> {
+export async function loadConfig(dir: string): Promise<AdlrConfig> {
 	const absDir = resolve(dir);
 	const globalPath = findConfig([GLOBAL_CONFIG_PATH]);
 	const projectPath = findConfig(projectConfigCandidates(absDir));
 
-	let globalConfig: AdlerConfig = {};
-	let projectConfig: AdlerConfig = {};
+	let globalConfig: AdlrConfig = {};
+	let projectConfig: AdlrConfig = {};
 
 	if (globalPath) {
 		try {
@@ -42,8 +42,8 @@ export async function loadConfig(dir: string): Promise<AdlerConfig> {
 	return mergeConfig(globalConfig, projectConfig);
 }
 
-function mergeConfig(base: AdlerConfig, override: AdlerConfig): AdlerConfig {
-	const merged: AdlerConfig = {
+function mergeConfig(base: AdlrConfig, override: AdlrConfig): AdlrConfig {
+	const merged: AdlrConfig = {
 		...base,
 		...override,
 	};

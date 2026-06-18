@@ -2,7 +2,7 @@ import { spawn } from "node:child_process";
 import { existsSync, unlinkSync } from "node:fs";
 import { connect } from "node:net";
 import { setTimeout } from "node:timers/promises";
-import { SOCKET_PATH } from "@adler/sdk";
+import { SOCKET_PATH } from "@adlr/sdk";
 
 const DAEMON_START_TIMEOUT_MS = 5000;
 const DAEMON_POLL_INTERVAL_MS = 100;

@@ -1,4 +1,4 @@
-import type { ContextItem, Event, Session, Span } from "@adler/sdk";
+import type { ContextItem, Event, Session, Span } from "@adlr/sdk";
 
 export interface AppState {
 	session: Session | null;

@@ -117,19 +117,19 @@ afterAll(() => {
 });
 
 describe("Client", () => {
-	test("env reads ADLER_SESSION and ADLER_SPAN_ID", () => {
-		const oldSession = process.env.ADLER_SESSION;
-		const oldSpan = process.env.ADLER_SPAN_ID;
-		process.env.ADLER_SESSION = "sess-123";
-		process.env.ADLER_SPAN_ID = "span-456";
+	test("env reads ADLR_SESSION and ADLR_SPAN_ID", () => {
+		const oldSession = process.env.ADLR_SESSION;
+		const oldSpan = process.env.ADLR_SPAN_ID;
+		process.env.ADLR_SESSION = "sess-123";
+		process.env.ADLR_SPAN_ID = "span-456";
 
 		const client = createClient(FAKE_SOCK);
 		const env = client.env();
 		expect(env.sessionId).toBe("sess-123");
 		expect(env.spanId).toBe("span-456");
 
-		process.env.ADLER_SESSION = oldSession;
-		process.env.ADLER_SPAN_ID = oldSpan;
+		process.env.ADLR_SESSION = oldSession;
+		process.env.ADLR_SPAN_ID = oldSpan;
 		client.close();
 	});
 

@@ -15,7 +15,7 @@
 | File | Responsibility | Action |
 |------|---------------|--------|
 | `packages/daemon/src/config-loader.ts` | `ConfigLoader` class with caching, watching, and invalidation | Modify |
-| `packages/daemon/src/process-manager.ts` | Use `ConfigLoader` instead of cached `AdlerConfig` | Modify |
+| `packages/daemon/src/process-manager.ts` | Use `ConfigLoader` instead of cached `AdlrConfig` | Modify |
 | `packages/daemon/src/index.ts` | Instantiate `ConfigLoader`, pass to `ProcessManager`, close on shutdown | Modify |
 | `packages/daemon/test/config-loader.test.ts` | Unit tests for `ConfigLoader` | Create |
 | `packages/daemon/test/process-manager.test.ts` | Unit tests for `ProcessManager` config loading | Create |
@@ -35,15 +35,15 @@ Replace the entire file with:
 import { existsSync, watch, type FSWatcher } from "fs"
 import { join } from "path"
 import { homedir } from "os"
-import type { AdlerConfig } from "@adler/sdk"
+import type { AdlrConfig } from "@adlr/sdk"
 
-const GLOBAL_CONFIG = join(homedir(), ".config/adler/adler.ts")
+const GLOBAL_CONFIG = join(homedir(), ".config/adlr/adlr.ts")
 
 export class ConfigLoader {
-  private cache = new Map<string, AdlerConfig>()
+  private cache = new Map<string, AdlrConfig>()
   private watchers = new Map<string, FSWatcher>()
 
-  async loadConfig(dir: string): Promise<AdlerConfig> {
+  async loadConfig(dir: string): Promise<AdlrConfig> {
     const absDir = join(dir) // normalize
     const cached = this.cache.get(absDir)
     if (cached) {
@@ -56,9 +56,9 @@ export class ConfigLoader {
     return config
   }
 
-  private async resolveConfig(dir: string): Promise<AdlerConfig> {
-    let globalConfig: AdlerConfig = {}
-    let projectConfig: AdlerConfig = {}
+  private async resolveConfig(dir: string): Promise<AdlrConfig> {
+    let globalConfig: AdlrConfig = {}
+    let projectConfig: AdlrConfig = {}
 
     if (existsSync(GLOBAL_CONFIG)) {
       try {
@@ -69,7 +69,7 @@ export class ConfigLoader {
       }
     }
 
-    const projectConfigPath = join(dir, ".adler/adler.ts")
+    const projectConfigPath = join(dir, ".adlr/adlr.ts")
     if (existsSync(projectConfigPath)) {
       try {
         const mod = await import(projectConfigPath)
@@ -85,7 +85,7 @@ export class ConfigLoader {
   private watchConfig(dir: string): void {
     if (this.watchers.has(dir)) return
 
-    const files = [GLOBAL_CONFIG, join(dir, ".adler/adler.ts")].filter(existsSync)
+    const files = [GLOBAL_CONFIG, join(dir, ".adlr/adlr.ts")].filter(existsSync)
     if (files.length === 0) return
 
     const watcher = watch(files, (eventType, filename) => {
@@ -114,7 +114,7 @@ export class ConfigLoader {
   }
 }
 
-function mergeConfig(base: AdlerConfig, override: AdlerConfig): AdlerConfig {
+function mergeConfig(base: AdlrConfig, override: AdlrConfig): AdlrConfig {
   return {
     ...base,
     ...override,
@@ -148,8 +148,8 @@ Change the imports at the top:
 
 ```typescript
 import { spawn as spawnPty } from "node-pty"
-import type { Storage, Span, SpanStatus, AdlerConfig } from "@adler/sdk"
-import { SOCKET_PATH } from "@adler/sdk"
+import type { Storage, Span, SpanStatus, AdlrConfig } from "@adlr/sdk"
+import { SOCKET_PATH } from "@adlr/sdk"
 import type { InactivityTimer } from "./lifecycle"
 import type { ConfigLoader } from "./config-loader"
 ```
@@ -200,7 +200,7 @@ In `spawnAgent`, after creating the span, add a call to load the config:
 In `pollStatus`, load the config from the span's session:
 
 ```typescript
-  private async pollStatus(spanId: string, statusHook: NonNullable<AdlerConfig["agent"]["agents"][string]["status"]>) {
+  private async pollStatus(spanId: string, statusHook: NonNullable<AdlrConfig["agent"]["agents"][string]["status"]>) {
     const agent = this.agents.get(spanId)
     if (!agent || agent.exited) return
 
@@ -285,7 +285,7 @@ git commit -m "feat(daemon): use ConfigLoader for per-directory config resolutio
 - [ ] **Step 1: Update imports**
 
 ```typescript
-import { SQLiteStorage, DB_PATH } from "@adler/sdk"
+import { SQLiteStorage, DB_PATH } from "@adlr/sdk"
 import { startServer } from "./server"
 import { ProcessManager } from "./process-manager"
 import { ConfigLoader } from "./config-loader"
@@ -337,7 +337,7 @@ async function main() {
   process.on("SIGTERM", shutdown)
   process.on("SIGINT", shutdown)
 
-  console.log("adlerd started")
+  console.log("adlrd started")
 }
 ```
 
@@ -365,7 +365,7 @@ import { join } from "path"
 import { tmpdir } from "os"
 
 function createTestDir(): string {
-  const dir = join(tmpdir(), `adler-test-${Date.now()}-${Math.random().toString(36).slice(2)}`)
+  const dir = join(tmpdir(), `adlr-test-${Date.now()}-${Math.random().toString(36).slice(2)}`)
   mkdirSync(dir, { recursive: true })
   return dir
 }
@@ -392,10 +392,10 @@ describe("ConfigLoader", () => {
   })
 
   test("loads project config", async () => {
-    const adlerDir = join(testDir, ".adler")
-    mkdirSync(adlerDir, { recursive: true })
+    const adlrDir = join(testDir, ".adlr")
+    mkdirSync(adlrDir, { recursive: true })
     writeFileSync(
-      join(adlerDir, "adler.ts"),
+      join(adlrDir, "adlr.ts"),
       `export default { agent: { agents: { test: { interactive: true } } } }`,
       "utf-8"
     )
@@ -405,10 +405,10 @@ describe("ConfigLoader", () => {
   })
 
   test("caches config on second load", async () => {
-    const adlerDir = join(testDir, ".adler")
-    mkdirSync(adlerDir, { recursive: true })
+    const adlrDir = join(testDir, ".adlr")
+    mkdirSync(adlrDir, { recursive: true })
     writeFileSync(
-      join(adlerDir, "adler.ts"),
+      join(adlrDir, "adlr.ts"),
       `export default { agent: { agents: { test: { interactive: true } } } }`,
       "utf-8"
     )
@@ -419,10 +419,10 @@ describe("ConfigLoader", () => {
   })
 
   test("invalidates cache and reloads on file change", async () => {
-    const adlerDir = join(testDir, ".adler")
-    mkdirSync(adlerDir, { recursive: true })
+    const adlrDir = join(testDir, ".adlr")
+    mkdirSync(adlrDir, { recursive: true })
     writeFileSync(
-      join(adlerDir, "adler.ts"),
+      join(adlrDir, "adlr.ts"),
       `export default { agent: { agents: { test: { interactive: true } } } }`,
       "utf-8"
     )
@@ -434,7 +434,7 @@ describe("ConfigLoader", () => {
     loader.invalidate(testDir)
 
     writeFileSync(
-      join(adlerDir, "adler.ts"),
+      join(adlrDir, "adlr.ts"),
       `export default { agent: { agents: { test: { interactive: false } } } }`,
       "utf-8"
     )
@@ -444,10 +444,10 @@ describe("ConfigLoader", () => {
   })
 
   test("close clears all watchers and cache", async () => {
-    const adlerDir = join(testDir, ".adler")
-    mkdirSync(adlerDir, { recursive: true })
+    const adlrDir = join(testDir, ".adlr")
+    mkdirSync(adlrDir, { recursive: true })
     writeFileSync(
-      join(adlerDir, "adler.ts"),
+      join(adlrDir, "adlr.ts"),
       `export default { agent: { agents: { test: { interactive: true } } } }`,
       "utf-8"
     )
@@ -488,7 +488,7 @@ git commit -m "test(daemon): add ConfigLoader tests"
 
 ```typescript
 import { test, expect, describe, beforeEach, afterEach } from "bun:test"
-import { SQLiteStorage } from "@adler/sdk"
+import { SQLiteStorage } from "@adlr/sdk"
 import { ProcessManager } from "../src/process-manager"
 import { ConfigLoader } from "../src/config-loader"
 import { writeFileSync, mkdirSync, rmSync, existsSync } from "fs"
@@ -496,7 +496,7 @@ import { join } from "path"
 import { tmpdir } from "os"
 
 function createTestDir(): string {
-  const dir = join(tmpdir(), `adler-test-${Date.now()}-${Math.random().toString(36).slice(2)}`)
+  const dir = join(tmpdir(), `adlr-test-${Date.now()}-${Math.random().toString(36).slice(2)}`)
   mkdirSync(dir, { recursive: true })
   return dir
 }
@@ -521,10 +521,10 @@ describe("ProcessManager", () => {
   })
 
   test("uses ConfigLoader with session working_dir", async () => {
-    const adlerDir = join(testDir, ".adler")
-    mkdirSync(adlerDir, { recursive: true })
+    const adlrDir = join(testDir, ".adlr")
+    mkdirSync(adlrDir, { recursive: true })
     writeFileSync(
-      join(adlerDir, "adler.ts"),
+      join(adlrDir, "adlr.ts"),
       `export default { agent: { agents: { test: { run: () => "echo hello" } } } }`,
       "utf-8"
     )

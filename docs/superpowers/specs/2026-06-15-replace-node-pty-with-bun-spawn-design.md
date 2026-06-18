@@ -69,7 +69,7 @@ All idle-tracking fields are unchanged: `stdoutBuffer`, `lastStdoutTime`, `stdou
 
 ## TUI Agent Lifecycle
 
-TUI agents (`interactive: true`) are marked "done" by adler when stdout has been idle beyond `interactiveTimeout`, but the underlying process keeps running and remains tracked in the `agents` map. `lastStdoutTime` and `stdoutIdle` capture idle state so the process can be reused or killed later. No new fields are needed.
+TUI agents (`interactive: true`) are marked "done" by adlr when stdout has been idle beyond `interactiveTimeout`, but the underlying process keeps running and remains tracked in the `agents` map. `lastStdoutTime` and `stdoutIdle` capture idle state so the process can be reused or killed later. No new fields are needed.
 
 ## Error Handling
 

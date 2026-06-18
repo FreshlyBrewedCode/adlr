@@ -1,4 +1,4 @@
-import type { ContextItem } from "@adler/sdk";
+import type { ContextItem } from "@adlr/sdk";
 import { useBindings } from "@opentui/keymap/react";
 import { useMemo, useState } from "react";
 import type { PanelProps } from "../../core/types";

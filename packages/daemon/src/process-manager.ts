@@ -1,5 +1,5 @@
-import type { Span, SpanStatus, Storage } from "@adler/sdk";
-import { SOCKET_PATH } from "@adler/sdk";
+import type { Span, SpanStatus, Storage } from "@adlr/sdk";
+import { SOCKET_PATH } from "@adlr/sdk";
 import type { ConfigLoader } from "./config-loader";
 import type { InactivityTimer } from "./lifecycle";
 import type { DaemonLogger } from "./logger";
@@ -72,11 +72,11 @@ export class ProcessManager {
 		const contextItems = await this.storage.listContextItems(data.sessionId);
 		const env = {
 			...process.env,
-			ADLER_SESSION: data.sessionId,
-			ADLER_SPAN_ID: span.id,
-			ADLER_SOCKET: SOCKET_PATH,
-			ADLER_AGENT_PROMPT: data.prompt,
-			ADLER_CONTEXT: JSON.stringify(contextItems),
+			ADLR_SESSION: data.sessionId,
+			ADLR_SPAN_ID: span.id,
+			ADLR_SOCKET: SOCKET_PATH,
+			ADLR_AGENT_PROMPT: data.prompt,
+			ADLR_CONTEXT: JSON.stringify(contextItems),
 		};
 
 		// Declare agent before spawn so terminal callbacks can close over it

@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Wire the adler daemon's operational logs into the structured event logging stack so daemon activity and agent lifecycle events are visible in the TUI's Logs tab.
+**Goal:** Wire the adlr daemon's operational logs into the structured event logging stack so daemon activity and agent lifecycle events are visible in the TUI's Logs tab.
 
 **Architecture:** A `createLogger(storage)` factory in `packages/daemon/src/logger.ts` returns a `DaemonLogger` object with `info/warn/error` methods. It lazily creates a `"__daemon__"` sentinel session row on first call, then writes all daemon-scoped log events as regular `events` rows. Session-scoped events (agent lifecycle) pass the real `session_id`/`span_id` via an optional `ctx` argument. The TUI gains a `d` key toggle to switch the Logs tab between session events and daemon events.
 
@@ -111,8 +111,8 @@ Create `packages/daemon/test/logger.test.ts`:
 
 ```ts
 import { test, expect, describe, beforeEach } from "bun:test"
-import { SQLiteStorage } from "@adler/sdk"
-import { DAEMON_SESSION_ID } from "@adler/sdk"
+import { SQLiteStorage } from "@adlr/sdk"
+import { DAEMON_SESSION_ID } from "@adlr/sdk"
 import { createLogger } from "../src/logger"
 
 describe("createLogger", () => {
@@ -218,8 +218,8 @@ Expected: FAIL — `Cannot find module '../src/logger'`
 - [ ] **Step 3: Create `packages/daemon/src/logger.ts`**
 
 ```ts
-import type { Storage } from "@adler/sdk"
-import { DAEMON_SESSION_ID } from "@adler/sdk"
+import type { Storage } from "@adlr/sdk"
+import { DAEMON_SESSION_ID } from "@adlr/sdk"
 
 export type LogContext = {
   session_id?: string
@@ -310,9 +310,9 @@ import { DAEMON_SESSION_ID } from "./constants"
 Now update `packages/daemon/src/logger.ts` to use this. Change the `ensureSentinel` function and narrow the `Storage` import:
 
 ```ts
-import type { Storage } from "@adler/sdk"
-import { DAEMON_SESSION_ID } from "@adler/sdk"
-import type { SQLiteStorage } from "@adler/sdk"
+import type { Storage } from "@adlr/sdk"
+import { DAEMON_SESSION_ID } from "@adlr/sdk"
+import type { SQLiteStorage } from "@adlr/sdk"
 
 export type LogContext = {
   session_id?: string
@@ -405,18 +405,18 @@ Replace the full `packages/daemon/src/config-loader.ts` with:
 import { existsSync, watch, type FSWatcher } from "fs"
 import { join, resolve } from "path"
 import { homedir } from "os"
-import type { AdlerConfig } from "@adler/sdk"
+import type { AdlrConfig } from "@adlr/sdk"
 import type { DaemonLogger } from "./logger"
 
-const GLOBAL_CONFIG = join(homedir(), ".config/adler/adler.ts")
+const GLOBAL_CONFIG = join(homedir(), ".config/adlr/adlr.ts")
 
 export class ConfigLoader {
-  private cache = new Map<string, AdlerConfig>()
+  private cache = new Map<string, AdlrConfig>()
   private watchers = new Map<string, FSWatcher>()
 
   constructor(private logger?: DaemonLogger) {}
 
-  async loadConfig(dir: string): Promise<AdlerConfig> {
+  async loadConfig(dir: string): Promise<AdlrConfig> {
     const absDir = resolve(dir)
     const cached = this.cache.get(absDir)
     if (cached) {
@@ -424,7 +424,7 @@ export class ConfigLoader {
     }
 
     const config = await this.resolveConfig(absDir)
-    const files = [GLOBAL_CONFIG, join(absDir, ".adler/adler.ts")].filter(existsSync)
+    const files = [GLOBAL_CONFIG, join(absDir, ".adlr/adlr.ts")].filter(existsSync)
     if (Object.keys(config).length === 0 && files.length === 0) {
       return config
     }
@@ -433,11 +433,11 @@ export class ConfigLoader {
     return config
   }
 
-  private async resolveConfig(dir: string): Promise<AdlerConfig> {
-    let globalConfig: AdlerConfig = {}
-    let projectConfig: AdlerConfig = {}
+  private async resolveConfig(dir: string): Promise<AdlrConfig> {
+    let globalConfig: AdlrConfig = {}
+    let projectConfig: AdlrConfig = {}
     const globalPath = existsSync(GLOBAL_CONFIG) ? GLOBAL_CONFIG : null
-    const projectConfigPath = join(dir, ".adler/adler.ts")
+    const projectConfigPath = join(dir, ".adlr/adlr.ts")
     const projectPath = existsSync(projectConfigPath) ? projectConfigPath : null
 
     if (globalPath) {
@@ -474,7 +474,7 @@ export class ConfigLoader {
     const absDir = resolve(dir)
     if (this.watchers.has(absDir)) return
 
-    const files = [GLOBAL_CONFIG, join(dir, ".adler/adler.ts")].filter(existsSync)
+    const files = [GLOBAL_CONFIG, join(dir, ".adlr/adlr.ts")].filter(existsSync)
     if (files.length === 0) return
 
     const fileWatchers = files.map((file) =>
@@ -512,8 +512,8 @@ export class ConfigLoader {
   }
 }
 
-function mergeConfig(base: AdlerConfig, override: AdlerConfig): AdlerConfig {
-  const merged: AdlerConfig = {
+function mergeConfig(base: AdlrConfig, override: AdlrConfig): AdlrConfig {
+  const merged: AdlrConfig = {
     ...base,
     ...override,
   }
@@ -735,7 +735,7 @@ git commit -m "feat(daemon): emit structured log events from server broadcast an
 Replace `packages/daemon/src/index.ts` with:
 
 ```ts
-import { SQLiteStorage, DB_PATH } from "@adler/sdk"
+import { SQLiteStorage, DB_PATH } from "@adlr/sdk"
 import { startServer } from "./server"
 import { ProcessManager } from "./process-manager"
 import { ConfigLoader } from "./config-loader"
@@ -787,7 +787,7 @@ async function main() {
   process.on("SIGTERM", shutdown)
   process.on("SIGINT", shutdown)
 
-  await logger.info("adlerd started")
+  await logger.info("adlrd started")
 }
 
 main().catch(async (err) => {
@@ -825,7 +825,7 @@ git commit -m "feat(daemon): wire DaemonLogger into all daemon components"
 Replace the full file with:
 
 ```ts
-import type { Session, Span, Event, ContextItem } from "@adler/sdk"
+import type { Session, Span, Event, ContextItem } from "@adlr/sdk"
 
 export interface AppState {
   session: Session | null
@@ -926,7 +926,7 @@ Replace `packages/tui/src/components/LogsTab.tsx` with:
 
 ```tsx
 import { Box, Text } from "ink"
-import type { Event } from "@adler/sdk"
+import type { Event } from "@adlr/sdk"
 
 function levelFromType(type: string): "info" | "warn" | "error" | "other" {
   if (type.startsWith("log.info")) return "info"
@@ -995,7 +995,7 @@ Replace `packages/tui/src/app.tsx` with:
 ```tsx
 import { useEffect, useReducer } from "react"
 import { Box, useInput, useApp } from "ink"
-import { createClient, type EventType, DAEMON_SESSION_ID } from "@adler/sdk"
+import { createClient, type EventType, DAEMON_SESSION_ID } from "@adlr/sdk"
 import { initialState, reducer } from "./types"
 import { Header } from "./components/Header"
 import { Footer } from "./components/Footer"
@@ -1235,7 +1235,7 @@ The only place `session.list` is exposed to clients is the `session.list` IPC co
 
 Add the import at the top of the file alongside the existing imports:
 ```ts
-import { DAEMON_SESSION_ID } from "@adler/sdk"
+import { DAEMON_SESSION_ID } from "@adlr/sdk"
 ```
 
 Then update the `session.list` case (line 26):
@@ -1268,7 +1268,7 @@ git commit -m "feat(daemon): exclude __daemon__ session from session.list result
 - [ ] **Step 1: Run all tests across all packages**
 
 ```bash
-cd /Users/karl/git/adler && bun test --recursive
+cd /Users/karl/git/adlr && bun test --recursive
 ```
 
 Expected: all tests pass

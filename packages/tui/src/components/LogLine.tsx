@@ -1,4 +1,4 @@
-import type { Event } from "@adler/sdk";
+import type { Event } from "@adlr/sdk";
 import { Theme } from "../theme";
 
 function levelFromType(type: string): "info" | "warn" | "error" | "other" {

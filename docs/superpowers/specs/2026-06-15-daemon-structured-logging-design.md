@@ -5,7 +5,7 @@
 
 ## Overview
 
-Wire the adler daemon's operational logs into the existing structured event logging stack. Today the daemon uses bare `console.log`/`console.error` calls that are invisible in the TUI. This change makes daemon logs — and session-scoped agent lifecycle events — visible as structured `events` rows, queryable and renderable in the TUI `LogsTab`.
+Wire the adlr daemon's operational logs into the existing structured event logging stack. Today the daemon uses bare `console.log`/`console.error` calls that are invisible in the TUI. This change makes daemon logs — and session-scoped agent lifecycle events — visible as structured `events` rows, queryable and renderable in the TUI `LogsTab`.
 
 ## Data Model
 
@@ -69,7 +69,7 @@ It is then passed as an explicit argument to `DaemonServer`, `ProcessManager`, a
 
 | Level | Message | Extra data |
 |-------|---------|------------|
-| `info` | `"adlerd started"` | — |
+| `info` | `"adlrd started"` | — |
 | `info` | `"Shutting down due to inactivity"` | — |
 | `error` | `"Daemon startup failed"` | `{ error: string }` |
 

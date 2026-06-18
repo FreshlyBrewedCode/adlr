@@ -8,15 +8,15 @@ Approved
 
 ## Context
 
-The adler daemon (`packages/daemon`) currently loads configuration once at startup using `config-loader.ts`. It resolves two files:
+The adlr daemon (`packages/daemon`) currently loads configuration once at startup using `config-loader.ts`. It resolves two files:
 
-1. Global config: `~/.config/adler/adler.ts`
-2. Project config: `join(process.cwd(), ".adler/adler.ts")`
+1. Global config: `~/.config/adlr/adlr.ts`
+2. Project config: `join(process.cwd(), ".adlr/adlr.ts")`
 
 The merged config is passed into `ProcessManager` and used for the daemon's entire lifetime. This creates two problems:
 
 1. **No hot reload** — Changing a config file while the daemon is running has no effect. Users must restart the daemon to pick up changes.
-2. **Single config across projects** — The daemon is a singleton (one socket/PID in `~/.local/share/adler/`). When a user runs `adler` from a different project directory, the daemon still uses the config from its startup directory, not the current project's config.
+2. **Single config across projects** — The daemon is a singleton (one socket/PID in `~/.local/share/adlr/`). When a user runs `adlr` from a different project directory, the daemon still uses the config from its startup directory, not the current project's config.
 
 ## Goals
 
@@ -43,16 +43,16 @@ class ConfigLoader {
   private cache = new Map<string, CachedConfig>()
   private watchers = new Map<string, FSWatcher>()
 
-  loadConfig(dir: string): AdlerConfig
+  loadConfig(dir: string): AdlrConfig
   invalidate(dir: string): void
   close(): void
 }
 ```
 
-**Cache entry:** `{ config: AdlerConfig }` keyed by absolute directory path.
+**Cache entry:** `{ config: AdlrConfig }` keyed by absolute directory path.
 
 **Behavior:**
-- `loadConfig(dir)` resolves the global config + the project config at `join(dir, ".adler/adler.ts")`, merges them, caches the result, and starts `fs.watch` on both files.
+- `loadConfig(dir)` resolves the global config + the project config at `join(dir, ".adlr/adlr.ts")`, merges them, caches the result, and starts `fs.watch` on both files.
 - `fs.watch` callback invalidates the cache entry for that directory when either config file changes.
 - `close()` clears all watchers and the cache (used during shutdown).
 - If a config file is deleted, the watcher fires; we invalidate the cache and subsequent calls fall back to the remaining config source.
@@ -73,14 +73,14 @@ class ConfigLoader {
 
 ### Data Flow
 
-1. User runs `adler agent run --agent foo` from `/project-b`.
+1. User runs `adlr agent run --agent foo` from `/project-b`.
 2. CLI sends `agent.run` with `session_id`.
 3. `ProcessManager.spawnAgent()` fetches the session from storage to get `working_dir`.
 4. `configLoader.loadConfig("/project-b")` checks cache:
-   - **Miss**: loads `~/.config/adler/adler.ts` + `/project-b/.adler/adler.ts`, merges, caches, starts watching.
+   - **Miss**: loads `~/.config/adlr/adlr.ts` + `/project-b/.adlr/adlr.ts`, merges, caches, starts watching.
    - **Hit**: returns cached config.
 5. Agent spawned with `/project-b` config.
-6. User edits `/project-b/.adler/adler.ts`.
+6. User edits `/project-b/.adlr/adlr.ts`.
 7. `fs.watch` fires, `ConfigLoader` invalidates the `/project-b` cache entry.
 8. Next `agent.run` from `/project-b` re-reads and caches the new config.
 

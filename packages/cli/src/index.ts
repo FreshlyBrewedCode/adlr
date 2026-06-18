@@ -1,5 +1,5 @@
 #!/usr/bin/env bun
-import { runTui } from "@adler/tui";
+import { runTui } from "@adlr/tui";
 import { ensureDaemon } from "./auto-start";
 import { runCli } from "./cli";
 

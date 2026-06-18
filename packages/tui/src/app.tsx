@@ -1,9 +1,9 @@
 import {
-	type AdlerConfig,
+	type AdlrConfig,
 	createClient,
 	DAEMON_SESSION_ID,
 	type EventType,
-} from "@adler/sdk";
+} from "@adlr/sdk";
 import { KeymapProvider, useBindings } from "@opentui/keymap/react";
 import { useRenderer, useTerminalDimensions } from "@opentui/react";
 import { useEffect, useReducer, useState } from "react";
@@ -39,7 +39,7 @@ interface AppProps {
 	sessionId: string;
 	layout?: ContentNode;
 	keymap: AdlerKeymap;
-	config?: AdlerConfig;
+	config?: AdlrConfig;
 }
 
 function AppInner({

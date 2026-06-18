@@ -1,5 +1,5 @@
-import type { Storage } from "@adler/sdk";
-import { DAEMON_SESSION_ID } from "@adler/sdk";
+import type { Storage } from "@adlr/sdk";
+import { DAEMON_SESSION_ID } from "@adlr/sdk";
 
 export type StorageWithDaemonSession = Storage & {
 	upsertDaemonSession(): void;

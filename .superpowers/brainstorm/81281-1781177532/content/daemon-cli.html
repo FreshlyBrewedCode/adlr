@@ -1,4 +1,4 @@
-<h2>adler — Daemon &amp; CLI Design</h2>
+<h2>adlr — Daemon &amp; CLI Design</h2>
 <p class="subtitle">Section 3 of 4 — Package structure, daemon lifecycle, and IPC flows</p>
 
 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
@@ -9,21 +9,21 @@
     <div style="font-family: monospace; font-size: 0.8rem; background: var(--bg-secondary, #1a1a2e); border: 1px solid #333; border-radius: 8px; padding: 1.25rem; line-height: 2.1;">
       <div style="color:#666;">packages/</div>
       <div style="color:#7c9ef5; padding-left:1rem;">core/ &nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#666; font-size:0.72rem;">— shared types, Storage interface, IPC protocol</span></div>
-      <div style="color:#a8d8a8; padding-left:1rem;">daemon/ &nbsp;&nbsp;<span style="color:#666; font-size:0.72rem;">— adlerd process</span></div>
-      <div style="color:#ccc; padding-left:1rem;">cli/ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#666; font-size:0.72rem;">— adler CLI binary</span></div>
+      <div style="color:#a8d8a8; padding-left:1rem;">daemon/ &nbsp;&nbsp;<span style="color:#666; font-size:0.72rem;">— adlrd process</span></div>
+      <div style="color:#ccc; padding-left:1rem;">cli/ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#666; font-size:0.72rem;">— adlr CLI binary</span></div>
       <div style="color:#f5c842; padding-left:1rem;">tui/ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#666; font-size:0.72rem;">— Ink dashboard (invoked by CLI)</span></div>
-      <div style="color:#f08080; padding-left:1rem;">opencode/ &nbsp;<span style="color:#666; font-size:0.72rem;">— @adler/opencode plugin</span></div>
+      <div style="color:#f08080; padding-left:1rem;">opencode/ &nbsp;<span style="color:#666; font-size:0.72rem;">— @adlr/opencode plugin</span></div>
     </div>
 
     <h3 style="margin-top:1.25rem;">Daemon lifecycle</h3>
     <div style="font-family: monospace; font-size: 0.78rem; background: var(--bg-secondary, #1a1a2e); border: 1px solid #333; border-radius: 8px; padding: 1.25rem; line-height: 2;">
       <div><span style="color:#f5c842;">start:</span> auto-spawned by CLI if socket missing</div>
-      <div style="padding-left:1rem;color:#666;">→ detached Bun process, writes PID to ~/.local/share/adler/</div>
-      <div><span style="color:#f5c842;">socket:</span> ~/.local/share/adler/adler.sock</div>
+      <div style="padding-left:1rem;color:#666;">→ detached Bun process, writes PID to ~/.local/share/adlr/</div>
+      <div><span style="color:#f5c842;">socket:</span> ~/.local/share/adlr/adlr.sock</div>
       <div style="padding-left:1rem;color:#666;">→ one global daemon, all sessions managed here</div>
       <div><span style="color:#f5c842;">stop:</span> SIGTERM, or after 10min with no clients</div>
       <div style="padding-left:1rem;color:#666;">→ graceful: wait for running agents to finish</div>
-      <div><span style="color:#f5c842;">db:</span> ~/.local/share/adler/adler.db</div>
+      <div><span style="color:#f5c842;">db:</span> ~/.local/share/adlr/adlr.db</div>
     </div>
   </div>
 
@@ -57,8 +57,8 @@
       <div style="font-family: monospace; font-size: 0.75rem; background: var(--bg-secondary, #1a1a2e); border: 1px solid #333; border-radius: 8px; padding: 1rem; line-height: 2; margin-top: 0.4rem;">
         <div style="color:#ccc;">daemon creates span (kind=agent) in Storage</div>
         <div style="color:#ccc;">daemon Bun.spawn(agentCmd, {</div>
-        <div style="padding-left:1rem; color:#a8d8a8;">env: { ADLER_SESSION, ADLER_SPAN_ID,</div>
-        <div style="padding-left:2rem; color:#a8d8a8;">ADLER_SOCKET, ADLER_CONTEXT, ... }</div>
+        <div style="padding-left:1rem; color:#a8d8a8;">env: { ADLR_SESSION, ADLR_SPAN_ID,</div>
+        <div style="padding-left:2rem; color:#a8d8a8;">ADLR_SOCKET, ADLR_CONTEXT, ... }</div>
         <div style="color:#ccc;">})</div>
         <div style="color:#ccc;">daemon streams stdout → event(agent.output) → push to TUI</div>
         <div style="color:#ccc;">on exit → span.status = done/failed, push to TUI</div>
@@ -72,13 +72,13 @@
   <h3>CLI commands</h3>
   <div style="font-family: monospace; font-size: 0.78rem; background: var(--bg-secondary, #1a1a2e); border: 1px solid #333; border-radius: 8px; padding: 1.25rem;">
     <div style="display: grid; grid-template-columns: 2fr 3fr; gap: 0.25rem 1.5rem; line-height: 2;">
-      <div style="color:#7c9ef5;">adler</div><div style="color:#666;">open TUI dashboard for current session</div>
-      <div style="color:#7c9ef5;">adler new [--goal "..."]</div><div style="color:#666;">create session, optionally set goal context item</div>
-      <div style="color:#7c9ef5;">adler agent run</div><div style="color:#666;">command daemon to spawn agent, returns span id</div>
-      <div style="color:#7c9ef5;">adler agent wait/status/list</div><div style="color:#666;">query span state via daemon</div>
-      <div style="color:#7c9ef5;">adler context add/list/get</div><div style="color:#666;">manage context items for current session</div>
-      <div style="color:#7c9ef5;">adler session list</div><div style="color:#666;">list all sessions across all projects</div>
-      <div style="color:#7c9ef5;">adler daemon stop</div><div style="color:#666;">graceful shutdown</div>
+      <div style="color:#7c9ef5;">adlr</div><div style="color:#666;">open TUI dashboard for current session</div>
+      <div style="color:#7c9ef5;">adlr new [--goal "..."]</div><div style="color:#666;">create session, optionally set goal context item</div>
+      <div style="color:#7c9ef5;">adlr agent run</div><div style="color:#666;">command daemon to spawn agent, returns span id</div>
+      <div style="color:#7c9ef5;">adlr agent wait/status/list</div><div style="color:#666;">query span state via daemon</div>
+      <div style="color:#7c9ef5;">adlr context add/list/get</div><div style="color:#666;">manage context items for current session</div>
+      <div style="color:#7c9ef5;">adlr session list</div><div style="color:#666;">list all sessions across all projects</div>
+      <div style="color:#7c9ef5;">adlr daemon stop</div><div style="color:#666;">graceful shutdown</div>
     </div>
   </div>
 </div>

@@ -2,39 +2,39 @@ import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { existsSync, mkdirSync, unlinkSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { buildCli } from "../src/cli";
-import { AdlerCliError } from "../src/error";
+import { AdlrCliError } from "../src/error";
 import { resolveSessionId } from "../src/resolve-session";
 
 describe("CLI", () => {
 	let oldSession: string | undefined;
 
 	beforeEach(() => {
-		oldSession = process.env.ADLER_SESSION;
-		delete process.env.ADLER_SESSION;
+		oldSession = process.env.ADLR_SESSION;
+		delete process.env.ADLR_SESSION;
 	});
 
 	afterEach(() => {
 		if (oldSession !== undefined) {
-			process.env.ADLER_SESSION = oldSession;
+			process.env.ADLR_SESSION = oldSession;
 		} else {
-			delete process.env.ADLER_SESSION;
+			delete process.env.ADLR_SESSION;
 		}
 	});
 
 	test("resolveSessionId returns env var", () => {
-		process.env.ADLER_SESSION = "env-sess";
+		process.env.ADLR_SESSION = "env-sess";
 		const id = resolveSessionId({});
 		expect(id).toBe("env-sess");
 	});
 
 	test("resolveSessionId prefers explicit session argument over env var", () => {
-		process.env.ADLER_SESSION = "env-sess";
+		process.env.ADLR_SESSION = "env-sess";
 		const id = resolveSessionId({ session: "flag-sess" });
 		expect(id).toBe("flag-sess");
 	});
 
-	test("resolveSessionId reads .adler/.session file", () => {
-		const sessionDir = join(process.cwd(), ".adler");
+	test("resolveSessionId reads .adlr/.session file", () => {
+		const sessionDir = join(process.cwd(), ".adlr");
 		const sessionFile = join(sessionDir, ".session");
 		const dirExistedBefore = existsSync(sessionDir);
 		mkdirSync(sessionDir, { recursive: true });
@@ -61,9 +61,9 @@ describe("CLI", () => {
 		expect(id).toBeUndefined();
 	});
 
-	test("AdlerCliError has correct name and message", () => {
-		const err = new AdlerCliError("test message");
-		expect(err.name).toBe("AdlerCliError");
+	test("AdlrCliError has correct name and message", () => {
+		const err = new AdlrCliError("test message");
+		expect(err.name).toBe("AdlrCliError");
 		expect(err.message).toBe("test message");
 	});
 
@@ -76,9 +76,7 @@ describe("CLI", () => {
 				output += str;
 			},
 		});
-		await expect(
-			cli.parseAsync(["node", "adler", "unknown"]),
-		).rejects.toThrow();
+		await expect(cli.parseAsync(["node", "adlr", "unknown"])).rejects.toThrow();
 		expect(output).toContain("error: unknown command");
 	});
 
@@ -102,7 +100,7 @@ describe("CLI", () => {
 			});
 		});
 		await expect(
-			cli.parseAsync(["node", "adler", "agent", "--help"]),
+			cli.parseAsync(["node", "adlr", "agent", "--help"]),
 		).rejects.toThrow();
 		expect(output).toContain("Usage:");
 		expect(output).toContain("run");

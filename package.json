@@ -1,5 +1,5 @@
 {
-	"name": "adler",
+	"name": "adlr",
 	"private": true,
 	"workspaces": {
 		"packages": [
@@ -12,12 +12,12 @@
 	},
 	"scripts": {
 		"test": "bun test",
-		"adler": "bun run packages/cli/src/index.ts",
+		"adlr": "bun run packages/cli/src/index.ts",
 		"lint": "bun run --filter='*' lint",
 		"typecheck": "bun run --filter='*' typecheck"
 	},
 	"devDependencies": {
-		"@adler/sdk": "workspace:*",
+		"@adlr/sdk": "workspace:*",
 		"@biomejs/biome": "2.5.0",
 		"@types/node": "^20.0.0",
 		"@types/react": "^18.3.0",

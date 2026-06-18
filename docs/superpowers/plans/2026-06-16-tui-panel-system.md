@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Restructure the adler TUI into a panel-based architecture with registrable, nestable layouts, fullscreen mode, and a configurable layout system driven by the adler.tsx config.
+**Goal:** Restructure the adlr TUI into a panel-based architecture with registrable, nestable layouts, fullscreen mode, and a configurable layout system driven by the adlr.tsx config.
 
 **Architecture:** Panels are self-contained React components registered in a PanelRegistry. Layouts (TabsLayout, SplitLayout) are registered in a LayoutRegistry. A recursive LayoutRenderer walks the layout tree (produced by evaluating the config's `tui.layout` function) and renders the appropriate panels and layouts. The Footer is always visible and shows hotkeys for the focused panel. The Help Modal (`?`) renders as an overlay showing all hotkeys grouped by panel.
 
@@ -362,7 +362,7 @@ git commit -m "feat(tui): add StatusBadge component"
 
 ```typescript
 import { Box, Text } from "ink"
-import type { Event } from "@adler/sdk"
+import type { Event } from "@adlr/sdk"
 
 const LEVEL_COLORS: Record<string, string> = {
   info: "green",
@@ -405,7 +405,7 @@ git commit -m "feat(tui): add LogLine component"
 
 ```typescript
 import { Box, Text } from "ink"
-import type { Span } from "@adler/sdk"
+import type { Span } from "@adlr/sdk"
 
 export function TreeNode({
   span,
@@ -678,7 +678,7 @@ git commit -m "feat(tui): add AgentsPanel with local state"
 import { useState } from "react"
 import { Box } from "ink"
 import { useInput } from "ink"
-import type { Span } from "@adler/sdk"
+import type { Span } from "@adlr/sdk"
 import type { PanelProps } from "../../core/types"
 import { TreeNode } from "../TreeNode"
 
@@ -768,8 +768,8 @@ git commit -m "feat(tui): add TracesPanel with local state"
 import { useState, useEffect } from "react"
 import { Box, Text } from "ink"
 import { useInput } from "ink"
-import { createClient, DAEMON_SESSION_ID } from "@adler/sdk"
-import type { Event } from "@adler/sdk"
+import { createClient, DAEMON_SESSION_ID } from "@adlr/sdk"
+import type { Event } from "@adlr/sdk"
 import type { PanelProps } from "../../core/types"
 import { LogLine } from "../LogLine"
 
@@ -1476,13 +1476,13 @@ git commit -m "feat(tui): add HelpModal overlay"
 
 ```typescript
 import { Box, Text } from "ink"
-import type { Session } from "@adler/sdk"
+import type { Session } from "@adlr/sdk"
 
 export function Header({ session }: { session: Session | null }) {
   return (
     <Box flexDirection="column" height={1}>
       <Box>
-        <Text bold>adler</Text>
+        <Text bold>adlr</Text>
         <Text> · session: {session?.id.slice(0, 6)}</Text>
         <Text> · {session?.status}</Text>
         <Text> · {session?.working_dir}</Text>
@@ -1519,7 +1519,7 @@ git commit -m "feat(tui): rewrite Header to remove hardcoded tabs"
 ```typescript
 import { useEffect, useReducer, useState } from "react"
 import { Box, useInput, useApp, useStdout } from "ink"
-import { createClient, type EventType, DAEMON_SESSION_ID } from "@adler/sdk"
+import { createClient, type EventType, DAEMON_SESSION_ID } from "@adlr/sdk"
 import { initialState, reducer } from "./types"
 import { Header } from "./components/Header"
 import { Footer } from "./components/Footer"
@@ -1953,7 +1953,7 @@ describe("App", () => {
   test("renders default layout with all panels", () => {
     const { lastFrame } = render(<App sessionId="test-123" />)
     const frame = lastFrame()
-    expect(frame).toContain("adler")
+    expect(frame).toContain("adlr")
     expect(frame).toContain("Overview")
   })
 
@@ -2006,7 +2006,7 @@ git commit -m "feat(tui): complete panel system refactor
 - Recursive LayoutRenderer
 - Footer showing focused panel hotkeys
 - Help modal (? key) showing all hotkeys grouped by panel
-- Config-driven layout via tui.layout in adler.tsx
+- Config-driven layout via tui.layout in adlr.tsx
 - All panel-specific state moved to local React state
 - Shared UI components: PanelChrome, StatusBadge, LogLine, TreeNode, SelectList, TypeBadge"
 ```

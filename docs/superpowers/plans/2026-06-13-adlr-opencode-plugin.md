@@ -2,11 +2,11 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Build `@adler/opencode` — a first-party plugin that exports `AdlerConfig` with pre-built opencode agent definitions.
+**Goal:** Build `@adlr/opencode` — a first-party plugin that exports `AdlrConfig` with pre-built opencode agent definitions.
 
-**Architecture:** A single file exporting an `AdlerConfig` object. It defines the `opencode` agent with `run`, `open`, `output`, and `status` hooks. The plugin is loaded by the daemon's config loader and merged with user config.
+**Architecture:** A single file exporting an `AdlrConfig` object. It defines the `opencode` agent with `run`, `open`, `output`, and `status` hooks. The plugin is loaded by the daemon's config loader and merged with user config.
 
-**Tech Stack:** Bun, `@adler/sdk`
+**Tech Stack:** Bun, `@adlr/sdk`
 
 ---
 
@@ -34,7 +34,7 @@ packages/plugins/opencode/
 
 ```json
 {
-  "name": "@adler/opencode",
+  "name": "@adlr/opencode",
   "version": "0.1.0",
   "type": "module",
   "main": "src/index.ts",
@@ -45,7 +45,7 @@ packages/plugins/opencode/
     "test": "bun test"
   },
   "dependencies": {
-    "@adler/sdk": "workspace:*"
+    "@adlr/sdk": "workspace:*"
   }
 }
 ```
@@ -80,9 +80,9 @@ git commit -m "feat(plugins/opencode): add package scaffolding"
 - [ ] **Step 1: Write plugin config**
 
 ```ts
-import type { AdlerConfig } from "@adler/sdk"
+import type { AdlrConfig } from "@adlr/sdk"
 
-const config: AdlerConfig = {
+const config: AdlrConfig = {
   agent: {
     agents: {
       opencode: {
@@ -150,7 +150,7 @@ git commit -m "feat(plugins/opencode): add opencode agent config"
 import { test, expect, describe } from "bun:test"
 import config from "../src/index"
 
-describe("@adler/opencode", () => {
+describe("@adlr/opencode", () => {
   test("exports a config object", () => {
     expect(config).toBeObject()
     expect(config.agent).toBeObject()
@@ -226,6 +226,6 @@ git commit -m "feat(plugins/opencode): add plugin tests"
 
 1. **Spec coverage:** §8 Configuration (agent hooks: `run`, `open`, `output`, `status`, `attach`), §8 `status` hook return values (`working`, `completed`, `failed`, `blocked`), §8 `mode`, `interactive`, `interactiveTimeout`, `statusPollInterval` — all covered.
 2. **No placeholders:** All hooks are implemented with real logic. No TODOs.
-3. **Type consistency:** Uses `AdlerConfig` from `@adler/sdk`. Hook signatures match the spec exactly.
+3. **Type consistency:** Uses `AdlrConfig` from `@adlr/sdk`. Hook signatures match the spec exactly.
 
 Plan complete.

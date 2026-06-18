@@ -1,19 +1,19 @@
-# adler — Core + TUI Design
+# adlr — Core + TUI Design
 
 **Date:** 2026-06-11
 **Scope:** Phase 1 + 2 — Core foundation, daemon, SDK, CLI, and TUI dashboard
-**Out of scope:** Workflows (Phase 3), adler Assistant (Phase 4), Plugin system (Phase 5)
+**Out of scope:** Workflows (Phase 3), adlr Assistant (Phase 4), Plugin system (Phase 5)
 
 ## Phase Map
 
-adler is designed as four sequential build phases. Each phase produces a working system and is a prerequisite for the next.
+adlr is designed as four sequential build phases. Each phase produces a working system and is a prerequisite for the next.
 
 | Phase | Focus | Key deliverables |
 |---|---|---|
 | **1 + 2** *(this spec)* | Core + TUI | Daemon, SDK, CLI, SQLite storage, Ink dashboard |
 | **3** | Workflows, Hooks, Plugins | YAML workflow engine, before/after hooks, npm plugin system |
-| **4** | adler Assistant | AI agent with full session awareness, auto-orchestration mode |
-| **Future** | Web UI, remote sessions | Browser dashboard using `@adler/sdk`, multi-user support |
+| **4** | adlr Assistant | AI agent with full session awareness, auto-orchestration mode |
+| **Future** | Web UI, remote sessions | Browser dashboard using `@adlr/sdk`, multi-user support |
 
 The span/event data model is designed to accommodate Phase 3 and 4 without schema changes. Workflow steps, hook runs, and assistant actions all become spans with the appropriate `kind`.
 
@@ -23,7 +23,7 @@ The span/event data model is designed to accommodate Phase 3 and 4 without schem
 
 ## 1. Overview
 
-adler is an agent orchestrator focused on observability and flexibility. This spec covers the foundational layer: the daemon that manages sessions and agents, the SDK that wraps it, the CLI that exposes it, and the TUI dashboard that visualises it.
+adlr is an agent orchestrator focused on observability and flexibility. This spec covers the foundational layer: the daemon that manages sessions and agents, the SDK that wraps it, the CLI that exposes it, and the TUI dashboard that visualises it.
 
 The central design principle is **daemon-as-source-of-truth**: a single background process owns all state and all agent child processes. The CLI and TUI are thin clients that communicate with it over a Unix socket. This means agents survive terminal sessions closing, all writes to the database are serialised through one process, and the persistence backend can be swapped without touching any consumer.
 
@@ -35,13 +35,13 @@ The central design principle is **daemon-as-source-of-truth**: a single backgrou
 
 ```
 ┌───────────┐   ┌───────────┐
-│  adler    │   │  adler    │
+│  adlr    │   │  adlr    │
 │   CLI     │   │   TUI     │
 └─────┬─────┘   └─────┬─────┘
       │  Unix socket  │
       └───────┬────────┘
        ┌──────┴──────┐
-       │   adlerd    │  ← daemon (Bun)
+       │   adlrd    │  ← daemon (Bun)
        └──┬───────┬──┘
           │       │
    ┌──────┴─┐  ┌──┴───────┐
@@ -55,11 +55,11 @@ The central design principle is **daemon-as-source-of-truth**: a single backgrou
 
 | Package | Role |
 |---|---|
-| `packages/sdk` | `@adler/sdk` — shared types, Storage interface, IPC protocol, typed client |
-| `packages/daemon` | `adlerd` — sole SQLite writer, owns agent processes, pushes events |
-| `packages/cli` | `adler` CLI binary — uses SDK client |
+| `packages/sdk` | `@adlr/sdk` — shared types, Storage interface, IPC protocol, typed client |
+| `packages/daemon` | `adlrd` — sole SQLite writer, owns agent processes, pushes events |
+| `packages/cli` | `adlr` CLI binary — uses SDK client |
 | `packages/tui` | Ink dashboard — uses SDK client |
-| `packages/plugins/opencode` | `@adler/opencode` — opencode agent definitions |
+| `packages/plugins/opencode` | `@adlr/opencode` — opencode agent definitions |
 
 The `sdk` package is the foundation everything else builds on. It has no runtime dependencies beyond Bun built-ins. `daemon` and plugins import types and interfaces from it. `cli` and `tui` import the client.
 
@@ -178,7 +178,7 @@ Arbitrary data attached to a session. The goal is a context item.
 
 ### Storage Interface
 
-The daemon accesses all four tables exclusively through a `Storage` interface defined in `@adler/sdk`. SQLite is the first implementation. Swapping the backend requires only re-implementing this interface.
+The daemon accesses all four tables exclusively through a `Storage` interface defined in `@adlr/sdk`. SQLite is the first implementation. Swapping the backend requires only re-implementing this interface.
 
 ```ts
 interface Storage {
@@ -212,11 +212,11 @@ interface Storage {
 
 ### Lifecycle
 
-- **Socket:** `~/.local/share/adler/adler.sock`
-- **Database:** `~/.local/share/adler/adler.db`
-- **PID file:** `~/.local/share/adler/adler.pid`
+- **Socket:** `~/.local/share/adlr/adlr.sock`
+- **Database:** `~/.local/share/adlr/adlr.db`
+- **PID file:** `~/.local/share/adlr/adlr.pid`
 - **Auto-start:** The CLI attempts to connect to the socket. If the connection is refused, it spawns the daemon as a detached Bun process (`detached: true`, `stdio: "ignore"`), then polls the socket at 100ms intervals with a 5-second timeout.
-- **Shutdown:** Graceful on `SIGTERM`/`SIGINT` — waits for running agent processes to finish. Also shuts down after 10 minutes of inactivity (no connected clients, no running agents). Manual: `adler daemon stop`.
+- **Shutdown:** Graceful on `SIGTERM`/`SIGINT` — waits for running agent processes to finish. Also shuts down after 10 minutes of inactivity (no connected clients, no running agents). Manual: `adlr daemon stop`.
 
 The daemon is a single global process that manages all sessions across all projects.
 
@@ -256,11 +256,11 @@ The TUI sends a `subscribe` command and receives a full snapshot followed by inc
 2. Daemon spawns the agent command using `Bun.spawn()` with a **PTY** (pseudo-terminal), so agents that are TUIs themselves render correctly.
 3. Agent process environment receives:
    ```
-   ADLER_SESSION=<session.id>
-   ADLER_SPAN_ID=<span.id>
-   ADLER_SOCKET=~/.local/share/adler/adler.sock
-   ADLER_AGENT_PROMPT=<prompt>
-   ADLER_CONTEXT=<JSON array of context_items>
+   ADLR_SESSION=<session.id>
+   ADLR_SPAN_ID=<span.id>
+   ADLR_SOCKET=~/.local/share/adlr/adlr.sock
+   ADLR_AGENT_PROMPT=<prompt>
+   ADLR_CONTEXT=<JSON array of context_items>
    ```
 4. Daemon streams PTY output to all clients currently attached to that span via the `attach` channel (see §4). PTY output is **not** written to the `events` table.
 5. **Process completion** depends on the agent's `interactive` flag:
@@ -272,51 +272,51 @@ The TUI sends a `subscribe` command and receives a full snapshot followed by inc
 
 Span context flows through environment variables — the same pattern as W3C Trace Context over HTTP headers, applied to subprocesses.
 
-When an agent (or any subprocess) calls `adler agent run`, the CLI inherits `ADLER_SPAN_ID` from its environment and passes it as `parent_span_id` in the socket command. The daemon sets this as the new span's `parent_id`. Propagation works at any nesting depth automatically — no agent code changes needed.
+When an agent (or any subprocess) calls `adlr agent run`, the CLI inherits `ADLR_SPAN_ID` from its environment and passes it as `parent_span_id` in the socket command. The daemon sets this as the new span's `parent_id`. Propagation works at any nesting depth automatically — no agent code changes needed.
 
 ---
 
-## 5. SDK (`@adler/sdk`)
+## 5. SDK (`@adlr/sdk`)
 
 The SDK is the single interface between consumers (CLI, TUI, future web UI) and the daemon. It wraps the Unix socket connection, handles auto-start, and exposes typed async methods.
 
 ```ts
-import { createClient } from "@adler/sdk"
+import { createClient } from "@adlr/sdk"
 
-const adler = createClient()  // auto-starts daemon if not running
+const adlr = createClient()  // auto-starts daemon if not running
 
-// Environment helpers — reads ADLER_SESSION, ADLER_SPAN_ID, ADLER_SOCKET
-const { sessionId, spanId, socketPath } = adler.env()
+// Environment helpers — reads ADLR_SESSION, ADLR_SPAN_ID, ADLR_SOCKET
+const { sessionId, spanId, socketPath } = adlr.env()
 
 // Sessions
-const session = await adler.session.create()
-await adler.session.list()
+const session = await adlr.session.create()
+await adlr.session.list()
 
 // Agents
-const span = await adler.agent.run({ agentType: "opencode:build", prompt: "...", name: "git-master" })
-await adler.agent.wait({ name: "git-master" })
-const status = await adler.agent.status({ name: "git-master" })
-const agents = await adler.agent.list()
+const span = await adlr.agent.run({ agentType: "opencode:build", prompt: "...", name: "git-master" })
+await adlr.agent.wait({ name: "git-master" })
+const status = await adlr.agent.status({ name: "git-master" })
+const agents = await adlr.agent.list()
 
 // Attach to a running agent's raw PTY stream (independent of the subscribe event stream)
-await adler.agent.attach("git-master")   // accepts name or span id; streams raw PTY to stdout
+await adlr.agent.attach("git-master")   // accepts name or span id; streams raw PTY to stdout
 
 // Spans
-await adler.span.update(spanId, { data: { opencode_session_id: "abc" } }, { merge: true })
+await adlr.span.update(spanId, { data: { opencode_session_id: "abc" } }, { merge: true })
 
 // Context
-await adler.context.add({ type: "url", label: "docs", value: { url: "https://..." } })
-const items = await adler.context.list()
+await adlr.context.add({ type: "url", label: "docs", value: { url: "https://..." } })
+const items = await adlr.context.list()
 
 // Structured event stream (state updates, TUI)
-adler.subscribe(sessionId, (event) => { /* handle push event */ })
+adlr.subscribe(sessionId, (event) => { /* handle push event */ })
 
 // SDK-level sugar — filtered aliases, no extra storage
-adler.on("agent.started", (event) => { /* span.started where kind === "agent" */ })
-adler.on("agent.finished", (event) => { /* span.finished where kind === "agent" */ })
+adlr.on("agent.started", (event) => { /* span.started where kind === "agent" */ })
+adlr.on("agent.finished", (event) => { /* span.finished where kind === "agent" */ })
 ```
 
-The SDK also exports all shared types (`Session`, `Span`, `Event`, `ContextItem`, `AdlerConfig`) and the `Storage` interface.
+The SDK also exports all shared types (`Session`, `Span`, `Event`, `ContextItem`, `AdlrConfig`) and the `Storage` interface.
 
 ### Span client
 
@@ -340,26 +340,26 @@ interface SpanClient {
 
 Sessions are resolved in priority order:
 1. `--session <id>` flag
-2. `ADLER_SESSION` environment variable
-3. `.adler/.session` file in the current working directory (written by `adler new`)
+2. `ADLR_SESSION` environment variable
+3. `.adlr/.session` file in the current working directory (written by `adlr new`)
 
 ### Commands
 
 | Command | Description |
 |---|---|
-| `adler` | Open TUI dashboard for the current session |
-| `adler new [--goal "..."]` | Create a new session; optionally adds a `goal` context item; writes session id to `.adler/.session` |
-| `adler agent run --agent <type> [--name <name>] <prompt>` | Command daemon to spawn agent; prints span id |
-| `adler agent wait [--name <name>]` | Block until agent span is `done` or `failed` |
-| `adler agent status [--name <name>]` | Print current span status |
-| `adler agent list` | List all agent spans for current session |
-| `adler agent read [--name <name>]` | For a **completed** agent: retrieve and stream stored output from `span.data.output`. For a **running** agent: attach to live PTY stream (same as pressing `enter` in the TUI). |
-| `adler context add --type <type> [--label <l>] [--description <d>] <value>` | Add context item |
-| `adler context list` | List all context items for current session |
-| `adler context get [--type <type>] [--label <label>]` | Get filtered context items (used in workflow prompts) |
-| `adler session list` | List all sessions |
-| `adler init` | Scaffold `.adler/adler.ts` config in current project |
-| `adler daemon stop` | Graceful daemon shutdown |
+| `adlr` | Open TUI dashboard for the current session |
+| `adlr new [--goal "..."]` | Create a new session; optionally adds a `goal` context item; writes session id to `.adlr/.session` |
+| `adlr agent run --agent <type> [--name <name>] <prompt>` | Command daemon to spawn agent; prints span id |
+| `adlr agent wait [--name <name>]` | Block until agent span is `done` or `failed` |
+| `adlr agent status [--name <name>]` | Print current span status |
+| `adlr agent list` | List all agent spans for current session |
+| `adlr agent read [--name <name>]` | For a **completed** agent: retrieve and stream stored output from `span.data.output`. For a **running** agent: attach to live PTY stream (same as pressing `enter` in the TUI). |
+| `adlr context add --type <type> [--label <l>] [--description <d>] <value>` | Add context item |
+| `adlr context list` | List all context items for current session |
+| `adlr context get [--type <type>] [--label <label>]` | Get filtered context items (used in workflow prompts) |
+| `adlr session list` | List all sessions |
+| `adlr init` | Scaffold `.adlr/adlr.ts` config in current project |
+| `adlr daemon stop` | Graceful daemon shutdown |
 
 ---
 
@@ -372,11 +372,11 @@ Sessions are resolved in priority order:
 
 ### Technology
 
-Built with **Ink** (React for terminals). The `adler` CLI with no arguments mounts the Ink app.
+Built with **Ink** (React for terminals). The `adlr` CLI with no arguments mounts the Ink app.
 
 ### Data Flow
 
-1. TUI creates an SDK client and calls `adler.subscribe(sessionId, handler)`.
+1. TUI creates an SDK client and calls `adlr.subscribe(sessionId, handler)`.
 2. Daemon sends a full snapshot immediately on subscribe.
 3. TUI initialises React state from the snapshot.
 4. All subsequent push events are applied as incremental state updates.
@@ -390,7 +390,7 @@ Five tabs. Navigation via `tab` / `shift+tab` or number keys `1`–`5`. A persis
 
 #### Header (always visible)
 ```
-adler · session: abc123 · active · ~/git/myapp
+adlr · session: abc123 · active · ~/git/myapp
 [1: Overview] [2: Context] [3: Agents] [4: Traces] [5: Logs]
 ```
 
@@ -418,7 +418,7 @@ Hotkeys: `↑↓` navigate.
 
 Flat list of all agent spans for the current session. Each row: status indicator, agent type, prompt preview (truncated), duration / exit code. The selected item is highlighted.
 
-- `enter` on a **running** agent: suspend Ink, attach to live PTY stream via `adler.agent.attach()`. `ctrl+c` returns to TUI.
+- `enter` on a **running** agent: suspend Ink, attach to live PTY stream via `adlr.agent.attach()`. `ctrl+c` returns to TUI.
 - `enter` on a **completed/failed** agent: suspend Ink, retrieve and stream stored output from `span.data.output`. Any key returns.
 - `o`: invoke the configurable `agent.attach` hook (e.g. `tmux new-window ...`). No-op if not configured.
 
@@ -454,19 +454,19 @@ Hotkeys: `i`/`w`/`e` filter info/warn/error, `f` toggle auto-scroll.
 
 ## 8. Configuration
 
-Adler is configured via `adler.ts` TypeScript files.
+Adlr is configured via `adlr.ts` TypeScript files.
 
-- **Global:** `~/.config/adler/adler.ts`
-- **Project:** `.adler/adler.ts`
+- **Global:** `~/.config/adlr/adlr.ts`
+- **Project:** `.adlr/adlr.ts`
 
 Project config is merged over global config. Both are optional.
 
 Relevant Phase 1+2 config:
 
 ```ts
-import type { AdlerConfig } from "@adler/sdk"
+import type { AdlrConfig } from "@adlr/sdk"
 
-const config: AdlerConfig = {
+const config: AdlrConfig = {
   agent: {
     agents: {
       opencode: {
@@ -515,7 +515,7 @@ const config: AdlerConfig = {
     },
 
     // Wraps the attach command for external display (e.g. in a tmux window).
-    // readCmd: `adler agent read --name <id>` — direct PTY stream
+    // readCmd: `adlr agent read --name <id>` — direct PTY stream
     // openCmd: result of the agent's open hook, if defined; undefined otherwise
     attach: ({ agentId, readCmd, openCmd }) => `tmux new-window "${openCmd ?? readCmd}"`,
   },
@@ -549,23 +549,23 @@ The `agent.attach` hook is invoked when the user presses `o` on an agent in the 
 
 ### Phase 3 — Workflows, Hooks, Plugins
 
-**Workflow engine:** Reusable multi-step workflows defined in YAML or inline in `adler.ts`. Each step is a prompt that runs an agent. Steps can reference session context via shell interpolation (`$ adler context get --label docs`). Workflows are triggered via `adler run <workflow>` or from the TUI. Workflow and step spans are created automatically — the data model already accommodates them with no schema change.
+**Workflow engine:** Reusable multi-step workflows defined in YAML or inline in `adlr.ts`. Each step is a prompt that runs an agent. Steps can reference session context via shell interpolation (`$ adlr context get --label docs`). Workflows are triggered via `adlr run <workflow>` or from the TUI. Workflow and step spans are created automatically — the data model already accommodates them with no schema change.
 
-**Hooks system:** Before/after hooks for any adler lifecycle trigger (`agent:start`, `agent:finish`, `session:create`, etc.). Hook triggers use colon-separated naming and fire at lifecycle points — distinct from the dot-separated event log. Hooks can be shell commands or full TypeScript functions with access to the adler SDK. Hook runs appear as `kind = "hook"` spans in the trace.
+**Hooks system:** Before/after hooks for any adlr lifecycle trigger (`agent:start`, `agent:finish`, `session:create`, etc.). Hook triggers use colon-separated naming and fire at lifecycle points — distinct from the dot-separated event log. Hooks can be shell commands or full TypeScript functions with access to the adlr SDK. Hook runs appear as `kind = "hook"` spans in the trace.
 
-**Plugin system:** npm packages that export an `AdlerConfig` object. Plugins contribute pre-built agent definitions, hooks, and workflows. Loaded and merged before local config. First-party plugin: `@adler/opencode`.
+**Plugin system:** npm packages that export an `AdlrConfig` object. Plugins contribute pre-built agent definitions, hooks, and workflows. Loaded and merged before local config. First-party plugin: `@adlr/opencode`.
 
-### Phase 4 — adler Assistant
+### Phase 4 — adlr Assistant
 
 An AI agent with full awareness of the current session. Receives the complete session state — spans, events, context, workflow status — as context.
 
 ```bash
-adler assistant "what has been implemented so far?"
-adler assistant --auto "finish the current workflow"
+adlr assistant "what has been implemented so far?"
+adlr assistant --auto "finish the current workflow"
 ```
 
 In `--auto` mode the assistant reads the session, decides what to do next, runs agents, and iterates until the workflow completes or a human decision is required. The assistant appears as a span in the trace like any other agent.
 
 ### Future — Web UI and Remote Sessions
 
-A browser-based dashboard built on `@adler/sdk`. Because the SDK abstracts all daemon communication, the web UI is another SDK consumer — no daemon changes needed. Remote daemon support (TCP socket + auth) would allow the web UI to connect to a daemon running on a different machine.
+A browser-based dashboard built on `@adlr/sdk`. Because the SDK abstracts all daemon communication, the web UI is another SDK consumer — no daemon changes needed. Remote daemon support (TCP socket + auth) would allow the web UI to connect to a daemon running on a different machine.

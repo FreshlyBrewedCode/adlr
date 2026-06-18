@@ -1,10 +1,10 @@
 {
-	"name": "adlerd",
+	"name": "adlrd",
 	"version": "0.1.0",
 	"type": "module",
 	"main": "src/index.ts",
 	"bin": {
-		"adlerd": "src/index.ts"
+		"adlrd": "src/index.ts"
 	},
 	"scripts": {
 		"test": "bun test",
@@ -13,7 +13,7 @@
 		"typecheck": "tsgo --noEmit"
 	},
 	"dependencies": {
-		"@adler/sdk": "workspace:*"
+		"@adlr/sdk": "workspace:*"
 	},
 	"devDependencies": {
 		"@types/node": "^20.0.0",

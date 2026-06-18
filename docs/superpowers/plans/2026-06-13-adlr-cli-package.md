@@ -2,11 +2,11 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Build the `adler` CLI binary — thin wrapper around `@adler/sdk` that resolves sessions, auto-starts the daemon, and exposes all commands.
+**Goal:** Build the `adlr` CLI binary — thin wrapper around `@adlr/sdk` that resolves sessions, auto-starts the daemon, and exposes all commands.
 
 **Architecture:** Single-file entry point with subcommand routing. Each command creates an SDK client, resolves the session, and calls the appropriate SDK method. The CLI with no arguments launches the TUI.
 
-**Tech Stack:** Bun, `@adler/sdk`, `arg` for CLI parsing (or minimal manual parsing)
+**Tech Stack:** Bun, `@adlr/sdk`, `arg` for CLI parsing (or minimal manual parsing)
 
 ---
 
@@ -41,18 +41,18 @@ packages/cli/
 
 ```json
 {
-  "name": "adler-cli",
+  "name": "adlr-cli",
   "version": "0.1.0",
   "type": "module",
   "main": "src/index.ts",
   "bin": {
-    "adler": "src/index.ts"
+    "adlr": "src/index.ts"
   },
   "scripts": {
     "test": "bun test"
   },
   "dependencies": {
-    "@adler/sdk": "workspace:*"
+    "@adlr/sdk": "workspace:*"
   }
 }
 ```
@@ -92,8 +92,8 @@ import { join } from "path"
 
 export function resolveSessionId(args: { session?: string }): string | undefined {
   if (args.session) return args.session
-  if (process.env.ADLER_SESSION) return process.env.ADLER_SESSION
-  const localFile = join(process.cwd(), ".adler", ".session")
+  if (process.env.ADLR_SESSION) return process.env.ADLR_SESSION
+  const localFile = join(process.cwd(), ".adlr", ".session")
   if (existsSync(localFile)) {
     return readFileSync(localFile, "utf-8").trim()
   }
@@ -120,7 +120,7 @@ git commit -m "feat(cli): add session resolution"
 ```ts
 import { connect } from "net"
 import { spawn } from "child_process"
-import { SOCKET_PATH, ADLER_DIR } from "@adler/sdk"
+import { SOCKET_PATH, ADLR_DIR } from "@adlr/sdk"
 import { existsSync } from "fs"
 
 export async function ensureDaemon(): Promise<void> {
@@ -137,7 +137,7 @@ export async function ensureDaemon(): Promise<void> {
     }
   }
 
-  const daemonPath = require.resolve("adlerd/src/index.ts")
+  const daemonPath = require.resolve("adlrd/src/index.ts")
   const proc = spawn("bun", [daemonPath], {
     detached: true,
     stdio: "ignore",
@@ -174,7 +174,7 @@ git commit -m "feat(cli): add daemon auto-start"
 
 ## Task 4: Commands
 
-### 4a: `adler new` (`commands/new.ts`)
+### 4a: `adlr new` (`commands/new.ts`)
 
 **Files:**
 - Create: `packages/cli/src/commands/new.ts`
@@ -182,7 +182,7 @@ git commit -m "feat(cli): add daemon auto-start"
 - [ ] **Step 1: Write new command**
 
 ```ts
-import { createClient } from "@adler/sdk"
+import { createClient } from "@adlr/sdk"
 import { writeFileSync, mkdirSync } from "fs"
 import { join } from "path"
 import { ensureDaemon } from "../auto-start"
@@ -202,7 +202,7 @@ export async function run(args: { goal?: string }): Promise<void> {
     })
   }
 
-  const dir = join(process.cwd(), ".adler")
+  const dir = join(process.cwd(), ".adlr")
   mkdirSync(dir, { recursive: true })
   writeFileSync(join(dir, ".session"), session.id, "utf-8")
 
@@ -211,7 +211,7 @@ export async function run(args: { goal?: string }): Promise<void> {
 }
 ```
 
-### 4b: `adler agent` (`commands/agent.ts`)
+### 4b: `adlr agent` (`commands/agent.ts`)
 
 **Files:**
 - Create: `packages/cli/src/commands/agent.ts`
@@ -219,7 +219,7 @@ export async function run(args: { goal?: string }): Promise<void> {
 - [ ] **Step 2: Write agent command**
 
 ```ts
-import { createClient } from "@adler/sdk"
+import { createClient } from "@adlr/sdk"
 import { ensureDaemon } from "../auto-start"
 import { resolveSessionId } from "../resolve-session"
 
@@ -228,7 +228,7 @@ export async function run(args: string[], subcommand: string): Promise<void> {
   const client = createClient()
   const sessionId = resolveSessionId({})
   if (!sessionId) {
-    console.error("No active session. Run `adler new` first.")
+    console.error("No active session. Run `adlr new` first.")
     process.exit(1)
   }
 
@@ -238,7 +238,7 @@ export async function run(args: string[], subcommand: string): Promise<void> {
     case "run": {
       const prompt = flags._?.join(" ") ?? ""
       if (!prompt) {
-        console.error("Usage: adler agent run --agent <type> [--name <name>] <prompt>")
+        console.error("Usage: adlr agent run --agent <type> [--name <name>] <prompt>")
         process.exit(1)
       }
       const span = await client.agent.run({
@@ -312,7 +312,7 @@ function parseFlags(args: string[]): Record<string, string> & { _?: string[] } {
 }
 ```
 
-### 4c: `adler context` (`commands/context.ts`)
+### 4c: `adlr context` (`commands/context.ts`)
 
 **Files:**
 - Create: `packages/cli/src/commands/context.ts`
@@ -320,7 +320,7 @@ function parseFlags(args: string[]): Record<string, string> & { _?: string[] } {
 - [ ] **Step 3: Write context command**
 
 ```ts
-import { createClient } from "@adler/sdk"
+import { createClient } from "@adlr/sdk"
 import { ensureDaemon } from "../auto-start"
 import { resolveSessionId } from "../resolve-session"
 
@@ -329,7 +329,7 @@ export async function run(args: string[], subcommand: string): Promise<void> {
   const client = createClient()
   const sessionId = resolveSessionId({})
   if (!sessionId) {
-    console.error("No active session. Run `adler new` first.")
+    console.error("No active session. Run `adlr new` first.")
     process.exit(1)
   }
 
@@ -402,7 +402,7 @@ function parseFlags(args: string[]): Record<string, string> & { _?: string[] } {
 }
 ```
 
-### 4d: `adler session` (`commands/session.ts`)
+### 4d: `adlr session` (`commands/session.ts`)
 
 **Files:**
 - Create: `packages/cli/src/commands/session.ts`
@@ -410,7 +410,7 @@ function parseFlags(args: string[]): Record<string, string> & { _?: string[] } {
 - [ ] **Step 4: Write session command**
 
 ```ts
-import { createClient } from "@adler/sdk"
+import { createClient } from "@adlr/sdk"
 import { ensureDaemon } from "../auto-start"
 
 export async function run(subcommand: string): Promise<void> {
@@ -434,7 +434,7 @@ export async function run(subcommand: string): Promise<void> {
 }
 ```
 
-### 4e: `adler init` (`commands/init.ts`)
+### 4e: `adlr init` (`commands/init.ts`)
 
 **Files:**
 - Create: `packages/cli/src/commands/init.ts`
@@ -445,9 +445,9 @@ export async function run(subcommand: string): Promise<void> {
 import { writeFileSync, mkdirSync, existsSync } from "fs"
 import { join } from "path"
 
-const CONFIG_TEMPLATE = `import type { AdlerConfig } from "@adler/sdk"
+const CONFIG_TEMPLATE = `import type { AdlrConfig } from "@adlr/sdk"
 
-const config: AdlerConfig = {
+const config: AdlrConfig = {
   agent: {
     agents: {
       // Example: echo: ({ prompt }) => \`echo "\${prompt}"\`,
@@ -459,11 +459,11 @@ export default config
 `
 
 export async function run(): Promise<void> {
-  const dir = join(process.cwd(), ".adler")
+  const dir = join(process.cwd(), ".adlr")
   mkdirSync(dir, { recursive: true })
-  const configPath = join(dir, "adler.ts")
+  const configPath = join(dir, "adlr.ts")
   if (existsSync(configPath)) {
-    console.log("adler.ts already exists")
+    console.log("adlr.ts already exists")
     return
   }
   writeFileSync(configPath, CONFIG_TEMPLATE, "utf-8")
@@ -471,7 +471,7 @@ export async function run(): Promise<void> {
 }
 ```
 
-### 4f: `adler daemon` (`commands/daemon.ts`)
+### 4f: `adlr daemon` (`commands/daemon.ts`)
 
 **Files:**
 - Create: `packages/cli/src/commands/daemon.ts`
@@ -480,7 +480,7 @@ export async function run(): Promise<void> {
 
 ```ts
 import { connect } from "net"
-import { SOCKET_PATH, PID_FILE } from "@adler/sdk"
+import { SOCKET_PATH, PID_FILE } from "@adlr/sdk"
 import { readFileSync, existsSync } from "fs"
 
 export async function run(subcommand: string): Promise<void> {
@@ -531,7 +531,7 @@ async function main() {
   if (args.length === 0) {
     // Launch TUI
     await ensureDaemon()
-    const { runTui } = await import("@adler/tui")
+    const { runTui } = await import("@adlr/tui")
     await runTui()
     return
   }
@@ -623,19 +623,19 @@ import { resolveSessionId } from "../src/resolve-session"
 
 describe("CLI", () => {
   test("resolveSessionId returns env var", () => {
-    const old = process.env.ADLER_SESSION
-    process.env.ADLER_SESSION = "env-sess"
+    const old = process.env.ADLR_SESSION
+    process.env.ADLR_SESSION = "env-sess"
     const id = resolveSessionId({})
     expect(id).toBe("env-sess")
-    process.env.ADLER_SESSION = old
+    process.env.ADLR_SESSION = old
   })
 
   test("resolveSessionId prefers --session flag", () => {
-    const old = process.env.ADLER_SESSION
-    process.env.ADLER_SESSION = "env-sess"
+    const old = process.env.ADLR_SESSION
+    process.env.ADLR_SESSION = "env-sess"
     const id = resolveSessionId({ session: "flag-sess" })
     expect(id).toBe("flag-sess")
-    process.env.ADLER_SESSION = old
+    process.env.ADLR_SESSION = old
   })
 })
 ```
@@ -658,6 +658,6 @@ git commit -m "feat(cli): add CLI tests"
 
 1. **Spec coverage:** §6 CLI commands (all commands listed), §6 Session Resolution (flag, env, file — all three), §4 Daemon auto-start (connect → spawn → poll), §4 Span context propagation (parentSpanId from env) — all covered.
 2. **No placeholders:** All commands have complete implementations. No TODOs.
-3. **Type consistency:** All types from `@adler/sdk`. `resolveSessionId` matches the priority order exactly.
+3. **Type consistency:** All types from `@adlr/sdk`. `resolveSessionId` matches the priority order exactly.
 
 Plan complete.

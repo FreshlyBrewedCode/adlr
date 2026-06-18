@@ -2,11 +2,11 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Build the Ink-based TUI dashboard for adler — five tabs, persistent footer, hotkey dialog, and live push-driven updates via SDK subscription.
+**Goal:** Build the Ink-based TUI dashboard for adlr — five tabs, persistent footer, hotkey dialog, and live push-driven updates via SDK subscription.
 
 **Architecture:** React app rendered with Ink. Single top-level `<App>` component manages SDK subscription and global state. All tabs are pure components receiving state via props. No polling — all updates are pushed from the daemon.
 
-**Tech Stack:** Bun, Ink, React, `@adler/sdk`
+**Tech Stack:** Bun, Ink, React, `@adlr/sdk`
 
 ---
 
@@ -45,7 +45,7 @@ packages/tui/
 
 ```json
 {
-  "name": "@adler/tui",
+  "name": "@adlr/tui",
   "version": "0.1.0",
   "type": "module",
   "main": "src/index.ts",
@@ -56,7 +56,7 @@ packages/tui/
     "test": "bun test"
   },
   "dependencies": {
-    "@adler/sdk": "workspace:*",
+    "@adlr/sdk": "workspace:*",
     "ink": "^4.4.0",
     "react": "^18.3.0"
   },
@@ -99,7 +99,7 @@ git commit -m "feat(tui): add package scaffolding"
 - [ ] **Step 1: Write types**
 
 ```ts
-import type { Session, Span, Event, ContextItem } from "@adler/sdk"
+import type { Session, Span, Event, ContextItem } from "@adlr/sdk"
 
 export interface AppState {
   session: Session | null
@@ -199,14 +199,14 @@ git commit -m "feat(tui): add app state types and reducer"
 
 ```tsx
 import { Box, Text } from "ink"
-import type { Session } from "@adler/sdk"
+import type { Session } from "@adlr/sdk"
 
 export function Header({ session, activeTab }: { session: Session | null; activeTab: number }) {
   const tabs = ["Overview", "Context", "Agents", "Traces", "Logs"]
   return (
     <Box flexDirection="column">
       <Box>
-        <Text bold>adler</Text>
+        <Text bold>adlr</Text>
         <Text> · session: {session?.id.slice(0, 6)}</Text>
         <Text> · {session?.status}</Text>
         <Text> · {session?.working_dir}</Text>
@@ -339,7 +339,7 @@ git commit -m "feat(tui): add HotkeyDialog component"
 
 ```tsx
 import { Box, Text } from "ink"
-import type { Session, Span, ContextItem } from "@adler/sdk"
+import type { Session, Span, ContextItem } from "@adlr/sdk"
 
 export function OverviewTab({ session, spans, context }: { session: Session | null; spans: Span[]; context: ContextItem[] }) {
   const recentAgents = spans
@@ -397,7 +397,7 @@ git commit -m "feat(tui): add OverviewTab component"
 
 ```tsx
 import { Box, Text } from "ink"
-import type { ContextItem } from "@adler/sdk"
+import type { ContextItem } from "@adlr/sdk"
 
 const TYPE_COLORS: Record<string, string> = {
   goal: "green",
@@ -458,7 +458,7 @@ git commit -m "feat(tui): add ContextTab component"
 
 ```tsx
 import { Box, Text } from "ink"
-import type { Span } from "@adler/sdk"
+import type { Span } from "@adlr/sdk"
 
 function formatDuration(started: number, finished: number | null): string {
   const ms = (finished ?? Date.now()) - started
@@ -511,7 +511,7 @@ git commit -m "feat(tui): add AgentsTab component"
 
 ```tsx
 import { Box, Text } from "ink"
-import type { Span } from "@adler/sdk"
+import type { Span } from "@adlr/sdk"
 
 function buildTree(spans: Span[]): Span[] {
   // Return root-level spans (null parent_id)
@@ -604,7 +604,7 @@ git commit -m "feat(tui): add TracesTab component"
 
 ```tsx
 import { Box, Text } from "ink"
-import type { Event } from "@adler/sdk"
+import type { Event } from "@adlr/sdk"
 
 function levelFromType(type: string): "info" | "warn" | "error" | "other" {
   if (type.startsWith("log.info")) return "info"
@@ -675,7 +675,7 @@ git commit -m "feat(tui): add LogsTab component"
 ```tsx
 import { useEffect, useReducer, useCallback } from "react"
 import { Box, useInput, useApp } from "ink"
-import { createClient } from "@adler/sdk"
+import { createClient } from "@adlr/sdk"
 import { initialState, reducer } from "./types"
 import { Header } from "./components/Header"
 import { Footer } from "./components/Footer"
@@ -837,13 +837,13 @@ git commit -m "feat(tui): add App component with input handling"
 import { render } from "ink"
 import React from "react"
 import { App } from "./app"
-import { createClient } from "@adler/sdk"
+import { createClient } from "@adlr/sdk"
 import { readFileSync, existsSync } from "fs"
 import { join } from "path"
 
 function resolveSessionId(): string | undefined {
-  if (process.env.ADLER_SESSION) return process.env.ADLER_SESSION
-  const localFile = join(process.cwd(), ".adler", ".session")
+  if (process.env.ADLR_SESSION) return process.env.ADLR_SESSION
+  const localFile = join(process.cwd(), ".adlr", ".session")
   if (existsSync(localFile)) {
     return readFileSync(localFile, "utf-8").trim()
   }
@@ -854,7 +854,7 @@ export async function runTui(): Promise<void> {
   const client = createClient()
   const sessionId = resolveSessionId()
   if (!sessionId) {
-    console.error("No active session. Run `adler new` first.")
+    console.error("No active session. Run `adlr new` first.")
     process.exit(1)
   }
   const { waitUntilExit } = render(React.createElement(App, { sessionId }))
@@ -875,7 +875,7 @@ git commit -m "feat(tui): add entry point"
 ## Self-Review
 
 1. **Spec coverage:** §7 TUI (all five tabs, header, footer, ? dialog), §7 Data Flow (subscribe → snapshot → push events), §7 Hotkeys (all global and tab-specific), §7 Agents tab (attach, read output, external), §7 Logs tab (filter, auto-scroll), §7 Traces tab (tree, expand/collapse) — all covered.
-2. **No placeholders:** No TODOs. The `TODO: attach or read output` in the App component is a small inline note; the actual attach functionality is a Phase 1+2 feature but the key handler is wired. The actual `adler.agent.attach` call would require suspending Ink which is a complex terminal operation — the comment is sufficient for the plan.
+2. **No placeholders:** No TODOs. The `TODO: attach or read output` in the App component is a small inline note; the actual attach functionality is a Phase 1+2 feature but the key handler is wired. The actual `adlr.agent.attach` call would require suspending Ink which is a complex terminal operation — the comment is sufficient for the plan.
 3. **Type consistency:** All state types match the SDK types. Event types match the spec. `activeTab` is 0-indexed matching the 1-5 keys.
 
 Plan complete.

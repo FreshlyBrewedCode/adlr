@@ -1,4 +1,4 @@
-import type { Session } from "@adler/sdk";
+import type { Session } from "@adlr/sdk";
 import { Theme } from "../theme";
 
 export function Header({ session }: { session: Session | null }) {
@@ -9,7 +9,7 @@ export function Header({ session }: { session: Session | null }) {
 	return (
 		<box style={{ height: 1 }}>
 			<text>
-				<b>adler</b>
+				<b>adlr</b>
 				<span fg="#666"> · session: </span>
 				<span fg={Theme.primary}>{session?.id.slice(0, 6)}</span>
 				<span fg="#666"> · </span>
