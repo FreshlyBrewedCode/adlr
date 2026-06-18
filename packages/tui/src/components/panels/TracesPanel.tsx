@@ -1,6 +1,5 @@
 import { useState, useMemo } from "react"
-import { Box } from "ink"
-import { useInput } from "ink"
+import { useBindings } from "@opentui/keymap/react"
 import type { Span } from "@adler/sdk"
 import type { PanelProps } from "../../core/types"
 import { TreeNode } from "../TreeNode"
@@ -43,18 +42,26 @@ export function TracesPanel({ state, width, height }: PanelProps) {
   const [selectedIndex, setSelectedIndex] = useState(0)
   const flatList = useMemo(() => flattenSpans(state.spans, selectedIndex), [state.spans, selectedIndex])
 
-  useInput((input, key) => {
-    if (key.upArrow) {
-      setSelectedIndex(i => Math.max(0, i - 1))
-    } else if (key.downArrow) {
-      setSelectedIndex(i => Math.max(0, Math.min(flatList.length - 1, i + 1)))
-    } else if (key.return) {
-      // TODO: toggle expansion
-    }
-  })
+  useBindings(
+    () => ({
+      commands: [
+        { name: "traces:up", run() { setSelectedIndex(i => Math.max(0, i - 1)) } },
+        { name: "traces:down", run() { setSelectedIndex(i => Math.max(0, Math.min(flatList.length - 1, i + 1))) } },
+        { name: "traces:expand", run() {
+          // TODO: toggle expansion
+        }},
+      ],
+      bindings: [
+        { key: "up", cmd: "traces:up" },
+        { key: "down", cmd: "traces:down" },
+        { key: "return", cmd: "traces:expand" },
+      ],
+    }),
+    [flatList.length],
+  )
 
   return (
-    <Box flexDirection="column" width={width} height={height}>
+    <box style={{ flexDirection: "column", width, height }}>
       <SelectList
         items={flatList}
         selectedIndex={selectedIndex}
@@ -62,6 +69,6 @@ export function TracesPanel({ state, width, height }: PanelProps) {
           <TreeNode span={span} depth={depth} isSelected={isSelected} />
         )}
       />
-    </Box>
+    </box>
   )
 }

@@ -1,4 +1,3 @@
-import { Box, Text } from "ink"
 import { Theme } from "../theme"
 
 export function PanelChrome({
@@ -15,16 +14,19 @@ export function PanelChrome({
   children: React.ReactNode
 }) {
   return (
-    <Box
-      flexDirection="column"
-      width={width}
-      height={height}
-      borderStyle="round"
-      borderColor={isFocused ? Theme.panel.activeBorder : Theme.panel.border}
-      padding={1}
+    <box
+      style={{
+        border: true,
+        borderStyle: "rounded",
+        borderColor: isFocused ? Theme.panel.activeBorder : Theme.panel.border,
+        flexDirection: "column",
+        width,
+        height,
+        padding: 1,
+      }}
+      title={title}
     >
-      <Text bold color={Theme.panel.title}>{title}</Text>
       {children}
-    </Box>
+    </box>
   )
 }

@@ -1,22 +1,11 @@
-import { render } from "ink"
 import React from "react"
-import { App } from "./app"
+import { createCliRenderer } from "@opentui/core"
+import { createRoot } from "@opentui/react"
+import { createAdlerKeymap } from "./keymap.ts"
+import { loadConfig } from "./loadConfig.ts"
+import App from "./app.tsx"
 import { readFileSync, existsSync } from "fs"
 import { join } from "path"
-import { loadConfig } from "./loadConfig"
-
-const ENTER_ALT_SCREEN = "\x1b[?1049h"
-const LEAVE_ALT_SCREEN = "\x1b[?1049l"
-
-let altScreenSetup = false
-
-// exported for testing only
-export function _resetAltScreenForTesting(): void {
-  process.removeAllListeners("exit")
-  process.removeAllListeners("SIGINT")
-  process.removeAllListeners("SIGTERM")
-  altScreenSetup = false
-}
 
 function resolveSessionId(): string | undefined {
   if (process.env.ADLER_SESSION) return process.env.ADLER_SESSION
@@ -27,7 +16,7 @@ function resolveSessionId(): string | undefined {
   return undefined
 }
 
-export async function runTui(): Promise<void> {
+export async function runTui(): Promise<() => void> {
   const sessionId = resolveSessionId()
   if (!sessionId) {
     console.error("No active session. Run `adler new` first.")
@@ -35,27 +24,19 @@ export async function runTui(): Promise<void> {
   }
 
   const config = await loadConfig(process.cwd())
-  const layout = config.tui?.layout
 
-  process.stdout.write(ENTER_ALT_SCREEN)
+  const renderer = await createCliRenderer({
+    screenMode: "alternate-screen",
+    exitOnCtrlC: false,
+  })
 
-  if (!altScreenSetup) {
-    altScreenSetup = true
+  const keymap = createAdlerKeymap(renderer)
 
-    process.on("exit", () => {
-      process.stdout.write(LEAVE_ALT_SCREEN)
-    })
+  createRoot(renderer).render(
+    React.createElement(App, { sessionId, config, keymap }),
+  )
 
-    process.on("SIGINT", () => {
-      process.exit(0)
-    })
-
-    process.on("SIGTERM", () => {
-      process.exit(0)
-    })
+  return () => {
+    renderer.destroy()
   }
-
-  const { waitUntilExit } = render(React.createElement(App, { sessionId, layout }))
-  await waitUntilExit()
-  process.exit(0)
 }

@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react"
-import { Box, Text } from "ink"
-import { useInput } from "ink"
+import { useBindings } from "@opentui/keymap/react"
 import { createClient, DAEMON_SESSION_ID } from "@adler/sdk"
 import type { Event } from "@adler/sdk"
 import type { PanelProps } from "../../core/types"
@@ -67,38 +66,52 @@ export function LogsPanel({ state, width, height }: PanelProps) {
     }
   }, [events.length, autoScroll, logsView, filter])
 
-  useInput((input, key) => {
-    if (input === "d") {
-      setLogsView(v => v === "session" ? "daemon" : "session")
-      setSelectedIndex(0)
-    } else if (input === "i") {
-      setFilter("info")
-      setSelectedIndex(0)
-    } else if (input === "w") {
-      setFilter("warn")
-      setSelectedIndex(0)
-    } else if (input === "e") {
-      setFilter("error")
-      setSelectedIndex(0)
-    } else if (input === "f") {
-      setAutoScroll(a => !a)
-    } else if (key.upArrow) {
-      setSelectedIndex(i => Math.max(0, i - 1))
-    } else if (key.downArrow) {
-      setSelectedIndex(i => Math.max(0, Math.min(display.length - 1, i + 1)))
-    }
-  })
+  useBindings(
+    () => ({
+      commands: [
+        { name: "logs:toggle-source", run() {
+          setLogsView(v => v === "session" ? "daemon" : "session")
+          setSelectedIndex(0)
+        }},
+        { name: "logs:filter-info", run() {
+          setFilter("info")
+          setSelectedIndex(0)
+        }},
+        { name: "logs:filter-warn", run() {
+          setFilter("warn")
+          setSelectedIndex(0)
+        }},
+        { name: "logs:filter-error", run() {
+          setFilter("error")
+          setSelectedIndex(0)
+        }},
+        { name: "logs:toggle-scroll", run() { setAutoScroll(a => !a) } },
+        { name: "logs:up", run() { setSelectedIndex(i => Math.max(0, i - 1)) } },
+        { name: "logs:down", run() { setSelectedIndex(i => Math.max(0, Math.min(display.length - 1, i + 1))) } },
+      ],
+      bindings: [
+        { key: "d", cmd: "logs:toggle-source" },
+        { key: "i", cmd: "logs:filter-info" },
+        { key: "w", cmd: "logs:filter-warn" },
+        { key: "e", cmd: "logs:filter-error" },
+        { key: "f", cmd: "logs:toggle-scroll" },
+        { key: "up", cmd: "logs:up" },
+        { key: "down", cmd: "logs:down" },
+      ],
+    }),
+    [display.length],
+  )
 
   return (
-    <Box flexDirection="column" width={width} height={height}>
-      <Box height={1} marginBottom={1}>
-        <Text bold>View: </Text>
-        <Text color={logsView === "session" ? Theme.primary : Theme.info}>
+    <box style={{ flexDirection: "column", width, height }}>
+      <box style={{ height: 1, marginBottom: 1 }}>
+        <text><b>View: </b></text>
+        <text fg={logsView === "session" ? Theme.primary : Theme.info}>
           {logsView === "session" ? "[Session]" : "[Daemon]"}
-        </Text>
-        <Text dimColor>  d=toggle  i/w/e=filter  f=autoscroll</Text>
-      </Box>
-      <Box flexDirection="column" flexGrow={1} overflow="hidden">
+        </text>
+        <text fg="#666">  d=toggle  i/w/e=filter  f=autoscroll</text>
+      </box>
+      <box style={{ flexDirection: "column", flexGrow: 1, overflow: "hidden" }}>
         <SelectList
           items={display}
           selectedIndex={safeIndex}
@@ -107,7 +120,7 @@ export function LogsPanel({ state, width, height }: PanelProps) {
             <LogLine event={event as Event} isSelected={isSelected} width={width} />
           )}
         />
-      </Box>
-    </Box>
+      </box>
+    </box>
   )
 }

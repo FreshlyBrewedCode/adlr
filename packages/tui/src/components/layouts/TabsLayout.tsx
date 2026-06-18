@@ -1,4 +1,3 @@
-import { Box, Text } from "ink"
 import { PanelRegistry } from "../../core/PanelRegistry"
 import { Theme } from "../../theme"
 import type { LayoutProps, ContentNode } from "../../core/types"
@@ -26,46 +25,40 @@ export function TabsLayout({
   const childArray = Array.isArray(children) ? children : [children]
 
   return (
-    <Box flexDirection="column" width={width} height={height}>
+    <box style={{ flexDirection: "column", width, height }}>
       {tabPosition === "top" && (
-        <Box height={1} flexDirection="row">
+        <box style={{ height: 1, flexDirection: "row" }}>
           {childArray.map((_, i) => {
             const title = childNodes ? getPanelTitle(childNodes[i]) : String(i + 1)
             const isActive = i === activeIndex
             return (
-              <Box key={i} marginRight={2}>
-                <Text
-                  bold={isActive}
-                  color={isActive ? Theme.primary : Theme.muted}
-                >
-                  {isActive ? "▸ " : "  "}{i + 1}: {title}
-                </Text>
-              </Box>
+              <box key={i} style={{ marginRight: 2 }}>
+                <text fg={isActive ? Theme.primary : Theme.muted}>
+                  {isActive ? <b>{"▸ "}{i + 1}: {title}</b> : <>{"  "}{i + 1}: {title}</>}
+                </text>
+              </box>
             )
           })}
-        </Box>
+        </box>
       )}
-      <Box flexGrow={1} overflow="hidden">
+      <box style={{ flexGrow: 1 }}>
         {childArray[activeIndex]}
-      </Box>
+      </box>
       {tabPosition === "bottom" && (
-        <Box height={1} flexDirection="row">
+        <box style={{ height: 1, flexDirection: "row" }}>
           {childArray.map((_, i) => {
             const title = childNodes ? getPanelTitle(childNodes[i]) : String(i + 1)
             const isActive = i === activeIndex
             return (
-              <Box key={i} marginRight={2}>
-                <Text
-                  bold={isActive}
-                  color={isActive ? Theme.primary : Theme.muted}
-                >
-                  {isActive ? "▸ " : "  "}{i + 1}: {title}
-                </Text>
-              </Box>
+              <box key={i} style={{ marginRight: 2 }}>
+                <text fg={isActive ? Theme.primary : Theme.muted}>
+                  {isActive ? <b>{"▸ "}{i + 1}: {title}</b> : <>{"  "}{i + 1}: {title}</>}
+                </text>
+              </box>
             )
           })}
-        </Box>
+        </box>
       )}
-    </Box>
+    </box>
   )
 }

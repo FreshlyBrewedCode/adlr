@@ -1,6 +1,5 @@
 import { useState, useMemo } from "react"
-import { Box, Text } from "ink"
-import { useInput } from "ink"
+import { useBindings } from "@opentui/keymap/react"
 import type { ContextItem } from "@adler/sdk"
 import type { PanelProps } from "../../core/types"
 import { TypeBadge } from "../TypeBadge"
@@ -36,22 +35,28 @@ export function ContextPanel({ state, width, height }: PanelProps) {
     return result
   }, [grouped])
 
-  useInput((input, key) => {
-    if (key.upArrow) {
-      setSelectedIndex(i => Math.max(0, i - 1))
-    } else if (key.downArrow) {
-      setSelectedIndex(i => Math.max(0, Math.min(state.context.length - 1, i + 1)))
-    }
-  })
+  useBindings(
+    () => ({
+      commands: [
+        { name: "context:up", run() { setSelectedIndex(i => Math.max(0, i - 1)) } },
+        { name: "context:down", run() { setSelectedIndex(i => Math.max(0, Math.min(state.context.length - 1, i + 1))) } },
+      ],
+      bindings: [
+        { key: "up", cmd: "context:up" },
+        { key: "down", cmd: "context:down" },
+      ],
+    }),
+    [state.context.length],
+  )
 
   return (
-    <Box flexDirection="column" width={width} height={height}>
+    <box style={{ flexDirection: "column", width, height }}>
       {Object.entries(grouped).map(([type, items]) => (
-        <Box key={type} flexDirection="column" marginTop={1}>
-          <Box flexDirection="row">
+        <box key={type} style={{ flexDirection: "column", marginTop: 1 }}>
+          <box style={{ flexDirection: "row" }}>
             <TypeBadge type={type} />
-            <Text dimColor> {items.length} items</Text>
-          </Box>
+            <text fg="#666"> {items.length} items</text>
+          </box>
           <SelectList
             items={items}
             selectedIndex={selectedIndex}
@@ -61,16 +66,16 @@ export function ContextPanel({ state, width, height }: PanelProps) {
               const valueText = String(contextItem.value?.text ?? contextItem.value?.url ?? contextItem.value?.path ?? JSON.stringify(contextItem.value))
               const typeColor = Theme.type[contextItem.type as keyof typeof Theme.type] ?? Theme.muted
               return (
-                <Box>
-                  <Text color={typeColor}>│ </Text>
-                  <Text>{valueText}</Text>
-                  <Text dimColor> {contextItem.label} {contextItem.description}</Text>
-                </Box>
+                <box>
+                  <text fg={typeColor}>│ </text>
+                  <text>{valueText}</text>
+                  <text fg="#666"> {contextItem.label} {contextItem.description}</text>
+                </box>
               )
             }}
           />
-        </Box>
+        </box>
       ))}
-    </Box>
+    </box>
   )
 }

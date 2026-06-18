@@ -1,6 +1,5 @@
 import { useState } from "react"
-import { Box, Text } from "ink"
-import { useInput } from "ink"
+import { useBindings } from "@opentui/keymap/react"
 import type { PanelProps } from "../../core/types"
 import { Card } from "../Card"
 import { SelectList } from "../SelectList"
@@ -15,21 +14,29 @@ export function AgentsPanel({ state, width, height }: PanelProps) {
   const [selectedIndex, setSelectedIndex] = useState(0)
   const agents = state.spans.filter(s => s.kind === "agent")
 
-  useInput((input, key) => {
-    if (key.upArrow) {
-      setSelectedIndex(i => Math.max(0, i - 1))
-    } else if (key.downArrow) {
-      setSelectedIndex(i => Math.max(0, Math.min(agents.length - 1, i + 1)))
-    } else if (key.return) {
-      const agent = agents[selectedIndex]
-      if (agent) {
-        // TODO: attach or read output
-      }
-    }
-  })
+  useBindings(
+    () => ({
+      commands: [
+        { name: "agents:up", run() { setSelectedIndex(i => Math.max(0, i - 1)) } },
+        { name: "agents:down", run() { setSelectedIndex(i => Math.max(0, Math.min(agents.length - 1, i + 1))) } },
+        { name: "agents:select", run() {
+          const agent = agents[selectedIndex]
+          if (agent) {
+            // TODO: attach or read output
+          }
+        }},
+      ],
+      bindings: [
+        { key: "up", cmd: "agents:up" },
+        { key: "down", cmd: "agents:down" },
+        { key: "return", cmd: "agents:select" },
+      ],
+    }),
+    [agents.length, selectedIndex],
+  )
 
   return (
-    <Box flexDirection="column" width={width} height={height}>
+    <box style={{ flexDirection: "column", width, height }}>
       <SelectList
         items={agents}
         selectedIndex={selectedIndex}
@@ -51,6 +58,6 @@ export function AgentsPanel({ state, width, height }: PanelProps) {
           )
         }}
       />
-    </Box>
+    </box>
   )
 }

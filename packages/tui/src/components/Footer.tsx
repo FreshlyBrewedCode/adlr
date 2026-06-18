@@ -1,4 +1,3 @@
-import { Box, Text } from "ink"
 import { PanelRegistry } from "../core/PanelRegistry"
 import { Theme } from "../theme"
 
@@ -10,17 +9,17 @@ export function Footer({ focusedPanelId }: { focusedPanelId: string | null }) {
     "q quit",
   ]
   return (
-    <Box height={1} justifyContent="space-between">
-      <Box>
+    <box style={{ flexDirection: "row", height: 1, width: "100%", justifyContent: "space-between" }}>
+      <box style={{ flexDirection: "row" }}>
         {hotkeys.map((hk, i) => (
-          <Box key={i} marginRight={1}>
-            <Text backgroundColor={Theme.footer.badgeBg} color={Theme.footer.badgeText}>
+          <box key={i} style={{ marginRight: 1 }}>
+            <text bg={Theme.footer.badgeBg} fg={Theme.footer.badgeText}>
               {" "}{hk}{" "}
-            </Text>
-          </Box>
+            </text>
+          </box>
         ))}
-      </Box>
-      <Text dimColor>{panel?.title ?? "No panel focused"}</Text>
-    </Box>
+      </box>
+      <text fg="#666">{panel?.title ?? "No panel focused"}</text>
+    </box>
   )
 }

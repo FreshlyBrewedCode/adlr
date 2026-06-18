@@ -1,4 +1,3 @@
-import { Box, Text } from "ink"
 import { Theme } from "../theme"
 
 export function Card({
@@ -20,27 +19,33 @@ export function Card({
 }) {
   const statusColor = Theme.status[status]
   return (
-    <Box
-      width={width}
-      flexDirection="column"
-      borderStyle={{
-        left: "┃",
-        topLeft: '',
-        top: '',
-        topRight: '',
-        bottomLeft: '',
-        bottom: '',
-        bottomRight: '',
-        right: '',
+    <box
+      style={{
+        width,
+        flexDirection: "column",
+        border: ["left"],
+        borderColor: statusColor,
+        customBorderChars: {
+          topLeft: "",
+          topRight: "",
+          vertical: "┃",
+          bottomLeft: "",
+          bottomRight: "",
+          horizontal: "",
+          topT: "",
+          bottomT: "",
+          leftT: "",
+          rightT: "",
+          cross: "",
+        },
+        backgroundColor: Theme.card.base,
+        padding: 1,
       }}
-      borderLeftColor={statusColor}
-      backgroundColor={Theme.card.base}
-      padding={1}
     >
-        <Text bold color={statusColor}>{title}</Text>
-        {description && <Text dimColor>{description}</Text>}
-        {children}
-        {hint && <Text dimColor> {hint}</Text>}
-    </Box>
+      <text fg={statusColor}><b>{title}</b></text>
+      {description && <text fg="#666">{description}</text>}
+      {children}
+      {hint && <text fg="#666"> {hint}</text>}
+    </box>
   )
 }

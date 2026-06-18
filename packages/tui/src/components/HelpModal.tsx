@@ -1,33 +1,40 @@
-import { Box, Text } from "ink"
 import { PanelRegistry } from "../core/PanelRegistry"
 import { Theme } from "../theme"
 
 export function HelpModal({ onClose }: { onClose: () => void }) {
   const panels = PanelRegistry.getAll()
   return (
-    <Box
-      flexDirection="column"
-      borderStyle="round"
-      borderColor={Theme.primary}
+    <scrollbox
+      border={true}
+      borderStyle={"rounded"}
+      borderColor={Theme.border}
       padding={1}
       width={60}
-      height={20}
+      maxHeight={20}
+      overflow="scroll"
+      shouldFill={true}
+      backgroundColor={Theme.background}
+      title="Hotkeys"
+      titleColor={Theme.foreground}
     >
-      <Text bold color={Theme.primary}>Hotkeys</Text>
-      <Box flexDirection="column" marginTop={1}>
-        <Text bold underline>Global</Text>
-        <Text>tab / shift+tab — next / prev focus</Text>
-        <Text>q / ctrl+c — quit</Text>
-        <Text>? — toggle help</Text>
-      </Box>
-      {panels.map(panel => (
-        <Box key={panel.id} marginTop={1} flexDirection="column">
-          <Text bold underline color={Theme.primary}>{panel.title}</Text>
-          {panel.hotkeys?.map(hk => (
-            <Text key={hk.key}>{hk.key} — {hk.description}</Text>
-          ))}
-        </Box>
-      ))}
-    </Box>
+      <box
+        style={{ flexDirection: "column", width: "100%", height: "auto" }}
+      >
+        <box style={{ flexDirection: "column" }} >
+          <text content="--- GLOBAL ---" />
+          <text content="tab / shift+tab — next / prev focus" />
+          <text content="q / ctrl+c — quit" />
+          <text content="? — toggle help" />
+        </box>
+        {panels.map(panel => (
+          <box key={panel.id} style={{ flexDirection: "column", marginTop: 1 }}>
+            <text content={`--- ${panel.title.toUpperCase()} ---`} />
+            {panel.hotkeys?.map(hk => (
+              <text key={hk.key} content={`${hk.key} — ${hk.description}`} />
+            ))}
+          </box>
+        ))}
+      </box>
+    </scrollbox>
   )
 }

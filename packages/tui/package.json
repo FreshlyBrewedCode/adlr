@@ -11,7 +11,9 @@
   },
   "dependencies": {
     "@adler/sdk": "workspace:*",
-    "ink": "7",
+    "@opentui/core": "latest",
+    "@opentui/react": "latest",
+    "@opentui/keymap": "latest",
     "react": "^19.2.7"
   },
   "devDependencies": {

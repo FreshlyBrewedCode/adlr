@@ -1,4 +1,3 @@
-import { Box, Text } from "ink"
 import type { PanelProps } from "../../core/types"
 import { Theme } from "../../theme"
 import { StatusBadge } from "../StatusBadge"
@@ -10,32 +9,32 @@ export function OverviewPanel({ state, width, height }: PanelProps) {
     .slice(0, 5)
 
   return (
-    <Box flexDirection="row" width={width} height={height}>
-      <Box flexDirection="column" width="50%">
-        <Text bold>Session</Text>
-        <Text>Status: {state.session?.status}</Text>
-        <Text>Working dir: {state.session?.working_dir}</Text>
-        <Box marginTop={1}>
-          <Text bold>Recent Agents</Text>
-        </Box>
+    <box style={{ flexDirection: "row", width, height }}>
+      <box style={{ flexDirection: "column", width: "50%" }}>
+        <text><b>Session</b></text>
+        <text>Status: {state.session?.status}</text>
+        <text>Working dir: {state.session?.working_dir}</text>
+        <box style={{ marginTop: 1 }}>
+          <text><b>Recent Agents</b></text>
+        </box>
         {recentAgents.map(a => (
-          <Box key={a.id}>
+          <box key={a.id}>
             <StatusBadge status={a.status} />
-            <Text> {a.name}</Text>
-          </Box>
+            <text> {a.name}</text>
+          </box>
         ))}
-      </Box>
-      <Box flexDirection="column" width="50%">
-        <Text bold>Context</Text>
+      </box>
+      <box style={{ flexDirection: "column", width: "50%" }}>
+        <text><b>Context</b></text>
         {state.context.map(item => (
-          <Box key={item.id}>
-            <Text color={Theme.type[item.type as keyof typeof Theme.type] ?? Theme.muted}>
+          <box key={item.id}>
+            <text fg={Theme.type[item.type as keyof typeof Theme.type] ?? Theme.muted}>
               {item.type}
-            </Text>
-            <Text> {item.label ?? "—"}</Text>
-          </Box>
+            </text>
+            <text> {item.label ?? "—"}</text>
+          </box>
         ))}
-      </Box>
-    </Box>
+      </box>
+    </box>
   )
 }
