@@ -1,6 +1,7 @@
 import { useEffect, useReducer, useState } from "react"
-import { Box, useInput, useApp, useStdout } from "ink"
-import { createClient, type EventType, DAEMON_SESSION_ID } from "@adler/sdk"
+import { useTerminalDimensions, useRenderer } from "@opentui/react"
+import { KeymapProvider, useBindings } from "@opentui/keymap/react"
+import { createClient, type EventType, DAEMON_SESSION_ID, type AdlerConfig } from "@adler/sdk"
 import { initialState, reducer } from "./types"
 import { Header } from "./components/Header"
 import { Footer } from "./components/Footer"
@@ -10,6 +11,7 @@ import { registerPanels } from "./components/panels"
 import { registerLayouts } from "./components/layouts"
 import type { ContentNode, TreeNode, PanelNode } from "./core/types"
 import { normalizeLayout } from "./core/normalizeLayout"
+import type { AdlerKeymap } from "./keymap"
 
 const defaultLayout: ContentNode = {
   layout: "tabs",
@@ -25,13 +27,20 @@ function resolveFocusedPanel(node: TreeNode, focusPath: number[]): string | null
   return resolveFocusedPanel(child, focusPath.slice(1))
 }
 
-export function App({ sessionId, layout: layoutProp }: { sessionId: string; layout?: ContentNode }) {
+interface AppProps {
+  sessionId: string
+  layout?: ContentNode
+  keymap: AdlerKeymap
+  config?: AdlerConfig
+}
+
+function AppInner({ sessionId, layout: layoutProp }: Omit<AppProps, "keymap" | "config">) {
   const [state, dispatch] = useReducer(reducer, initialState)
   const [isHelpOpen, setIsHelpOpen] = useState(false)
   const [focusPath, setFocusPath] = useState<number[]>([0])
   const [layout] = useState<TreeNode>(() => normalizeLayout(layoutProp ?? defaultLayout))
-  const { exit } = useApp()
-  const { stdout } = useStdout()
+  const renderer = useRenderer()
+  const { width, height } = useTerminalDimensions()
 
   useEffect(() => {
     registerPanels()
@@ -115,46 +124,75 @@ export function App({ sessionId, layout: layoutProp }: { sessionId: string; layo
     }
   }, [])
 
+  useBindings(() => ({
+    bindings: [
+      {
+        key: "?",
+        cmd: () => {
+          if (isHelpOpen) {
+            setIsHelpOpen(false)
+          } else {
+            setIsHelpOpen(true)
+          }
+        },
+      },
+      {
+        key: "escape",
+        cmd: () => {
+          if (isHelpOpen) {
+            setIsHelpOpen(false)
+          }
+        },
+      },
+      {
+        key: "q",
+        cmd: () => {
+          if (!isHelpOpen) {
+            renderer.destroy()
+          }
+        },
+      },
+      {
+        key: "ctrl+c",
+        cmd: () => {
+          renderer.destroy()
+        },
+      },
+      {
+        key: "tab",
+        cmd: () => {
+          if (!isHelpOpen) {
+            setFocusPath(path => {
+              if (path.length === 0) return [0]
+              const newPath = [...path]
+              newPath[0] = Math.min(4, newPath[0] + 1)
+              return newPath
+            })
+          }
+        },
+      },
+      {
+        key: "shift+tab",
+        cmd: () => {
+          if (!isHelpOpen) {
+            setFocusPath(path => {
+              if (path.length === 0) return [0]
+              const newPath = [...path]
+              newPath[0] = Math.max(0, newPath[0] - 1)
+              return newPath
+            })
+          }
+        },
+      },
+    ],
+  }), [isHelpOpen, renderer])
+
   const focusedPanel = resolveFocusedPanel(layout, focusPath)
 
-  useInput((input, key) => {
-    if (isHelpOpen) {
-      if (input === "?" || key.escape) {
-        setIsHelpOpen(false)
-      }
-      return
-    }
-
-    if (input === "?") {
-      setIsHelpOpen(true)
-      return
-    }
-
-    if (input === "q" || (key.ctrl && input === "c")) {
-      exit()
-      return
-    }
-
-    if (key.tab) {
-      setFocusPath(path => {
-        if (path.length === 0) return [0]
-        const newPath = [...path]
-        newPath[0] = key.shift
-          ? Math.max(0, newPath[0] - 1)
-          : Math.min(4, newPath[0] + 1)
-        return newPath
-      })
-      return
-    }
-  })
-
-  const width = stdout.columns ?? 80
-  const height = stdout.rows ?? 24
-
   return (
-    <Box flexDirection="column" width={width} height={height}>
+    <box style={{ flexDirection: "column", width, height }}>
       <Header session={state.session} />
-      <Box flexGrow={1} overflow="hidden">
+      <box style={{ flexGrow: 1, overflow: "hidden" }}>
         <LayoutRenderer
           node={layout}
           state={state}
@@ -164,13 +202,21 @@ export function App({ sessionId, layout: layoutProp }: { sessionId: string; layo
           focusPath={focusPath}
           onFocusChange={setFocusPath}
         />
-      </Box>
+      </box>
       {isHelpOpen && (
-        <Box position="absolute" width={width} height={height} justifyContent="center" alignItems="center">
+        <box style={{ position: "absolute", width, height, justifyContent: "center", alignItems: "center" }}>
           <HelpModal onClose={() => setIsHelpOpen(false)} />
-        </Box>
+        </box>
       )}
       <Footer focusedPanelId={focusedPanel} />
-    </Box>
+    </box>
+  )
+}
+
+export default function App({ sessionId, layout, keymap }: AppProps) {
+  return (
+    <KeymapProvider keymap={keymap}>
+      <AppInner sessionId={sessionId} layout={layout} />
+    </KeymapProvider>
   )
 }
