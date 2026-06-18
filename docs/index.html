@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>adler — Eagle eyes on your agents</title>
+<title>adlr — Eagle eyes on your agents</title>
 <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
 <style>
   :root {
@@ -508,7 +508,7 @@
 
 <!-- ── Nav ───────────────────────────────────────────── -->
 <nav>
-  <div class="nav-brand">adler <span>/ docs</span></div>
+  <div class="nav-brand">adlr <span>/ docs</span></div>
   <div class="nav-links">
     <a href="#architecture">Architecture</a>
     <a href="#data-model">Data Model</a>
@@ -525,7 +525,7 @@
     <span class="dot"></span>
     Phase 1 + 2 — Core &amp; TUI
   </div>
-  <div class="hero-title">adler</div>
+  <div class="hero-title">adlr</div>
   <p class="hero-subtitle">Eagle eyes on your agents. An orchestrator built for full observability into what your AI agents are doing, right now.</p>
   <div class="hero-pills">
     <span class="pill blue">Daemon-centric</span>
@@ -558,7 +558,7 @@
 <section id="architecture">
   <div class="section-label">Architecture</div>
   <h2>One daemon, many clients</h2>
-  <p>adlerd is the single authority over all sessions and agent processes. The CLI and TUI are thin clients — they send commands or subscribe to events over a Unix socket. Persistence is hidden behind a Storage interface, making the backend swappable.</p>
+  <p>adlrd is the single authority over all sessions and agent processes. The CLI and TUI are thin clients — they send commands or subscribe to events over a Unix socket. Persistence is hidden behind a Storage interface, making the backend swappable.</p>
 
   <div class="arch-grid">
     <div>
@@ -573,23 +573,23 @@
           <text x="160" y="13" text-anchor="middle" fill="#6868a0" font-family="monospace" font-size="8.5" letter-spacing="2">COMPONENT MAP</text>
           <!-- CLI box -->
           <rect x="14" y="22" width="102" height="36" rx="6" fill="#191928" stroke="#2e2e48"/>
-          <text x="65" y="44" text-anchor="middle" fill="#9090c0" font-family="monospace" font-size="11.5">adler CLI</text>
+          <text x="65" y="44" text-anchor="middle" fill="#9090c0" font-family="monospace" font-size="11.5">adlr CLI</text>
           <!-- TUI box -->
           <rect x="204" y="22" width="102" height="36" rx="6" fill="#191928" stroke="#2e2e48"/>
-          <text x="255" y="44" text-anchor="middle" fill="#9090c0" font-family="monospace" font-size="11.5">adler TUI</text>
+          <text x="255" y="44" text-anchor="middle" fill="#9090c0" font-family="monospace" font-size="11.5">adlr TUI</text>
           <!-- Vertical lines from CLI and TUI down -->
           <line x1="65" y1="58" x2="65" y2="84" stroke="#2e2e48" stroke-width="1.5"/>
           <line x1="255" y1="58" x2="255" y2="84" stroke="#2e2e48" stroke-width="1.5"/>
           <!-- Horizontal Unix socket connector (dashed) -->
           <line x1="65" y1="84" x2="255" y2="84" stroke="#2e2e48" stroke-dasharray="5,3" stroke-width="1.5"/>
           <text x="160" y="79" text-anchor="middle" fill="#6868a0" font-family="monospace" font-size="9">Unix socket</text>
-          <!-- Line from midpoint down to adlerd -->
+          <!-- Line from midpoint down to adlrd -->
           <line x1="160" y1="84" x2="160" y2="108" stroke="#2e2e48" stroke-width="1.5" marker-end="url(#arch-arr)"/>
-          <!-- adlerd box -->
+          <!-- adlrd box -->
           <rect x="96" y="108" width="128" height="42" rx="7" fill="rgba(124,158,245,0.12)" stroke="#7c9ef5" stroke-width="1.5"/>
-          <text x="160" y="126" text-anchor="middle" fill="#7c9ef5" font-family="monospace" font-size="12.5" font-weight="700">adlerd</text>
+          <text x="160" y="126" text-anchor="middle" fill="#7c9ef5" font-family="monospace" font-size="12.5" font-weight="700">adlrd</text>
           <text x="160" y="141" text-anchor="middle" fill="rgba(124,158,245,0.55)" font-family="monospace" font-size="8.5">daemon process</text>
-          <!-- Lines from adlerd to SQLite and Agent Procs -->
+          <!-- Lines from adlrd to SQLite and Agent Procs -->
           <line x1="130" y1="150" x2="68" y2="180" stroke="#2e2e48" stroke-width="1.5" marker-end="url(#arch-arr)"/>
           <line x1="190" y1="150" x2="252" y2="180" stroke="#2e2e48" stroke-width="1.5" marker-end="url(#arch-arr)"/>
           <!-- SQLite box -->
@@ -621,11 +621,11 @@
         <div class="file-tree-header">
           <i data-lucide="layout-list"></i> explorer
         </div>
-        <!-- adler root -->
+        <!-- adlr root -->
         <div class="ft-row ft-indent-0">
           <i data-lucide="chevron-down" class="ft-chevron"></i>
           <i data-lucide="folder-open" style="color:#9090c0;"></i>
-          <span class="ft-name" style="color:var(--text);">adler</span>
+          <span class="ft-name" style="color:var(--text);">adlr</span>
         </div>
         <!-- packages/ -->
         <div class="ft-row ft-indent-1">
@@ -637,19 +637,19 @@
         <div class="ft-row ft-indent-2">
           <i data-lucide="folder" style="color:#7c9ef5;"></i>
           <span class="ft-name" style="color:#7c9ef5;">sdk</span>
-          <span class="ft-desc">@adler/sdk · types · storage · IPC · typed client</span>
+          <span class="ft-desc">@adlr/sdk · types · storage · IPC · typed client</span>
         </div>
         <!-- daemon -->
         <div class="ft-row ft-indent-2">
           <i data-lucide="folder" style="color:#c084fc;"></i>
           <span class="ft-name" style="color:#c084fc;">daemon</span>
-          <span class="ft-desc">adlerd · sole SQLite writer · PTY spawn</span>
+          <span class="ft-desc">adlrd · sole SQLite writer · PTY spawn</span>
         </div>
         <!-- cli -->
         <div class="ft-row ft-indent-2">
           <i data-lucide="folder" style="color:#9090c0;"></i>
           <span class="ft-name" style="color:#9090c0;">cli</span>
-          <span class="ft-desc">adler · thin CLI · auto-starts daemon</span>
+          <span class="ft-desc">adlr · thin CLI · auto-starts daemon</span>
         </div>
         <!-- tui -->
         <div class="ft-row ft-indent-2">
@@ -667,7 +667,7 @@
         <div class="ft-row ft-indent-3">
           <i data-lucide="folder" style="color:#6dd8a0;"></i>
           <span class="ft-name" style="color:#6dd8a0;">opencode</span>
-          <span class="ft-desc">@adler/opencode · first-party plugin</span>
+          <span class="ft-desc">@adlr/opencode · first-party plugin</span>
         </div>
       </div>
 
@@ -676,7 +676,7 @@
         <div style="display:flex; flex-direction:column; gap:0.5rem;">
           <div style="display:flex; gap:0.75rem; align-items:flex-start;">
             <span style="font-family:monospace; color:var(--yellow); font-size:0.75rem; white-space:nowrap; min-width:60px;">socket</span>
-            <span style="color:var(--muted); font-size:0.8rem;">~/.local/share/adler/adler.sock — one global daemon for all projects</span>
+            <span style="color:var(--muted); font-size:0.8rem;">~/.local/share/adlr/adlr.sock — one global daemon for all projects</span>
           </div>
           <div style="display:flex; gap:0.75rem; align-items:flex-start;">
             <span style="font-family:monospace; color:var(--yellow); font-size:0.75rem; white-space:nowrap; min-width:60px;">start</span>
@@ -698,7 +698,7 @@
 <section id="data-model">
   <div class="section-label">Data Model</div>
   <h2>Spans and events, all the way down</h2>
-  <p>Instead of separate tables for agents, workflow steps, and hooks, adler uses a single <strong style="color:var(--text);">spans</strong> table for every unit of work. A <code style="font-size:0.85em; color:var(--green);">kind</code> field says what it is. Adding new kinds — workflow steps, hooks, assistant runs — costs nothing: no schema change, no migration.</p>
+  <p>Instead of separate tables for agents, workflow steps, and hooks, adlr uses a single <strong style="color:var(--text);">spans</strong> table for every unit of work. A <code style="font-size:0.85em; color:var(--green);">kind</code> field says what it is. Adding new kinds — workflow steps, hooks, assistant runs — costs nothing: no schema change, no migration.</p>
   <p>Everything that happens is an <strong style="color:var(--text);">event</strong> with an open-ended <code style="font-size:0.85em; color:var(--red);">type</code> string and a JSON payload. This is the OpenTelemetry model applied to agent orchestration.</p>
 
   <div class="tables-grid">
@@ -762,13 +762,13 @@
   <!-- Span context propagation -->
   <div style="margin-top:2.5rem;">
     <h3 style="margin-bottom:0.5rem;">Span context propagation</h3>
-    <p>Context flows through environment variables — the subprocess equivalent of W3C Trace Context over HTTP headers. When the daemon spawns an agent it injects the span context. If that agent calls <code style="font-size:0.85em; color:var(--blue);">adler agent run</code>, the CLI reads <code style="font-size:0.85em; color:var(--yellow);">ADLER_SPAN_ID</code> from its own environment and passes it as the parent. Propagation works at any depth automatically.</p>
+    <p>Context flows through environment variables — the subprocess equivalent of W3C Trace Context over HTTP headers. When the daemon spawns an agent it injects the span context. If that agent calls <code style="font-size:0.85em; color:var(--blue);">adlr agent run</code>, the CLI reads <code style="font-size:0.85em; color:var(--yellow);">ADLR_SPAN_ID</code> from its own environment and passes it as the parent. Propagation works at any depth automatically.</p>
     <div class="env-block">
-      <span class="env-key">ADLER_SESSION</span>=<span class="env-val">session-abc123</span><br>
-      <span class="env-key">ADLER_SPAN_ID</span>=<span class="env-val">span-xyz789</span>  &nbsp;<span class="env-cm">← this agent's span id</span><br>
-      <span class="env-key">ADLER_SOCKET</span>=<span class="env-val">~/.local/share/adler/adler.sock</span><br>
-      <span class="env-key">ADLER_AGENT_PROMPT</span>=<span class="env-val">"Implement the payment module"</span><br>
-      <span class="env-key">ADLER_CONTEXT</span>=<span class="env-val">[{"type":"goal","value":{"text":"..."}}, ...]</span>
+      <span class="env-key">ADLR_SESSION</span>=<span class="env-val">session-abc123</span><br>
+      <span class="env-key">ADLR_SPAN_ID</span>=<span class="env-val">span-xyz789</span>  &nbsp;<span class="env-cm">← this agent's span id</span><br>
+      <span class="env-key">ADLR_SOCKET</span>=<span class="env-val">~/.local/share/adlr/adlr.sock</span><br>
+      <span class="env-key">ADLR_AGENT_PROMPT</span>=<span class="env-val">"Implement the payment module"</span><br>
+      <span class="env-key">ADLR_CONTEXT</span>=<span class="env-val">[{"type":"goal","value":{"text":"..."}}, ...]</span>
     </div>
   </div>
 </section>
@@ -779,7 +779,7 @@
 <section id="tui" style="max-width:900px;">
   <div class="section-label">TUI Dashboard</div>
   <h2>Live visibility into every session</h2>
-  <p>Running <code style="font-size:0.85em; color:var(--blue);">adler</code> with no arguments opens a live dashboard. The TUI holds an open socket connection to the daemon and re-renders on push events — no polling. Five tabs cover every view you need.</p>
+  <p>Running <code style="font-size:0.85em; color:var(--blue);">adlr</code> with no arguments opens a live dashboard. The TUI holds an open socket connection to the daemon and re-renders on push events — no polling. Five tabs cover every view you need.</p>
 
   <div style="margin-top:2.5rem;">
     <div class="terminal-window">
@@ -787,7 +787,7 @@
         <div class="chrome-dot red"></div>
         <div class="chrome-dot yellow"></div>
         <div class="chrome-dot green"></div>
-        <div class="terminal-titlebar">adler — ~/git/myapp</div>
+        <div class="terminal-titlebar">adlr — ~/git/myapp</div>
       </div>
       <div class="terminal-header">
         <span class="session-status"><span class="status-dot"></span> active</span>
@@ -988,7 +988,7 @@
 <section>
   <div class="section-label">Agent Execution</div>
   <h2>What happens when you run an agent</h2>
-  <p>Every <code style="font-size:0.85em; color:var(--blue);">adler agent run</code> follows the same flow. The daemon is the authority throughout — spawning, tracking, streaming output, and broadcasting to any connected TUI clients in real time.</p>
+  <p>Every <code style="font-size:0.85em; color:var(--blue);">adlr agent run</code> follows the same flow. The daemon is the authority throughout — spawning, tracking, streaming output, and broadcasting to any connected TUI clients in real time.</p>
 
   <div class="flow-steps">
     <div class="flow-step">
@@ -1004,7 +1004,7 @@
     <div class="flow-step">
       <div class="flow-num">3</div>
       <h4>PTY spawn</h4>
-      <p>Daemon calls Bun.spawn() with PTY. Injects ADLER_* env vars.</p>
+      <p>Daemon calls Bun.spawn() with PTY. Injects ADLR_* env vars.</p>
     </div>
     <div class="flow-step">
       <div class="flow-num">4</div>
@@ -1025,49 +1025,49 @@
 <section id="cli">
   <div class="section-label">CLI</div>
   <h2>Control everything from the terminal</h2>
-  <p>All commands are thin wrappers around SDK calls. Session context is resolved automatically from <code style="font-size:0.85em; color:var(--blue);">--session</code> flag, <code style="font-size:0.85em; color:var(--yellow);">ADLER_SESSION</code> env, or <code style="font-size:0.85em; color:var(--muted2);">.adler/.session</code> file.</p>
+  <p>All commands are thin wrappers around SDK calls. Session context is resolved automatically from <code style="font-size:0.85em; color:var(--blue);">--session</code> flag, <code style="font-size:0.85em; color:var(--yellow);">ADLR_SESSION</code> env, or <code style="font-size:0.85em; color:var(--muted2);">.adlr/.session</code> file.</p>
 
   <div class="cli-grid">
     <div class="cli-group">
       <div class="cli-group-title">Sessions</div>
       <div class="cmd">
-        <span class="cmd-text">adler</span>
+        <span class="cmd-text">adlr</span>
         <span class="cmd-desc">Open TUI dashboard for current session</span>
       </div>
       <div class="cmd">
-        <span class="cmd-text">adler new <span class="arg">[--goal "..."]</span></span>
-        <span class="cmd-desc">Create session, write id to .adler/.session</span>
+        <span class="cmd-text">adlr new <span class="arg">[--goal "..."]</span></span>
+        <span class="cmd-desc">Create session, write id to .adlr/.session</span>
       </div>
       <div class="cmd">
-        <span class="cmd-text">adler session list</span>
+        <span class="cmd-text">adlr session list</span>
         <span class="cmd-desc">List all sessions across all projects</span>
       </div>
       <div class="cmd">
-        <span class="cmd-text">adler init</span>
-        <span class="cmd-desc">Scaffold .adler/adler.ts in current project</span>
+        <span class="cmd-text">adlr init</span>
+        <span class="cmd-desc">Scaffold .adlr/adlr.ts in current project</span>
       </div>
     </div>
 
     <div class="cli-group">
       <div class="cli-group-title">Agents</div>
       <div class="cmd">
-        <span class="cmd-text">adler agent run <span class="arg">--agent &lt;type&gt; &lt;prompt&gt;</span></span>
+        <span class="cmd-text">adlr agent run <span class="arg">--agent &lt;type&gt; &lt;prompt&gt;</span></span>
         <span class="cmd-desc">Spawn agent, returns span id</span>
       </div>
       <div class="cmd">
-        <span class="cmd-text">adler agent wait <span class="arg">[--name &lt;n&gt;]</span></span>
+        <span class="cmd-text">adlr agent wait <span class="arg">[--name &lt;n&gt;]</span></span>
         <span class="cmd-desc">Block until span is done or failed</span>
       </div>
       <div class="cmd">
-        <span class="cmd-text">adler agent status <span class="arg">[--name &lt;n&gt;]</span></span>
+        <span class="cmd-text">adlr agent status <span class="arg">[--name &lt;n&gt;]</span></span>
         <span class="cmd-desc">Print current span status</span>
       </div>
       <div class="cmd">
-        <span class="cmd-text">adler agent read <span class="arg">[--name &lt;n&gt;]</span></span>
+        <span class="cmd-text">adlr agent read <span class="arg">[--name &lt;n&gt;]</span></span>
         <span class="cmd-desc">Stream agent PTY output to stdout</span>
       </div>
       <div class="cmd">
-        <span class="cmd-text">adler agent list</span>
+        <span class="cmd-text">adlr agent list</span>
         <span class="cmd-desc">List all agent spans for session</span>
       </div>
     </div>
@@ -1075,15 +1075,15 @@
     <div class="cli-group">
       <div class="cli-group-title">Context</div>
       <div class="cmd">
-        <span class="cmd-text">adler context add <span class="arg">--type &lt;t&gt; &lt;value&gt;</span></span>
+        <span class="cmd-text">adlr context add <span class="arg">--type &lt;t&gt; &lt;value&gt;</span></span>
         <span class="cmd-desc">Add context item (with optional --label, --description)</span>
       </div>
       <div class="cmd">
-        <span class="cmd-text">adler context list</span>
+        <span class="cmd-text">adlr context list</span>
         <span class="cmd-desc">List all context items for session</span>
       </div>
       <div class="cmd">
-        <span class="cmd-text">adler context get <span class="arg">[--type t] [--label l]</span></span>
+        <span class="cmd-text">adlr context get <span class="arg">[--type t] [--label l]</span></span>
         <span class="cmd-desc">Filtered output — used in workflow step prompts</span>
       </div>
     </div>
@@ -1091,7 +1091,7 @@
     <div class="cli-group">
       <div class="cli-group-title">Daemon</div>
       <div class="cmd">
-        <span class="cmd-text">adler daemon stop</span>
+        <span class="cmd-text">adlr daemon stop</span>
         <span class="cmd-desc">Graceful shutdown — waits for running agents</span>
       </div>
     </div>
@@ -1104,11 +1104,11 @@
 <section>
   <div class="section-label">Configuration</div>
   <h2>Your stack, your config</h2>
-  <p>adler is configured with a TypeScript file. Global config at <code style="font-size:0.85em; color:var(--blue);">~/.config/adler/adler.ts</code>, project config at <code style="font-size:0.85em; color:var(--blue);">.adler/adler.ts</code>. Project config merges over global. Agents are just functions returning shell commands.</p>
+  <p>adlr is configured with a TypeScript file. Global config at <code style="font-size:0.85em; color:var(--blue);">~/.config/adlr/adlr.ts</code>, project config at <code style="font-size:0.85em; color:var(--blue);">.adlr/adlr.ts</code>. Project config merges over global. Agents are just functions returning shell commands.</p>
 
-  <pre class="code-block"><code><span class="c-kw">import type</span> { <span class="c-ty">AdlerConfig</span> } <span class="c-kw">from</span> <span class="c-str">"@adler/sdk"</span>
+  <pre class="code-block"><code><span class="c-kw">import type</span> { <span class="c-ty">AdlrConfig</span> } <span class="c-kw">from</span> <span class="c-str">"@adlr/sdk"</span>
 
-<span class="c-kw">const</span> config: <span class="c-ty">AdlerConfig</span> = {
+<span class="c-kw">const</span> config: <span class="c-ty">AdlrConfig</span> = {
   agent: {
     agents: {
       <span class="c-cm">// Any CLI agent — return a shell command string</span>
@@ -1117,7 +1117,7 @@
     },
     <span class="c-cm">// Invoked when pressing 'o' on an agent in the TUI</span>
     attach: ({ agentId }) =>
-      <span class="c-str">`tmux new-window "adler agent read --name <span class="c-fn">${agentId}</span>"`</span>,
+      <span class="c-str">`tmux new-window "adlr agent read --name <span class="c-fn">${agentId}</span>"`</span>,
   },
 }
 
@@ -1142,8 +1142,8 @@
         <p>The foundation. A global daemon managing sessions and agents. Full SQLite-backed span/event tracing. SDK, CLI, and a live Ink dashboard with five tabs — overview, context, agents, traces, and logs.</p>
       </div>
       <div class="phase-tags">
-        <span class="tag">adlerd daemon</span>
-        <span class="tag">@adler/sdk</span>
+        <span class="tag">adlrd daemon</span>
+        <span class="tag">@adlr/sdk</span>
         <span class="tag">CLI</span>
         <span class="tag">Ink TUI</span>
         <span class="tag">SQLite</span>
@@ -1157,26 +1157,26 @@
         <h3>Workflows, Hooks &amp; Plugins</h3>
       </div>
       <div>
-        <p>YAML or TypeScript workflow definitions with sequential and parallel steps. Before/after hooks for any adler event. npm plugin system for distributing agent configs — first-party plugin: @adler/opencode.</p>
+        <p>YAML or TypeScript workflow definitions with sequential and parallel steps. Before/after hooks for any adlr event. npm plugin system for distributing agent configs — first-party plugin: @adlr/opencode.</p>
       </div>
       <div class="phase-tags">
-        <span class="tag">adler run</span>
+        <span class="tag">adlr run</span>
         <span class="tag">Workflow engine</span>
         <span class="tag">Hooks</span>
-        <span class="tag">@adler/opencode</span>
+        <span class="tag">@adlr/opencode</span>
       </div>
     </div>
 
     <div class="phase">
       <div>
         <div class="phase-badge next">Phase 4 — Planned</div>
-        <h3>adler Assistant</h3>
+        <h3>adlr Assistant</h3>
       </div>
       <div>
         <p>An AI agent with full awareness of the current session — all spans, events, and context. Ask it anything about the session, or let it auto-orchestrate: read state, decide what to run next, iterate until done.</p>
       </div>
       <div class="phase-tags">
-        <span class="tag">adler assistant</span>
+        <span class="tag">adlr assistant</span>
         <span class="tag">--auto mode</span>
         <span class="tag">Session-aware AI</span>
       </div>
@@ -1188,7 +1188,7 @@
         <h3>Web UI &amp; Remote Sessions</h3>
       </div>
       <div>
-        <p>A browser dashboard built on @adler/sdk — just another client. Remote daemon support via TCP socket allows connecting from anywhere. Multi-user sessions for team visibility.</p>
+        <p>A browser dashboard built on @adlr/sdk — just another client. Remote daemon support via TCP socket allows connecting from anywhere. Multi-user sessions for team visibility.</p>
       </div>
       <div class="phase-tags">
         <span class="tag">Web dashboard</span>
@@ -1200,7 +1200,7 @@
 </section>
 
 <footer>
-  adler &nbsp;·&nbsp; Phase 1 + 2 Design Spec &nbsp;·&nbsp; 2026-06-11 &nbsp;·&nbsp; <span style="color:var(--muted);">Bun · TypeScript · Ink · SQLite</span>
+  adlr &nbsp;·&nbsp; Phase 1 + 2 Design Spec &nbsp;·&nbsp; 2026-06-11 &nbsp;·&nbsp; <span style="color:var(--muted);">Bun · TypeScript · Ink · SQLite</span>
 </footer>
 
 <script>

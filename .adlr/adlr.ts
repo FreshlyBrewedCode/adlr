@@ -1,6 +1,6 @@
-import type { AdlerConfig } from "@adler/sdk"
+import type { AdlrConfig } from "@adlr/sdk"
 
-const config: AdlerConfig = {
+const config: AdlrConfig = {
   agent: {
     agents: {
       // Non-interactive: runs opencode headlessly, exits when done
@@ -24,7 +24,7 @@ const config: AdlerConfig = {
         interactive: false
       },
       "test-nested": {
-        run: ({ prompt }) => `sleep 1 && bun run adler agent run --agent test --name subagent hello && sleep 6`,
+        run: ({ prompt }) => `sleep 1 && bun run adlr agent run --agent test --name subagent hello && sleep 6`,
         mode: "log",
         interactive: false
       }

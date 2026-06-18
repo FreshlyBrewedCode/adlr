@@ -1,4 +1,4 @@
-import type { Span } from "@adler/sdk";
+import type { Span } from "@adlr/sdk";
 import { Theme } from "../theme";
 
 export function TreeNode({

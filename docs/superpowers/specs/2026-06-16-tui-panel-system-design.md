@@ -5,12 +5,12 @@
 
 ## 1. Goals
 
-Restructure the adler TUI into a **panel-based architecture** where:
+Restructure the adlr TUI into a **panel-based architecture** where:
 
 - Panels are self-contained, responsive UI units that can be composed into configurable layouts
 - The existing tabs (Overview, Context, Agents, Traces, Logs) become the first built-in panels
 - Layouts are registrable, nestable, and config-driven
-- The `adler.tsx` config can define the TUI layout using JSX without importing UI components
+- The `adlr.tsx` config can define the TUI layout using JSX without importing UI components
 - The architecture is future-proof for a plugin system that adds new panels
 - The TUI runs in **fullscreen** mode, taking full advantage of the terminal real estate
 - Fullscreen mode is seamless, without any visible UI decorations that detract from the panels
@@ -39,7 +39,7 @@ This design is rigid: adding a new tab requires editing `app.tsx`, `Header.tsx`,
 
 The system splits into three layers:
 
-### 3.1. `@adler/tui` — The TUI Package
+### 3.1. `@adlr/tui` — The TUI Package
 
 Owns the runtime, registries, and renderer.
 
@@ -62,7 +62,7 @@ Owns the runtime, registries, and renderer.
 - `SelectList` — navigable list with border highlighting
 - `TypeBadge` — colored badge for context item types
 
-### 3.2. Config — `adler.tsx`
+### 3.2. Config — `adlr.tsx`
 
 The config exports a `tui` section with a layout function. The function receives data constructor primitives (`Layout`, `Panel`) as arguments and returns a JSX tree (which evaluates to plain JSON objects).
 
@@ -574,7 +574,7 @@ export default {
 | Config format? | Plain object tree — no JSX, no function wrapper |
 | Config imports? | No imports needed — plain object literal |
 | Panel registry owner? | TUI owns the registry |
-| Layout abstraction? | `@adler/ui` package with JSX constructors (not needed; primitives are injected) |
+| Layout abstraction? | `@adlr/ui` package with JSX constructors (not needed; primitives are injected) |
 | Initial layouts? | `TabsLayout` and `SplitLayout` (with ratio) |
 | Fullscreen? | Yes, fullscreen is the default and only mode |
 | Footer? | Always visible, shows hotkeys for focused panel |

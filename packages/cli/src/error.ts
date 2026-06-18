@@ -1,6 +1,6 @@
-export class AdlerCliError extends Error {
+export class AdlrCliError extends Error {
 	constructor(message: string) {
 		super(message);
-		this.name = "AdlerCliError";
+		this.name = "AdlrCliError";
 	}
 }

@@ -9,8 +9,8 @@ import { spanCmd } from "./commands/span";
 
 export function buildCli(): Command {
 	const program = new Command()
-		.name("adler")
-		.description("adler - Eagle eyes on your agents")
+		.name("adlr")
+		.description("adlr - Eagle eyes on your agents")
 		.version("0.1.0")
 		.option("-s, --session <id>", "Session ID override")
 		.configureHelp({

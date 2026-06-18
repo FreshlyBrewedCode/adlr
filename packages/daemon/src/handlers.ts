@@ -1,5 +1,5 @@
-import type { ContextItemType, SessionStatus, Span, Storage } from "@adler/sdk";
-import { DAEMON_SESSION_ID } from "@adler/sdk";
+import type { ContextItemType, SessionStatus, Span, Storage } from "@adlr/sdk";
+import { DAEMON_SESSION_ID } from "@adlr/sdk";
 import type { ProcessManager } from "./process-manager";
 
 export interface HandlerContext {

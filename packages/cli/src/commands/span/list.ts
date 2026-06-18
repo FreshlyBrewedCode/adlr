@@ -1,8 +1,8 @@
-import type { Span } from "@adler/sdk";
-import { createClient } from "@adler/sdk";
+import type { Span } from "@adlr/sdk";
+import { createClient } from "@adlr/sdk";
 import { Command } from "commander";
 import { ensureDaemon } from "../../auto-start";
-import { AdlerCliError } from "../../error";
+import { AdlrCliError } from "../../error";
 import { resolveSessionId } from "../../resolve-session";
 
 function formatDuration(started: number, finished: number | null): string {
@@ -61,7 +61,7 @@ export const spanListCmd = new Command("list")
 				session: spanListCmd.optsWithGlobals().session,
 			});
 			if (!sessionId) {
-				throw new AdlerCliError("No active session. Run `adler new` first.");
+				throw new AdlrCliError("No active session. Run `adlr new` first.");
 			}
 			const spans = await client.span.list(sessionId);
 			const childrenMap = buildChildrenMap(spans);

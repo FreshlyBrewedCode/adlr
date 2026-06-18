@@ -1,9 +1,9 @@
 ---
 name: opentui
-description: Use if you need to work tasks related to the tui or specifically OpenTUI. The adler tui packages uses opentui 
+description: Use if you need to work tasks related to the tui or specifically OpenTUI. The adlr tui packages uses opentui 
 ---
 
-OpenTUI is a library for building terminal uis (similar to e.g. Ink). adlers tui is built using OpenTUI with React bindings.
+OpenTUI is a library for building terminal uis (similar to e.g. Ink). adlr's tui is built using OpenTUI with React bindings.
 
 # OpenTUI Skill
 

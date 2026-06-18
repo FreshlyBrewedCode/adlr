@@ -1,12 +1,12 @@
-# adler CLI Improvements — Commander.js Refactor
+# adlr CLI Improvements — Commander.js Refactor
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Refactor the adler CLI to use Commander.js for routing, help, and error handling while adding global `--session` flag support.
+**Goal:** Refactor the adlr CLI to use Commander.js for routing, help, and error handling while adding global `--session` flag support.
 
-**Architecture:** Replace the hand-rolled `switch` router in `src/index.ts` with a Commander.js `Program` object. Each command exports a `Command` instance. A custom `AdlerCliError` class replaces scattered `process.exit(1)` calls. The global `--session` flag is registered on the top-level program and passed to all command handlers.
+**Architecture:** Replace the hand-rolled `switch` router in `src/index.ts` with a Commander.js `Program` object. Each command exports a `Command` instance. A custom `AdlrCliError` class replaces scattered `process.exit(1)` calls. The global `--session` flag is registered on the top-level program and passed to all command handlers.
 
-**Tech Stack:** TypeScript, Bun, Commander.js, @adler/sdk, @adler/tui
+**Tech Stack:** TypeScript, Bun, Commander.js, @adlr/sdk, @adlr/tui
 
 ---
 
@@ -14,7 +14,7 @@
 
 | File | Status | Responsibility |
 |------|--------|-------------|
-| `src/error.ts` | Create | `AdlerCliError` class for consistent CLI errors |
+| `src/error.ts` | Create | `AdlrCliError` class for consistent CLI errors |
 | `src/resolve-session.ts` | Modify | Accept `session` option from global flag |
 | `src/cli.ts` | Create | Commander.js entry point with all commands wired up |
 | `src/index.ts` | Modify | Delegate to `cli.ts` |
@@ -48,9 +48,9 @@
 ```json
 {
   "dependencies": {
-    "@adler/sdk": "workspace:*",
-    "@adler/tui": "workspace:*",
-    "adlerd": "workspace:*",
+    "@adlr/sdk": "workspace:*",
+    "@adlr/tui": "workspace:*",
+    "adlrd": "workspace:*",
     "commander": "^13.0.0"
   }
 }
@@ -58,7 +58,7 @@
 
 - [ ] **Step 2: Install dependencies**
 
-Run: `cd /mnt/shares/git/adler && bun install`
+Run: `cd /mnt/shares/git/adlr && bun install`
 Expected: `commander` is installed successfully
 
 - [ ] **Step 3: Commit**
@@ -70,7 +70,7 @@ git commit -m "deps(cli): add commander"
 
 ---
 
-### Task 2: Create AdlerCliError Class
+### Task 2: Create AdlrCliError Class
 
 **Files:**
 - Create: `packages/cli/src/error.ts`
@@ -78,10 +78,10 @@ git commit -m "deps(cli): add commander"
 - [ ] **Step 1: Write the error class**
 
 ```typescript
-export class AdlerCliError extends Error {
+export class AdlrCliError extends Error {
   constructor(message: string) {
     super(message)
-    this.name = "AdlerCliError"
+    this.name = "AdlrCliError"
   }
 }
 ```
@@ -90,7 +90,7 @@ export class AdlerCliError extends Error {
 
 ```bash
 git add packages/cli/src/error.ts
-git commit -m "feat(cli): add AdlerCliError class"
+git commit -m "feat(cli): add AdlrCliError class"
 ```
 
 ---
@@ -115,11 +115,11 @@ export function resolveSessionId(options: { session?: string }): string | undefi
     return options.session
   }
 
-  if (process.env.ADLER_SESSION) {
-    return process.env.ADLER_SESSION
+  if (process.env.ADLR_SESSION) {
+    return process.env.ADLR_SESSION
   }
 
-  const sessionFile = join(process.cwd(), ".adler", ".session")
+  const sessionFile = join(process.cwd(), ".adlr", ".session")
   if (existsSync(sessionFile)) {
     return readFileSync(sessionFile, "utf-8").trim()
   }
@@ -130,7 +130,7 @@ export function resolveSessionId(options: { session?: string }): string | undefi
 
 - [ ] **Step 3: Run existing tests**
 
-Run: `cd /mnt/shares/git/adler/packages/cli && bun test`
+Run: `cd /mnt/shares/git/adlr/packages/cli && bun test`
 Expected: All 4 existing tests pass
 
 - [ ] **Step 4: Commit**
@@ -156,10 +156,10 @@ git commit -m "feat(cli): accept session option in resolveSessionId"
 
 ```typescript
 import { Command } from "commander"
-import { createClient } from "@adler/sdk"
+import { createClient } from "@adlr/sdk"
 import { ensureDaemon } from "../../auto-start"
 import { resolveSessionId } from "../../resolve-session"
-import { AdlerCliError } from "../../error"
+import { AdlrCliError } from "../../error"
 
 export const agentRunCmd = new Command("run")
   .description("Run an agent")
@@ -171,7 +171,7 @@ export const agentRunCmd = new Command("run")
     const client = createClient()
     const sessionId = resolveSessionId({ session: agentRunCmd.optsWithGlobals().session })
     if (!sessionId) {
-      throw new AdlerCliError("No active session. Run `adler new` first.")
+      throw new AdlrCliError("No active session. Run `adlr new` first.")
     }
 
     try {
@@ -193,9 +193,9 @@ export const agentRunCmd = new Command("run")
 
 ```typescript
 import { Command } from "commander"
-import { createClient } from "@adler/sdk"
+import { createClient } from "@adlr/sdk"
 import { ensureDaemon } from "../../auto-start"
-import { AdlerCliError } from "../../error"
+import { AdlrCliError } from "../../error"
 
 export const agentWaitCmd = new Command("wait")
   .description("Wait for an agent to finish")
@@ -216,9 +216,9 @@ export const agentWaitCmd = new Command("wait")
 
 ```typescript
 import { Command } from "commander"
-import { createClient } from "@adler/sdk"
+import { createClient } from "@adlr/sdk"
 import { ensureDaemon } from "../../auto-start"
-import { AdlerCliError } from "../../error"
+import { AdlrCliError } from "../../error"
 
 export const agentStatusCmd = new Command("status")
   .description("Get agent status")
@@ -239,7 +239,7 @@ export const agentStatusCmd = new Command("status")
 
 ```typescript
 import { Command } from "commander"
-import { createClient } from "@adler/sdk"
+import { createClient } from "@adlr/sdk"
 import { ensureDaemon } from "../../auto-start"
 
 export const agentListCmd = new Command("list")
@@ -262,9 +262,9 @@ export const agentListCmd = new Command("list")
 
 ```typescript
 import { Command } from "commander"
-import { createClient } from "@adler/sdk"
+import { createClient } from "@adlr/sdk"
 import { ensureDaemon } from "../../auto-start"
-import { AdlerCliError } from "../../error"
+import { AdlrCliError } from "../../error"
 
 export const agentReadCmd = new Command("read")
   .description("Read agent output")
@@ -332,10 +332,10 @@ git commit -m "feat(cli): add agent subcommands with commander"
 
 ```typescript
 import { Command } from "commander"
-import { createClient } from "@adler/sdk"
+import { createClient } from "@adlr/sdk"
 import { ensureDaemon } from "../../auto-start"
 import { resolveSessionId } from "../../resolve-session"
-import { AdlerCliError } from "../../error"
+import { AdlrCliError } from "../../error"
 
 export const contextAddCmd = new Command("add")
   .description("Add a context item")
@@ -348,7 +348,7 @@ export const contextAddCmd = new Command("add")
     const client = createClient()
     const sessionId = resolveSessionId({ session: contextAddCmd.optsWithGlobals().session })
     if (!sessionId) {
-      throw new AdlerCliError("No active session. Run `adler new` first.")
+      throw new AdlrCliError("No active session. Run `adlr new` first.")
     }
 
     let parsedValue: Record<string, unknown>
@@ -361,7 +361,7 @@ export const contextAddCmd = new Command("add")
     try {
       const item = await client.context.add({
         session_id: sessionId,
-        type: options.type as import("@adler/sdk").ContextItemType,
+        type: options.type as import("@adlr/sdk").ContextItemType,
         label: options.label ?? null,
         description: options.description ?? null,
         value: parsedValue,
@@ -377,7 +377,7 @@ export const contextAddCmd = new Command("add")
 
 ```typescript
 import { Command } from "commander"
-import { createClient } from "@adler/sdk"
+import { createClient } from "@adlr/sdk"
 import { ensureDaemon } from "../../auto-start"
 
 export const contextListCmd = new Command("list")
@@ -400,7 +400,7 @@ export const contextListCmd = new Command("list")
 
 ```typescript
 import { Command } from "commander"
-import { createClient } from "@adler/sdk"
+import { createClient } from "@adlr/sdk"
 import { ensureDaemon } from "../../auto-start"
 
 export const contextGetCmd = new Command("get")
@@ -465,9 +465,9 @@ import { writeFileSync, mkdirSync, existsSync } from "node:fs"
 import { join } from "node:path"
 import { Command } from "commander"
 
-const CONFIG_TEMPLATE = `import type { AdlerConfig } from "@adler/sdk"
+const CONFIG_TEMPLATE = `import type { AdlrConfig } from "@adlr/sdk"
 
-const config: AdlerConfig = {
+const config: AdlrConfig = {
   agent: {
     agents: {
       // Example: echo: ({ prompt }) => \`echo "\${prompt}"\`,
@@ -479,13 +479,13 @@ export default config
 `
 
 export const initCmd = new Command("init")
-  .description("Initialize adler in the current project")
+  .description("Initialize adlr in the current project")
   .action(async () => {
-    const dir = join(process.cwd(), ".adler")
+    const dir = join(process.cwd(), ".adlr")
     mkdirSync(dir, { recursive: true })
-    const configPath = join(dir, "adler.ts")
+    const configPath = join(dir, "adlr.ts")
     if (existsSync(configPath)) {
-      console.log("adler.ts already exists")
+      console.log("adlr.ts already exists")
       return
     }
     writeFileSync(configPath, CONFIG_TEMPLATE, "utf-8")
@@ -497,7 +497,7 @@ export const initCmd = new Command("init")
 
 ```typescript
 import { Command } from "commander"
-import { createClient } from "@adler/sdk"
+import { createClient } from "@adlr/sdk"
 import { writeFileSync, mkdirSync } from "node:fs"
 import { join } from "node:path"
 import { ensureDaemon } from "../auto-start"
@@ -522,7 +522,7 @@ export const newCmd = new Command("new")
         })
       }
 
-      const dir = join(process.cwd(), ".adler")
+      const dir = join(process.cwd(), ".adlr")
       mkdirSync(dir, { recursive: true })
       writeFileSync(join(dir, ".session"), session.id, "utf-8")
 
@@ -537,7 +537,7 @@ export const newCmd = new Command("new")
 
 ```typescript
 import { Command } from "commander"
-import { createClient } from "@adler/sdk"
+import { createClient } from "@adlr/sdk"
 import { ensureDaemon } from "../auto-start"
 
 export const sessionCmd = new Command("session")
@@ -564,7 +564,7 @@ export const sessionCmd = new Command("session")
 
 ```typescript
 import { Command } from "commander"
-import { PID_FILE } from "@adler/sdk"
+import { PID_FILE } from "@adlr/sdk"
 import { readFileSync, existsSync } from "node:fs"
 
 export const daemonCmd = new Command("daemon")
@@ -617,12 +617,12 @@ import { sessionCmd } from "./commands/session"
 import { daemonCmd } from "./commands/daemon"
 import { agentCmd } from "./commands/agent"
 import { contextCmd } from "./commands/context"
-import { AdlerCliError } from "./error"
+import { AdlrCliError } from "./error"
 
 export function buildCli(): Command {
   const program = new Command()
-    .name("adler")
-    .description("adler - Eagle eyes on your agents")
+    .name("adlr")
+    .description("adlr - Eagle eyes on your agents")
     .version("0.1.0")
     .option("-s, --session <id>", "Session ID override")
     .configureHelp({
@@ -645,7 +645,7 @@ export async function runCli(argv: string[] = process.argv): Promise<void> {
   try {
     await program.parseAsync(argv)
   } catch (err) {
-    if (err instanceof AdlerCliError) {
+    if (err instanceof AdlrCliError) {
       console.error(err.message)
       process.exit(1)
     }
@@ -682,7 +682,7 @@ async function main() {
     const { ensureDaemon } = await import("./auto-start")
     await ensureDaemon()
     try {
-      const { runTui } = await import("@adler/tui")
+      const { runTui } = await import("@adlr/tui")
       await runTui()
     } catch (err) {
       console.error("TUI failed to start:", err)
@@ -734,7 +734,7 @@ git commit -m "refactor(cli): remove parse-flags.ts (commander handles parsing)"
 import { test, expect, describe, beforeEach, afterEach } from "bun:test"
 import { resolveSessionId } from "../src/resolve-session"
 import { buildCli } from "../src/cli"
-import { AdlerCliError } from "../src/error"
+import { AdlrCliError } from "../src/error"
 import { mkdirSync, writeFileSync, unlinkSync, rmdirSync } from "node:fs"
 import { join } from "node:path"
 
@@ -742,32 +742,32 @@ describe("CLI", () => {
   let oldSession: string | undefined
 
   beforeEach(() => {
-    oldSession = process.env.ADLER_SESSION
-    delete process.env.ADLER_SESSION
+    oldSession = process.env.ADLR_SESSION
+    delete process.env.ADLR_SESSION
   })
 
   afterEach(() => {
     if (oldSession !== undefined) {
-      process.env.ADLER_SESSION = oldSession
+      process.env.ADLR_SESSION = oldSession
     } else {
-      delete process.env.ADLER_SESSION
+      delete process.env.ADLR_SESSION
     }
   })
 
   test("resolveSessionId returns env var", () => {
-    process.env.ADLER_SESSION = "env-sess"
+    process.env.ADLR_SESSION = "env-sess"
     const id = resolveSessionId({})
     expect(id).toBe("env-sess")
   })
 
   test("resolveSessionId prefers explicit session argument over env var", () => {
-    process.env.ADLER_SESSION = "env-sess"
+    process.env.ADLR_SESSION = "env-sess"
     const id = resolveSessionId({ session: "flag-sess" })
     expect(id).toBe("flag-sess")
   })
 
-  test("resolveSessionId reads .adler/.session file", () => {
-    const sessionDir = join(process.cwd(), ".adler")
+  test("resolveSessionId reads .adlr/.session file", () => {
+    const sessionDir = join(process.cwd(), ".adlr")
     const sessionFile = join(sessionDir, ".session")
     mkdirSync(sessionDir, { recursive: true })
     writeFileSync(sessionFile, " file-sess \n", "utf-8")
@@ -785,9 +785,9 @@ describe("CLI", () => {
     expect(id).toBeUndefined()
   })
 
-  test("AdlerCliError has correct name and message", () => {
-    const err = new AdlerCliError("test message")
-    expect(err.name).toBe("AdlerCliError")
+  test("AdlrCliError has correct name and message", () => {
+    const err = new AdlrCliError("test message")
+    expect(err.name).toBe("AdlrCliError")
     expect(err.message).toBe("test message")
   })
 
@@ -800,7 +800,7 @@ describe("CLI", () => {
       },
     })
     try {
-      await cli.parseAsync(["node", "adler", "unknown"])
+      await cli.parseAsync(["node", "adlr", "unknown"])
     } catch {
       // expected
     }
@@ -816,7 +816,7 @@ describe("CLI", () => {
       },
     })
     try {
-      await cli.parseAsync(["node", "adler", "agent", "--help"])
+      await cli.parseAsync(["node", "adlr", "agent", "--help"])
     } catch {
       // expected
     }
@@ -829,7 +829,7 @@ describe("CLI", () => {
 
 - [ ] **Step 2: Run tests**
 
-Run: `cd /mnt/shares/git/adler/packages/cli && bun test`
+Run: `cd /mnt/shares/git/adlr/packages/cli && bun test`
 Expected: All tests pass (including the new ones)
 
 - [ ] **Step 3: Commit**
@@ -845,27 +845,27 @@ git commit -m "test(cli): update tests for commander refactor"
 
 - [ ] **Step 1: Type check**
 
-Run: `cd /mnt/shares/git/adler && bun tsc --noEmit -p packages/cli/tsconfig.json`
+Run: `cd /mnt/shares/git/adlr && bun tsc --noEmit -p packages/cli/tsconfig.json`
 Expected: No type errors
 
 - [ ] **Step 2: Run full test suite**
 
-Run: `cd /mnt/shares/git/adler/packages/cli && bun test`
+Run: `cd /mnt/shares/git/adlr/packages/cli && bun test`
 Expected: All tests pass
 
 - [ ] **Step 3: Verify CLI help works**
 
-Run: `cd /mnt/shares/git/adler && bun packages/cli/src/index.ts --help`
+Run: `cd /mnt/shares/git/adlr && bun packages/cli/src/index.ts --help`
 Expected: Shows help with all commands listed
 
 - [ ] **Step 4: Verify subcommand help works**
 
-Run: `cd /mnt/shares/git/adler && bun packages/cli/src/index.ts agent --help`
+Run: `cd /mnt/shares/git/adlr && bun packages/cli/src/index.ts agent --help`
 Expected: Shows agent subcommands
 
 - [ ] **Step 5: Verify unknown command error**
 
-Run: `cd /mnt/shares/git/adler && bun packages/cli/src/index.ts foo 2>&1 || true`
+Run: `cd /mnt/shares/git/adlr && bun packages/cli/src/index.ts foo 2>&1 || true`
 Expected: Shows "error: unknown command 'foo'"
 
 - [ ] **Step 6: Commit if all pass**
@@ -884,7 +884,7 @@ git commit --allow-empty -m "chore(cli): verify commander refactor"
 | Auto-help when running subcommand group without verb | Task 7 (Commander default behavior) |
 | List available commands for unknown command | Task 7 (Commander default behavior) |
 | Validate flags, reject unknown options | Tasks 4-6 (Commander `.requiredOption()`, `.option()`) |
-| Provide meaningful error messages | Tasks 2, 7 (AdlerCliError + top-level handler) |
+| Provide meaningful error messages | Tasks 2, 7 (AdlrCliError + top-level handler) |
 | Global `--session` flag | Tasks 3, 7 (`.option("-s, --session <id>")`) |
 | Minimal dependencies | Task 1 (only `commander` added) |
 
@@ -903,7 +903,7 @@ git commit --allow-empty -m "chore(cli): verify commander refactor"
 
 - `resolveSessionId` accepts `{ session?: string }` in Task 3.
 - All command handlers use `optsWithGlobals()` to access `--session` in Tasks 4-6.
-- `AdlerCliError` is used consistently across all command files.
+- `AdlrCliError` is used consistently across all command files.
 - `buildCli()` returns `Command` in Task 7.
 - `runCli()` accepts `string[]` in Task 7.
 

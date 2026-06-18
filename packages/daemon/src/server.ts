@@ -1,6 +1,6 @@
 import { createServer, type Socket } from "node:net";
-import type { Storage } from "@adler/sdk";
-import { SOCKET_PATH } from "@adler/sdk";
+import type { Storage } from "@adlr/sdk";
+import { SOCKET_PATH } from "@adlr/sdk";
 import { handleCommand } from "./handlers";
 import type { InactivityTimer } from "./lifecycle";
 import type { DaemonLogger } from "./logger";

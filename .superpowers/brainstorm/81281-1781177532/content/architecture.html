@@ -1,4 +1,4 @@
-<h2>adler — Architecture Overview</h2>
+<h2>adlr — Architecture Overview</h2>
 <p class="subtitle">Section 1 of 4 — Does this structure look right?</p>
 
 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem;">
@@ -8,13 +8,13 @@
     <h3>Component Map</h3>
     <div style="font-family: monospace; font-size: 0.78rem; background: var(--bg-secondary, #1a1a2e); border: 1px solid var(--border, #333); border-radius: 8px; padding: 1.25rem; line-height: 2.1;">
       <div style="color:#ccc;">  ┌───────────┐   ┌───────────┐</div>
-      <div style="color:#ccc;">  │  adler    │   │  adler    │</div>
+      <div style="color:#ccc;">  │  adlr    │   │  adlr    │</div>
       <div style="color:#ccc;">  │   CLI     │   │   TUI     │</div>
       <div style="color:#ccc;">  └─────┬─────┘   └─────┬─────┘</div>
       <div style="color:#ccc;">        │   Unix socket  │</div>
       <div style="color:#ccc;">        └───────┬────────┘</div>
       <div style="color:#7c9ef5;">         ┌──────┴──────┐</div>
-      <div style="color:#7c9ef5;">         │  adlerd     │  ← daemon</div>
+      <div style="color:#7c9ef5;">         │  adlrd     │  ← daemon</div>
       <div style="color:#7c9ef5;">         │  (bun)      │</div>
       <div style="color:#7c9ef5;">         └──┬───────┬──┘</div>
       <div style="color:#ccc;">            │       │</div>
@@ -30,7 +30,7 @@
   <div>
     <h3>Who does what</h3>
     <div style="margin-bottom: 1rem;">
-      <div class="label" style="color:#7c9ef5;">DAEMON (adlerd)</div>
+      <div class="label" style="color:#7c9ef5;">DAEMON (adlrd)</div>
       <ul style="margin: 0.4rem 0 0 1rem; font-size: 0.85rem; line-height: 1.8;">
         <li>Single writer to SQLite</li>
         <li>Spawns &amp; owns agent child processes</li>
@@ -41,7 +41,7 @@
       </ul>
     </div>
     <div style="margin-bottom: 1rem;">
-      <div class="label" style="color:#ccc;">CLI (adler)</div>
+      <div class="label" style="color:#ccc;">CLI (adlr)</div>
       <ul style="margin: 0.4rem 0 0 1rem; font-size: 0.85rem; line-height: 1.8;">
         <li>Thin client — sends commands to daemon</li>
         <li>Receives responses, prints to stdout</li>
@@ -49,7 +49,7 @@
       </ul>
     </div>
     <div>
-      <div class="label" style="color:#ccc;">TUI (adler with no args)</div>
+      <div class="label" style="color:#ccc;">TUI (adlr with no args)</div>
       <ul style="margin: 0.4rem 0 0 1rem; font-size: 0.85rem; line-height: 1.8;">
         <li>Holds open socket connection to daemon</li>
         <li>Receives push events, re-renders on each</li>

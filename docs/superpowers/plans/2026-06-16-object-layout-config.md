@@ -4,9 +4,9 @@
 
 **Goal:** Replace the JSX/function-based layout config with a plain object tree, drop `.tsx` config support, and align the SDK types, TUI evaluation/validation, and the existing spec.
 
-**Architecture:** The `tui.layout` field in `AdlerConfig` becomes a direct `LayoutNode` object (no function wrapper, no JSX). The TUI normalizes string shorthands to `PanelNode` objects before rendering. The config loader drops `.tsx` candidates entirely.
+**Architecture:** The `tui.layout` field in `AdlrConfig` becomes a direct `LayoutNode` object (no function wrapper, no JSX). The TUI normalizes string shorthands to `PanelNode` objects before rendering. The config loader drops `.tsx` candidates entirely.
 
-**Tech Stack:** TypeScript, Bun test runner (`bun:test`), `@adler/sdk`, `@adler/tui`
+**Tech Stack:** TypeScript, Bun test runner (`bun:test`), `@adlr/sdk`, `@adlr/tui`
 
 ---
 
@@ -21,7 +21,7 @@
 | `packages/tui/src/core/validateLayout.ts` | Rewrite to handle new shape (`layout`/`panel` keys, `content`, string shorthands) |
 | `packages/tui/src/core/normalizeLayout.ts` | Create: normalizes `ContentNode` (string shorthands → `PanelNode`) |
 | `packages/tui/src/app.tsx` | Update `defaultLayout` to new shape; remove `evaluateLayout` import if present |
-| `.adler/adler.tsx` | Rename to `.adler/adler.ts` (content already correct) |
+| `.adlr/adlr.tsx` | Rename to `.adlr/adlr.ts` (content already correct) |
 | `packages/tui/test/core/evaluateLayout.test.ts` | Delete file |
 | `packages/tui/test/core/validateLayout.test.ts` | Rewrite tests for new shape |
 | `packages/tui/test/core/normalizeLayout.test.ts` | Create: tests for string shorthand normalization |
@@ -86,8 +86,8 @@ In `packages/daemon/src/config-loader.ts`, replace:
 
 ```ts
 const GLOBAL_CONFIG_STEMS = [
-  join(homedir(), ".config/adler/adler.tsx"),
-  join(homedir(), ".config/adler/adler.ts"),
+  join(homedir(), ".config/adlr/adlr.tsx"),
+  join(homedir(), ".config/adlr/adlr.ts"),
 ]
 ```
 
@@ -95,7 +95,7 @@ with:
 
 ```ts
 const GLOBAL_CONFIG_STEMS = [
-  join(homedir(), ".config/adler/adler.ts"),
+  join(homedir(), ".config/adlr/adlr.ts"),
 ]
 ```
 
@@ -103,7 +103,7 @@ And replace:
 
 ```ts
 function projectConfigCandidates(dir: string): string[] {
-  return [join(dir, ".adler/adler.tsx"), join(dir, ".adler/adler.ts")]
+  return [join(dir, ".adlr/adlr.tsx"), join(dir, ".adlr/adlr.ts")]
 }
 ```
 
@@ -111,7 +111,7 @@ with:
 
 ```ts
 function projectConfigCandidates(dir: string): string[] {
-  return [join(dir, ".adler/adler.ts")]
+  return [join(dir, ".adlr/adlr.ts")]
 }
 ```
 
@@ -567,18 +567,18 @@ git commit -m "feat(tui): update LayoutRenderer and App for object-based layout"
 ## Task 8: Rename sample config
 
 **Files:**
-- Rename: `.adler/adler.tsx` → `.adler/adler.ts`
+- Rename: `.adlr/adlr.tsx` → `.adlr/adlr.ts`
 
 - [ ] **Step 1: Rename and update import**
 
 ```bash
-mv .adler/adler.tsx .adler/adler.ts
+mv .adlr/adlr.tsx .adlr/adlr.ts
 ```
 
-The file content already uses the correct object-based layout format and imports `AdlerConfig` from `@adler/sdk`. The type definitions changed in Task 1, so verify the import still resolves:
+The file content already uses the correct object-based layout format and imports `AdlrConfig` from `@adlr/sdk`. The type definitions changed in Task 1, so verify the import still resolves:
 
 ```bash
-bun tsc --noEmit .adler/adler.ts 2>&1 || true
+bun tsc --noEmit .adlr/adlr.ts 2>&1 || true
 ```
 
 (This may not be in the tsconfig — just confirm the file has no obvious syntax errors.)
@@ -586,9 +586,9 @@ bun tsc --noEmit .adler/adler.ts 2>&1 || true
 - [ ] **Step 2: Commit**
 
 ```bash
-git add .adler/adler.ts
-git rm .adler/adler.tsx
-git commit -m "chore: rename adler.tsx to adler.ts"
+git add .adlr/adlr.ts
+git rm .adlr/adlr.tsx
+git commit -m "chore: rename adlr.tsx to adlr.ts"
 ```
 
 ---
@@ -687,7 +687,7 @@ git commit -m "docs: update tui panel system spec for object-based layout config
 - [ ] **Step 1: Run all tests across all packages**
 
 ```bash
-cd /Users/karl/git/adler && bun test
+cd /Users/karl/git/adlr && bun test
 ```
 
 Expected: all tests pass with no failures.
@@ -705,7 +705,7 @@ Expected: no errors in any package.
 - [ ] **Step 3: Confirm no `.tsx` config references remain**
 
 ```bash
-grep -r "adler\.tsx" packages/ .adler/ --include="*.ts" --include="*.tsx"
+grep -r "adlr\.tsx" packages/ .adlr/ --include="*.ts" --include="*.tsx"
 ```
 
 Expected: no output.

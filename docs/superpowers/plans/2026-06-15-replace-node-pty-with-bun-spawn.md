@@ -49,8 +49,8 @@ Expected output: `2 pass, 0 fail`
 Replace the top of `packages/daemon/src/process-manager.ts` (lines 1–16):
 
 ```ts
-import type { Storage, Span, SpanStatus } from "@adler/sdk"
-import { SOCKET_PATH } from "@adler/sdk"
+import type { Storage, Span, SpanStatus } from "@adlr/sdk"
+import { SOCKET_PATH } from "@adlr/sdk"
 import type { InactivityTimer } from "./lifecycle"
 import type { ConfigLoader } from "./config-loader"
 
@@ -88,10 +88,10 @@ Add to `packages/daemon/test/process-manager.test.ts`:
 
 ```ts
 test("spawned agent uses session working_dir as cwd", async () => {
-  const adlerDir = join(testDir, ".adler")
-  mkdirSync(adlerDir, { recursive: true })
+  const adlrDir = join(testDir, ".adlr")
+  mkdirSync(adlrDir, { recursive: true })
   writeFileSync(
-    join(adlerDir, "adler.ts"),
+    join(adlrDir, "adlr.ts"),
     // The command prints the cwd; we verify it matches testDir
     `export default { agent: { agents: { cwd-test: { run: () => "pwd" } } } }`,
     "utf-8"
@@ -267,10 +267,10 @@ Add to `packages/daemon/test/process-manager.test.ts`:
 
 ```ts
 test("stop() kills all tracked agents regardless of mode", async () => {
-  const adlerDir = join(testDir, ".adler")
-  mkdirSync(adlerDir, { recursive: true })
+  const adlrDir = join(testDir, ".adlr")
+  mkdirSync(adlrDir, { recursive: true })
   writeFileSync(
-    join(adlerDir, "adler.ts"),
+    join(adlrDir, "adlr.ts"),
     // sleep keeps the process alive so we can verify stop() kills it
     `export default { agent: { agents: { sleeper: { run: () => "sleep 60" } } } }`,
     "utf-8"
@@ -386,19 +386,19 @@ In `packages/daemon/package.json`, remove the `"node-pty": "^1.1.0"` line. The f
 
 ```json
 {
-  "name": "adlerd",
+  "name": "adlrd",
   "version": "0.1.0",
   "type": "module",
   "main": "src/index.ts",
   "bin": {
-    "adlerd": "src/index.ts"
+    "adlrd": "src/index.ts"
   },
   "scripts": {
     "test": "bun test",
     "start": "bun src/index.ts"
   },
   "dependencies": {
-    "@adler/sdk": "workspace:*"
+    "@adlr/sdk": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^20.0.0"
@@ -437,7 +437,7 @@ Expected: all pass.
 - [ ] **Step 1: Kill any running daemon so a fresh one starts**
 
 ```bash
-pkill -f "adler/packages/daemon/src/index.ts" 2>/dev/null || true
+pkill -f "adlr/packages/daemon/src/index.ts" 2>/dev/null || true
 sleep 1
 ```
 

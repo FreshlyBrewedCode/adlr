@@ -1,4 +1,4 @@
-import { DB_PATH, SQLiteStorage } from "@adler/sdk";
+import { DB_PATH, SQLiteStorage } from "@adlr/sdk";
 import { ConfigLoader } from "./config-loader";
 import {
 	ensureAdlerDir,
@@ -63,7 +63,7 @@ async function main() {
 	process.on("SIGTERM", shutdown);
 	process.on("SIGINT", shutdown);
 
-	await logger.info("adlerd started");
+	await logger.info("adlrd started");
 }
 
 main().catch((err) => {

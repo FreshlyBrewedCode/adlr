@@ -1,5 +1,5 @@
 import { existsSync, readFileSync } from "node:fs";
-import { PID_FILE } from "@adler/sdk";
+import { PID_FILE } from "@adlr/sdk";
 import { Command } from "commander";
 
 export const daemonCmd = new Command("daemon")

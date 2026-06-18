@@ -1,5 +1,5 @@
 {
-	"name": "@adler/tui",
+	"name": "@adlr/tui",
 	"version": "0.1.0",
 	"type": "module",
 	"main": "src/index.ts",
@@ -12,7 +12,7 @@
 		"typecheck": "tsgo --noEmit"
 	},
 	"dependencies": {
-		"@adler/sdk": "workspace:*",
+		"@adlr/sdk": "workspace:*",
 		"@opentui/core": "latest",
 		"@opentui/react": "latest",
 		"@opentui/keymap": "latest",

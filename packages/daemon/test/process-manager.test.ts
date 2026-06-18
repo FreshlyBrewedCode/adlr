@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { SQLiteStorage } from "@adler/sdk";
+import { SQLiteStorage } from "@adlr/sdk";
 import { ConfigLoader } from "../src/config-loader";
 // Type guard: AgentProcess must have proc and terminal, not pty
 import type { AgentProcess } from "../src/process-manager";
@@ -18,7 +18,7 @@ type _Check = AgentProcess extends {
 function createTestDir(): string {
 	const dir = join(
 		tmpdir(),
-		`adler-test-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+		`adlr-test-${Date.now()}-${Math.random().toString(36).slice(2)}`,
 	);
 	mkdirSync(dir, { recursive: true });
 	return dir;
@@ -46,10 +46,10 @@ describe("ProcessManager", () => {
 	});
 
 	test("uses ConfigLoader with session working_dir", async () => {
-		const adlerDir = join(testDir, ".adler");
-		mkdirSync(adlerDir, { recursive: true });
+		const adlrDir = join(testDir, ".adlr");
+		mkdirSync(adlrDir, { recursive: true });
 		writeFileSync(
-			join(adlerDir, "adler.ts"),
+			join(adlrDir, "adlr.ts"),
 			`export default { agent: { agents: { test: { run: () => "echo hello" } } } }`,
 			"utf-8",
 		);
@@ -86,10 +86,10 @@ describe("ProcessManager", () => {
 	});
 
 	test("spawned agent uses session working_dir as cwd", async () => {
-		const adlerDir = join(testDir, ".adler");
-		mkdirSync(adlerDir, { recursive: true });
+		const adlrDir = join(testDir, ".adlr");
+		mkdirSync(adlrDir, { recursive: true });
 		writeFileSync(
-			join(adlerDir, "adler.ts"),
+			join(adlrDir, "adlr.ts"),
 			`export default { agent: { agents: { "cwd-test": { run: () => "pwd" } } } }`,
 			"utf-8",
 		);
@@ -120,10 +120,10 @@ describe("ProcessManager", () => {
 	});
 
 	test("stop() kills all tracked agents regardless of mode", async () => {
-		const adlerDir = join(testDir, ".adler");
-		mkdirSync(adlerDir, { recursive: true });
+		const adlrDir = join(testDir, ".adlr");
+		mkdirSync(adlrDir, { recursive: true });
 		writeFileSync(
-			join(adlerDir, "adler.ts"),
+			join(adlrDir, "adlr.ts"),
 			`export default { agent: { agents: { sleeper: { run: () => "sleep 60" } } } }`,
 			"utf-8",
 		);

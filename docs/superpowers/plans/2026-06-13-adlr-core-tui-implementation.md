@@ -1,8 +1,8 @@
-# adler Core + TUI Implementation Plan
+# adlr Core + TUI Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Build the adler daemon, SDK, CLI, and TUI dashboard as a Bun monorepo, implementing the core session/agent/context observability system with SQLite persistence and Unix socket IPC.
+**Goal:** Build the adlr daemon, SDK, CLI, and TUI dashboard as a Bun monorepo, implementing the core session/agent/context observability system with SQLite persistence and Unix socket IPC.
 
 **Architecture:** Four packages (`sdk`, `daemon`, `cli`, `tui`) plus one plugin (`plugins/opencode`). The daemon is the sole SQLite writer and agent process manager. The SDK wraps Unix socket IPC with auto-start. The CLI and TUI are thin SDK consumers. Everything is TypeScript on Bun, using `bun:sqlite` for persistence.
 
@@ -16,13 +16,13 @@ This plan is split into five sub-plans. They must be implemented in order — ea
 
 | # | Sub-plan | Package | Depends on | File |
 |---|---|---|---|---|
-| 1 | [Monorepo + SDK](./2026-06-13-adler-sdk-package.md) | `@adler/sdk` | — | `sdk-package.md` |
-| 2 | [Daemon](./2026-06-13-adler-daemon-package.md) | `adlerd` | `@adler/sdk` | `daemon-package.md` |
-| 3 | [CLI](./2026-06-13-adler-cli-package.md) | `adler` | `@adler/sdk`, `adlerd` | `cli-package.md` |
-| 4 | [TUI](./2026-06-13-adler-tui-package.md) | TUI dashboard | `adler`, `adlerd` | `tui-package.md` |
-| 5 | [Plugin: opencode](./2026-06-13-adler-opencode-plugin.md) | `@adler/opencode` | `@adler/sdk` | `opencode-plugin.md` |
+| 1 | [Monorepo + SDK](./2026-06-13-adlr-sdk-package.md) | `@adlr/sdk` | — | `sdk-package.md` |
+| 2 | [Daemon](./2026-06-13-adlr-daemon-package.md) | `adlrd` | `@adlr/sdk` | `daemon-package.md` |
+| 3 | [CLI](./2026-06-13-adlr-cli-package.md) | `adlr` | `@adlr/sdk`, `adlrd` | `cli-package.md` |
+| 4 | [TUI](./2026-06-13-adlr-tui-package.md) | TUI dashboard | `adlr`, `adlrd` | `tui-package.md` |
+| 5 | [Plugin: opencode](./2026-06-13-adlr-opencode-plugin.md) | `@adlr/opencode` | `@adlr/sdk` | `opencode-plugin.md` |
 
-> **Important:** The SDK exports types and the `Storage` interface. The daemon implements `Storage` with SQLite. The CLI and TUI import only from `@adler/sdk`. No package imports from a sibling except via the SDK.
+> **Important:** The SDK exports types and the `Storage` interface. The daemon implements `Storage` with SQLite. The CLI and TUI import only from `@adlr/sdk`. No package imports from a sibling except via the SDK.
 
 ---
 
@@ -30,19 +30,19 @@ This plan is split into five sub-plans. They must be implemented in order — ea
 
 ```
 packages/
-  sdk/          → @adler/sdk
-  daemon/       → adlerd
-  cli/          → adler CLI binary
+  sdk/          → @adlr/sdk
+  daemon/       → adlrd
+  cli/          → adlr CLI binary
   tui/          → Ink dashboard
   plugins/
-    opencode/   → @adler/opencode
+    opencode/   → @adlr/opencode
 ```
 
 ### Root `package.json`
 
 ```json
 {
-  "name": "adler",
+  "name": "adlr",
   "private": true,
   "workspaces": ["packages/*", "packages/plugins/*"],
   "scripts": {
@@ -73,7 +73,7 @@ packages/
     "outDir": "./dist",
     "rootDir": ".",
     "paths": {
-      "@adler/sdk": ["./packages/sdk/src/index.ts"]
+      "@adlr/sdk": ["./packages/sdk/src/index.ts"]
     }
   },
   "include": ["packages/**/*"]
@@ -90,25 +90,25 @@ All packages use these env vars consistently:
 
 | Variable | Set by | Read by |
 |---|---|---|
-| `ADLER_SESSION` | daemon on spawn | CLI, agents, SDK `env()` |
-| `ADLER_SPAN_ID` | daemon on spawn | CLI, agents, SDK `env()` |
-| `ADLER_SOCKET` | CLI/daemon | SDK client, agents |
-| `ADLER_AGENT_PROMPT` | daemon on spawn | agent process |
-| `ADLER_CONTEXT` | daemon on spawn | agent process |
+| `ADLR_SESSION` | daemon on spawn | CLI, agents, SDK `env()` |
+| `ADLR_SPAN_ID` | daemon on spawn | CLI, agents, SDK `env()` |
+| `ADLR_SOCKET` | CLI/daemon | SDK client, agents |
+| `ADLR_AGENT_PROMPT` | daemon on spawn | agent process |
+| `ADLR_CONTEXT` | daemon on spawn | agent process |
 
 ### 2. Runtime Paths
 
-All derived from `~/.local/share/adler/`:
+All derived from `~/.local/share/adlr/`:
 
 ```ts
-// In @adler/sdk — shared path utilities
+// In @adlr/sdk — shared path utilities
 import { homedir } from "os"
 import { join } from "path"
 
-export const ADLER_DIR = join(homedir(), ".local/share/adler")
-export const SOCKET_PATH = join(ADLER_DIR, "adler.sock")
-export const DB_PATH = join(ADLER_DIR, "adler.db")
-export const PID_FILE = join(ADLER_DIR, "adler.pid")
+export const ADLR_DIR = join(homedir(), ".local/share/adlr")
+export const SOCKET_PATH = join(ADLR_DIR, "adlr.sock")
+export const DB_PATH = join(ADLR_DIR, "adlr.db")
+export const PID_FILE = join(ADLR_DIR, "adlr.pid")
 ```
 
 ### 3. Type Conventions
@@ -151,7 +151,7 @@ Each sub-plan ends every task with a commit. The commit messages follow:
 - **Unit tests** in `packages/sdk/test/` for Storage interface and types
 - **Integration tests** in `packages/daemon/test/` for socket server and agent spawning
 - **CLI tests** in `packages/cli/test/` using subprocess invocation
-- **TUI tests** are visual — no automated tests; verify by running `adler`
+- **TUI tests** are visual — no automated tests; verify by running `adlr`
 
 ---
 
@@ -159,13 +159,13 @@ Each sub-plan ends every task with a commit. The commit messages follow:
 
 1. **Spec coverage:** All sections of the 2026-06-11 spec are covered by at least one task in the sub-plans.
 2. **No placeholders:** Every task contains exact file paths, code, or commands. No "TBD", "TODO", or "implement later".
-3. **Type consistency:** All types are defined in `@adler/sdk` and imported by downstream packages. No redefined interfaces.
+3. **Type consistency:** All types are defined in `@adlr/sdk` and imported by downstream packages. No redefined interfaces.
 
 ---
 
 ## Execution Handoff
 
-Plan complete and saved to `docs/superpowers/plans/2026-06-13-adler-core-tui-implementation.md`.
+Plan complete and saved to `docs/superpowers/plans/2026-06-13-adlr-core-tui-implementation.md`.
 
 **Two execution options:**
 

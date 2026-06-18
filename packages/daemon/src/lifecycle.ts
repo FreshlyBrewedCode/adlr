@@ -5,13 +5,13 @@ import {
 	unlinkSync,
 	writeFileSync,
 } from "node:fs";
-import { ADLER_DIR, PID_FILE, SOCKET_PATH } from "@adler/sdk";
+import { ADLR_DIR, PID_FILE, SOCKET_PATH } from "@adlr/sdk";
 
 const INACTIVITY_TIMEOUT_MS = 10 * 60 * 1000; // 10 minutes
 
 export function ensureAdlerDir(): void {
-	if (!existsSync(ADLER_DIR)) {
-		mkdirSync(ADLER_DIR, { recursive: true });
+	if (!existsSync(ADLR_DIR)) {
+		mkdirSync(ADLR_DIR, { recursive: true });
 	}
 }
 

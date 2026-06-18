@@ -1,5 +1,5 @@
-import type { Event } from "@adler/sdk";
-import { createClient, DAEMON_SESSION_ID } from "@adler/sdk";
+import type { Event } from "@adlr/sdk";
+import { createClient, DAEMON_SESSION_ID } from "@adlr/sdk";
 import { useBindings } from "@opentui/keymap/react";
 import { useEffect, useState } from "react";
 import type { PanelProps } from "../../core/types";

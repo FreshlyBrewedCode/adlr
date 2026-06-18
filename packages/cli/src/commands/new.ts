@@ -1,6 +1,6 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { createClient } from "@adler/sdk";
+import { createClient } from "@adlr/sdk";
 import { Command } from "commander";
 import { ensureDaemon } from "../auto-start";
 
@@ -24,7 +24,7 @@ export const newCmd = new Command("new")
 				});
 			}
 
-			const dir = join(process.cwd(), ".adler");
+			const dir = join(process.cwd(), ".adlr");
 			mkdirSync(dir, { recursive: true });
 			writeFileSync(join(dir, ".session"), session.id, "utf-8");
 

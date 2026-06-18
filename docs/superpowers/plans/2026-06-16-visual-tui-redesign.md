@@ -221,7 +221,7 @@ Replace the entire file with:
 
 ```typescript
 import { Box, Text } from "ink"
-import type { Session } from "@adler/sdk"
+import type { Session } from "@adlr/sdk"
 import { Theme } from "../theme"
 
 export function Header({ session }: { session: Session | null }) {
@@ -230,7 +230,7 @@ export function Header({ session }: { session: Session | null }) {
     : Theme.header.status.completed
   return (
     <Box height={1}>
-      <Text bold>adler</Text>
+      <Text bold>adlr</Text>
       <Text dimColor> · session: </Text>
       <Text color={Theme.primary}>{session?.id.slice(0, 6)}</Text>
       <Text dimColor> · </Text>
@@ -466,7 +466,7 @@ Replace the entire file with:
 
 ```typescript
 import { Box, Text } from "ink"
-import type { Event } from "@adler/sdk"
+import type { Event } from "@adlr/sdk"
 import { Theme } from "../theme"
 
 function levelFromType(type: string): "info" | "warn" | "error" | "other" {
@@ -511,7 +511,7 @@ Replace the entire file with:
 
 ```typescript
 import { Box, Text } from "ink"
-import type { Span } from "@adler/sdk"
+import type { Span } from "@adlr/sdk"
 import { Theme } from "../theme"
 
 export function TreeNode({
@@ -732,7 +732,7 @@ Replace the entire file with:
 import { useState, useMemo } from "react"
 import { Box, Text } from "ink"
 import { useInput } from "ink"
-import type { ContextItem } from "@adler/sdk"
+import type { ContextItem } from "@adlr/sdk"
 import type { PanelProps } from "../../core/types"
 import { TypeBadge } from "../TypeBadge"
 import { Theme } from "../../theme"
@@ -891,7 +891,7 @@ Replace the entire file with:
 import { useState, useMemo } from "react"
 import { Box } from "ink"
 import { useInput } from "ink"
-import type { Span } from "@adler/sdk"
+import type { Span } from "@adlr/sdk"
 import type { PanelProps } from "../../core/types"
 import { TreeNode } from "../TreeNode"
 import { SelectList } from "../SelectList"
@@ -979,8 +979,8 @@ Replace the entire file with:
 import { useState, useEffect } from "react"
 import { Box, Text } from "ink"
 import { useInput } from "ink"
-import { createClient, DAEMON_SESSION_ID } from "@adler/sdk"
-import type { Event } from "@adler/sdk"
+import { createClient, DAEMON_SESSION_ID } from "@adlr/sdk"
+import type { Event } from "@adlr/sdk"
 import type { PanelProps } from "../../core/types"
 import { LogLine } from "../LogLine"
 import { SelectList } from "../SelectList"

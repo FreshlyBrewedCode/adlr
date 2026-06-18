@@ -1,4 +1,4 @@
-import type { Span } from "@adler/sdk";
+import type { Span } from "@adlr/sdk";
 import { useBindings } from "@opentui/keymap/react";
 import { useMemo, useState } from "react";
 import type { PanelProps } from "../../core/types";

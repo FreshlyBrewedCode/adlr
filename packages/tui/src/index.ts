@@ -8,8 +8,8 @@ import { createAdlerKeymap } from "./keymap.ts";
 import { loadConfig } from "./loadConfig.ts";
 
 function resolveSessionId(): string | undefined {
-	if (process.env.ADLER_SESSION) return process.env.ADLER_SESSION;
-	const localFile = join(process.cwd(), ".adler", ".session");
+	if (process.env.ADLR_SESSION) return process.env.ADLR_SESSION;
+	const localFile = join(process.cwd(), ".adlr", ".session");
 	if (existsSync(localFile)) {
 		return readFileSync(localFile, "utf-8").trim();
 	}
@@ -19,7 +19,7 @@ function resolveSessionId(): string | undefined {
 export async function runTui(): Promise<() => void> {
 	const sessionId = resolveSessionId();
 	if (!sessionId) {
-		console.error("No active session. Run `adler new` first.");
+		console.error("No active session. Run `adlr new` first.");
 		process.exit(1);
 	}
 

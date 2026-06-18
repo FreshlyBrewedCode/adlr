@@ -109,7 +109,7 @@ export interface TuiConfig {
 	layout?: LayoutNode;
 }
 
-export interface AdlerConfig {
+export interface AdlrConfig {
 	agent?: {
 		agents?: Record<string, AgentConfig>;
 		attach?: AttachConfig;

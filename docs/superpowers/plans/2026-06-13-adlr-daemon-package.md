@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Build `adlerd` — the background daemon that owns SQLite, manages agent processes via PTY, serves Unix socket IPC, and pushes events to subscribers.
+**Goal:** Build `adlrd` — the background daemon that owns SQLite, manages agent processes via PTY, serves Unix socket IPC, and pushes events to subscribers.
 
 **Architecture:** A single Bun process that runs forever (or until idle). It listens on a Unix socket, routes commands to Storage or process manager, and streams PTY output over raw attach channels. All state is in SQLite; the daemon is the only writer.
 
@@ -40,19 +40,19 @@ packages/daemon/
 
 ```json
 {
-  "name": "adlerd",
+  "name": "adlrd",
   "version": "0.1.0",
   "type": "module",
   "main": "src/index.ts",
   "bin": {
-    "adlerd": "src/index.ts"
+    "adlrd": "src/index.ts"
   },
   "scripts": {
     "test": "bun test",
     "start": "bun src/index.ts"
   },
   "dependencies": {
-    "@adler/sdk": "workspace:*",
+    "@adlr/sdk": "workspace:*",
     "node-pty": "^1.0.0"
   },
   "devDependencies": {
@@ -93,14 +93,14 @@ git commit -m "feat(daemon): add package scaffolding"
 ```ts
 import { writeFileSync, readFileSync, unlinkSync, existsSync } from "fs"
 import { join } from "path"
-import { ADLER_DIR, PID_FILE, SOCKET_PATH } from "@adler/sdk"
+import { ADLR_DIR, PID_FILE, SOCKET_PATH } from "@adlr/sdk"
 
 const INACTIVITY_TIMEOUT_MS = 10 * 60 * 1000 // 10 minutes
 
 export function ensureAdlerDir(): void {
-  if (!existsSync(ADLER_DIR)) {
+  if (!existsSync(ADLR_DIR)) {
     const { mkdirSync } = require("fs")
-    mkdirSync(ADLER_DIR, { recursive: true })
+    mkdirSync(ADLR_DIR, { recursive: true })
   }
 }
 
@@ -218,14 +218,14 @@ git commit -m "feat(daemon): add lifecycle and inactivity timer"
 import { existsSync } from "fs"
 import { join } from "path"
 import { homedir } from "os"
-import type { AdlerConfig } from "@adler/sdk"
+import type { AdlrConfig } from "@adlr/sdk"
 
-const GLOBAL_CONFIG = join(homedir(), ".config/adler/adler.ts")
-const PROJECT_CONFIG = join(process.cwd(), ".adler/adler.ts")
+const GLOBAL_CONFIG = join(homedir(), ".config/adlr/adlr.ts")
+const PROJECT_CONFIG = join(process.cwd(), ".adlr/adlr.ts")
 
-export async function loadConfig(): Promise<AdlerConfig> {
-  let globalConfig: AdlerConfig = {}
-  let projectConfig: AdlerConfig = {}
+export async function loadConfig(): Promise<AdlrConfig> {
+  let globalConfig: AdlrConfig = {}
+  let projectConfig: AdlrConfig = {}
 
   if (existsSync(GLOBAL_CONFIG)) {
     const mod = await import(GLOBAL_CONFIG)
@@ -240,7 +240,7 @@ export async function loadConfig(): Promise<AdlerConfig> {
   return mergeConfig(globalConfig, projectConfig)
 }
 
-function mergeConfig(base: AdlerConfig, override: AdlerConfig): AdlerConfig {
+function mergeConfig(base: AdlrConfig, override: AdlrConfig): AdlrConfig {
   return {
     agent: {
       agents: { ...base.agent?.agents, ...override.agent?.agents },
@@ -268,8 +268,8 @@ git commit -m "feat(daemon): add config loader"
 
 ```ts
 import { spawn as spawnPty } from "node-pty"
-import type { Storage, Span, SpanStatus, AdlerConfig } from "@adler/sdk"
-import { ADLER_SOCKET } from "@adler/sdk"
+import type { Storage, Span, SpanStatus, AdlrConfig } from "@adlr/sdk"
+import { ADLR_SOCKET } from "@adlr/sdk"
 
 export interface AgentProcess {
   spanId: string
@@ -289,7 +289,7 @@ export class ProcessManager {
 
   constructor(
     private storage: Storage,
-    private config: AdlerConfig,
+    private config: AdlrConfig,
     private onEvent: (event: { type: string; payload: unknown }) => void,
   ) {}
 
@@ -322,11 +322,11 @@ export class ProcessManager {
     const contextItems = await this.storage.listContextItems(data.sessionId)
     const env = {
       ...process.env,
-      ADLER_SESSION: data.sessionId,
-      ADLER_SPAN_ID: span.id,
-      ADLER_SOCKET: ADLER_SOCKET,
-      ADLER_AGENT_PROMPT: data.prompt,
-      ADLER_CONTEXT: JSON.stringify(contextItems),
+      ADLR_SESSION: data.sessionId,
+      ADLR_SPAN_ID: span.id,
+      ADLR_SOCKET: ADLR_SOCKET,
+      ADLR_AGENT_PROMPT: data.prompt,
+      ADLR_CONTEXT: JSON.stringify(contextItems),
     }
 
     const pty = spawnPty(runCmd, [], {
@@ -394,7 +394,7 @@ export class ProcessManager {
     return span
   }
 
-  private async pollStatus(spanId: string, statusHook: NonNullable<AdlerConfig["agent"]["agents"][string]["status"]>) {
+  private async pollStatus(spanId: string, statusHook: NonNullable<AdlrConfig["agent"]["agents"][string]["status"]>) {
     const agent = this.agents.get(spanId)
     if (!agent || agent.exited) return
 
@@ -515,7 +515,7 @@ git commit -m "feat(daemon): add process manager with PTY spawning"
 - [ ] **Step 1: Write handlers**
 
 ```ts
-import type { Storage } from "@adler/sdk"
+import type { Storage } from "@adlr/sdk"
 import type { ProcessManager } from "./process-manager"
 
 export interface HandlerContext {
@@ -662,8 +662,8 @@ git commit -m "feat(daemon): add IPC command handlers"
 
 ```ts
 import { createServer, type Socket } from "net"
-import type { Storage } from "@adler/sdk"
-import { SOCKET_PATH } from "@adler/sdk"
+import type { Storage } from "@adlr/sdk"
+import { SOCKET_PATH } from "@adlr/sdk"
 import { ProcessManager } from "./process-manager"
 import { handleCommand } from "./handlers"
 import { InactivityTimer } from "./lifecycle"
@@ -790,7 +790,7 @@ git commit -m "feat(daemon): add Unix socket server with subscriptions"
 - [ ] **Step 1: Write entry point**
 
 ```ts
-import { SQLiteStorage, DB_PATH } from "@adler/sdk"
+import { SQLiteStorage, DB_PATH } from "@adlr/sdk"
 import { startServer } from "./server"
 import { ProcessManager } from "./process-manager"
 import { loadConfig } from "./config-loader"
@@ -828,7 +828,7 @@ async function main() {
   process.on("SIGTERM", shutdown)
   process.on("SIGINT", shutdown)
 
-  console.log("adlerd started")
+  console.log("adlrd started")
 }
 
 main().catch((err) => {
@@ -856,11 +856,11 @@ git commit -m "feat(daemon): add daemon entry point"
 ```ts
 import { test, expect, describe, beforeEach, afterEach } from "bun:test"
 import { connect } from "net"
-import { SQLiteStorage } from "@adler/sdk"
+import { SQLiteStorage } from "@adlr/sdk"
 import { startServer } from "../src/server"
 import { ProcessManager } from "../src/process-manager"
 import { unlinkSync, existsSync } from "fs"
-import { SOCKET_PATH } from "@adler/sdk"
+import { SOCKET_PATH } from "@adlr/sdk"
 
 describe("Daemon server", () => {
   let storage: SQLiteStorage
@@ -929,6 +929,6 @@ git commit -m "feat(daemon): add server integration tests"
 
 1. **Spec coverage:** §4 Daemon lifecycle (socket, PID, auto-start, shutdown, inactivity), §4 IPC Protocol (all command types, responses, errors, snapshot, event stream), §4 Agent spawning (PTY, env vars, interactive/non-interactive, status hook, output hook, completion), §4 Span context propagation (env vars), §8 Configuration (config loader) — all covered.
 2. **No placeholders:** All hooks (`run`, `output`, `status`, `open`, `attach`) are referenced in the config loader. PTY output streaming is implemented via `addAttachListener`. The `agent.attach` command routes to raw PTY stream.
-3. **Type consistency:** All imports from `@adler/sdk`. `AgentConfig` fields match the spec. `ProcContext` fields match. `ADLER_SOCKET` is imported from paths.
+3. **Type consistency:** All imports from `@adlr/sdk`. `AgentConfig` fields match the spec. `ProcContext` fields match. `ADLR_SOCKET` is imported from paths.
 
 Plan complete.

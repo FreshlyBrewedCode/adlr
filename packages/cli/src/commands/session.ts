@@ -1,4 +1,4 @@
-import { createClient } from "@adler/sdk";
+import { createClient } from "@adlr/sdk";
 import { Command } from "commander";
 import { ensureDaemon } from "../auto-start";
 

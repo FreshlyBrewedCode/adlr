@@ -46,21 +46,21 @@ Remove `.tsx` from all config file candidate lists:
 ```ts
 // before
 const GLOBAL_CONFIG_STEMS = [
-  join(homedir(), ".config/adler/adler.tsx"),
-  join(homedir(), ".config/adler/adler.ts"),
+  join(homedir(), ".config/adlr/adlr.tsx"),
+  join(homedir(), ".config/adlr/adlr.ts"),
 ]
 
 function projectConfigCandidates(dir: string): string[] {
-  return [join(dir, ".adler/adler.tsx"), join(dir, ".adler/adler.ts")]
+  return [join(dir, ".adlr/adlr.tsx"), join(dir, ".adlr/adlr.ts")]
 }
 
 // after
 const GLOBAL_CONFIG_STEMS = [
-  join(homedir(), ".config/adler/adler.ts"),
+  join(homedir(), ".config/adlr/adlr.ts"),
 ]
 
 function projectConfigCandidates(dir: string): string[] {
-  return [join(dir, ".adler/adler.ts")]
+  return [join(dir, ".adlr/adlr.ts")]
 }
 ```
 
@@ -92,9 +92,9 @@ const defaultLayout: LayoutNode = {
 }
 ```
 
-### 2.4. Sample Config (`/.adler/adler.tsx` → `/.adler/adler.ts`)
+### 2.4. Sample Config (`/.adlr/adlr.tsx` → `/.adlr/adlr.ts`)
 
-Rename the sample config file from `adler.tsx` to `adler.ts`. The layout section already uses the correct object format — no content changes needed beyond the rename.
+Rename the sample config file from `adlr.tsx` to `adlr.ts`. The layout section already uses the correct object format — no content changes needed beyond the rename.
 
 ### 2.5. Spec Update (`docs/superpowers/specs/2026-06-16-tui-panel-system-design.md`)
 
@@ -150,7 +150,7 @@ export default {
 }
 ```
 
-### From the `.adler/adler.ts` sample
+### From the `.adlr/adlr.ts` sample
 ```ts
 tui: {
   layout: {

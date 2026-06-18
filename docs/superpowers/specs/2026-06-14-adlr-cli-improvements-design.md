@@ -1,4 +1,4 @@
-# adler CLI Improvements — Commander.js Refactor
+# adlr CLI Improvements — Commander.js Refactor
 
 ## Date
 2026-06-14
@@ -8,11 +8,11 @@ Approved
 
 ## Context
 
-The adler CLI (`packages/cli`) is currently a hand-rolled switch-based router in `src/index.ts` with a custom flag parser (`parse-flags.ts`). It has no help system, minimal error handling, and inconsistent command interfaces. The goal is to improve the CLI user experience by providing better help, automatic error handling, and a cleaner command structure while keeping dependencies minimal.
+The adlr CLI (`packages/cli`) is currently a hand-rolled switch-based router in `src/index.ts` with a custom flag parser (`parse-flags.ts`). It has no help system, minimal error handling, and inconsistent command interfaces. The goal is to improve the CLI user experience by providing better help, automatic error handling, and a cleaner command structure while keeping dependencies minimal.
 
 ## Goals
 
-1. **Better Help & Usage** — Provide `--help` / `-h` for every command and subcommand. Show automatic help when running a subcommand group without a verb (e.g., `adler agent`). List available commands when an unknown command is provided.
+1. **Better Help & Usage** — Provide `--help` / `-h` for every command and subcommand. Show automatic help when running a subcommand group without a verb (e.g., `adlr agent`). List available commands when an unknown command is provided.
 2. **Improved Error Handling** — Validate flags, reject unknown options, provide meaningful error messages, and avoid scattered `process.exit(1)` calls.
 3. **Global Flags** — Support `--session` (or `-s`) globally across all commands.
 4. **Minimal Dependencies** — Use Commander.js as the only new dependency.
@@ -31,8 +31,8 @@ A new `src/cli.ts` file creates a `Command` program using Commander.js. It defin
 
 ```ts
 const program = new Command()
-  .name("adler")
-  .description("adler - Eagle eyes on your agents")
+  .name("adlr")
+  .description("adlr - Eagle eyes on your agents")
   .version("0.1.0")
   .option("-s, --session <id>", "session ID override")
 ```
@@ -41,21 +41,21 @@ const program = new Command()
 
 Commands are organized as nested `Command` objects:
 
-- `adler` (no args) → launches TUI
-- `adler new [--goal <goal>]` → create session
-- `adler init` → init project
-- `adler session list` → list sessions
-- `adler daemon stop` → stop daemon
-- `adler agent <subcommand>` → agent subcommands
-  - `adler agent run --agent <type> [--name <name>] <prompt>`
-  - `adler agent wait --name <name>`
-  - `adler agent status --name <name>`
-  - `adler agent list`
-  - `adler agent read --name <name>`
-- `adler context <subcommand>` → context subcommands
-  - `adler context add --type <type> [--label <label>] [--description <desc>] <value>`
-  - `adler context list`
-  - `adler context get [--type <type>] [--label <label>]`
+- `adlr` (no args) → launches TUI
+- `adlr new [--goal <goal>]` → create session
+- `adlr init` → init project
+- `adlr session list` → list sessions
+- `adlr daemon stop` → stop daemon
+- `adlr agent <subcommand>` → agent subcommands
+  - `adlr agent run --agent <type> [--name <name>] <prompt>`
+  - `adlr agent wait --name <name>`
+  - `adlr agent status --name <name>`
+  - `adlr agent list`
+  - `adlr agent read --name <name>`
+- `adlr context <subcommand>` → context subcommands
+  - `adlr context add --type <type> [--label <label>] [--description <desc>] <value>`
+  - `adlr context list`
+  - `adlr context get [--type <type>] [--label <label>]`
 
 ### Global Flags
 
@@ -63,7 +63,7 @@ Commands are organized as nested `Command` objects:
 
 ### Error Handling
 
-All commands throw a custom `AdlerCliError` instead of calling `process.exit(1)`. A top-level wrapper catches these errors, prints a clean message, and exits with code 1.
+All commands throw a custom `AdlrCliError` instead of calling `process.exit(1)`. A top-level wrapper catches these errors, prints a clean message, and exits with code 1.
 
 Commander.js automatically handles:
 - Unknown commands
@@ -76,7 +76,7 @@ Commander.js automatically handles:
 ```
 src/
   cli.ts              # Entry point (replaces index.ts)
-  error.ts            # AdlerCliError class
+  error.ts            # AdlrCliError class
   resolve-session.ts  # Updated to accept global --session flag
   parse-flags.ts      # Removed (Commander handles this)
   auto-start.ts       # Unchanged
@@ -103,7 +103,7 @@ src/
 
 1. Add `commander` to `package.json` dependencies.
 2. Create `src/cli.ts` with the new entry point.
-3. Create `src/error.ts` with the `AdlerCliError` class.
+3. Create `src/error.ts` with the `AdlrCliError` class.
 4. Refactor `src/resolve-session.ts` to accept a `session` option from the global flag.
 5. Remove `src/parse-flags.ts` (no longer needed).
 6. Rewrite each command to export a `Command` object instead of a `run` function.

@@ -114,7 +114,7 @@ Tests to **modify**:
 
   ```json
   "dependencies": {
-    "@adler/sdk": "workspace:*",
+    "@adlr/sdk": "workspace:*",
     "ink": "7",
     "react": "^19.2.7"
   },
@@ -124,7 +124,7 @@ Tests to **modify**:
 
   ```json
   "dependencies": {
-    "@adler/sdk": "workspace:*",
+    "@adlr/sdk": "workspace:*",
     "@opentui/core": "latest",
     "@opentui/react": "latest",
     "@opentui/keymap": "latest",
@@ -288,7 +288,7 @@ This is the most impactful change. The current `index.ts` manually writes alt-sc
     default: () => null,
   }))
 
-  mock.module("@adler/sdk", () => ({
+  mock.module("@adlr/sdk", () => ({
     resolveSessionId: mock(() => "test-session"),
   }))
 
@@ -333,10 +333,10 @@ This is the most impactful change. The current `index.ts` manually writes alt-sc
   import { createAdlerKeymap } from "./keymap.ts"
   import { loadConfig } from "./loadConfig.ts"
   import App from "./app.tsx"
-  import { resolveSessionId } from "@adler/sdk"
+  import { resolveSessionId } from "@adlr/sdk"
 
   export async function runTui(): Promise<() => void> {
-    const sessionId = resolveSessionId(process.env.ADLER_SESSION)
+    const sessionId = resolveSessionId(process.env.ADLR_SESSION)
     const config = await loadConfig(process.cwd())
 
     const renderer = await createCliRenderer({
@@ -356,7 +356,7 @@ This is the most impactful change. The current `index.ts` manually writes alt-sc
   }
   ```
 
-  **Note:** `resolveSessionId` may not exist in `@adler/sdk` — read `packages/sdk/src/index.ts` to find the actual export for getting the session ID (the current `index.ts` reads `process.env.ADLER_SESSION` or `.adler/.session`). Copy the inline session resolution logic from the old `index.ts` if there is no dedicated export.
+  **Note:** `resolveSessionId` may not exist in `@adlr/sdk` — read `packages/sdk/src/index.ts` to find the actual export for getting the session ID (the current `index.ts` reads `process.env.ADLR_SESSION` or `.adlr/.session`). Copy the inline session resolution logic from the old `index.ts` if there is no dedicated export.
 
 - [ ] **Step 5: Delete `packages/tui/src/ink-jsx-runtime.d.ts`**
 
@@ -418,7 +418,7 @@ The current `app.tsx` uses `useInput`, `useApp`, and `useStdout` from `ink`. The
   import { Footer } from "./components/Footer.tsx"
   import { HelpModal } from "./components/HelpModal.tsx"
   import { normalizeLayout } from "./core/normalizeLayout.ts"
-  import type { AdlerConfig } from "@adler/sdk"
+  import type { AdlrConfig } from "@adlr/sdk"
 
   // Register panels and layouts once at module load
   registerPanels()
@@ -431,7 +431,7 @@ The current `app.tsx` uses `useInput`, `useApp`, and `useStdout` from `ink`. The
 
   interface AppProps {
     sessionId: string
-    config: AdlerConfig
+    config: AdlrConfig
     keymap: AdlerKeymap
   }
 
@@ -499,7 +499,7 @@ The current `app.tsx` uses `useInput`, `useApp`, and `useStdout` from `ink`. The
   }
   ```
 
-  **Important:** Copy the IPC subscription logic exactly from the current `app.tsx` (lines 41–116). It uses `@adler/sdk` IPC client and is not ink-specific — it just needs the `dispatch` function.
+  **Important:** Copy the IPC subscription logic exactly from the current `app.tsx` (lines 41–116). It uses `@adlr/sdk` IPC client and is not ink-specific — it just needs the `dispatch` function.
 
 - [ ] **Step 3: Run type check**
 
@@ -854,7 +854,7 @@ The existing tests mock `ink` entirely. Now that `ink` is gone, the mocks are in
   This step drives the real TUI through a terminal session using `agent-tui`. It proves the renderer initialises correctly, the default layout renders visible content, and keyboard navigation works end-to-end.
 
   **Prerequisites:**
-  - An active adler session must exist. Check with `bun run adler session list`. If none exists, create one with `bun run adler new`.
+  - An active adlr session must exist. Check with `bun run adlr session list`. If none exists, create one with `bun run adlr new`.
   - `agent-tui` must be installed (`agent-tui --version`). If missing, install with `bun add -g agent-tui`.
 
   **Start the daemon if not already running:**
@@ -872,13 +872,13 @@ The existing tests mock `ink` entirely. Now that `ink` is gone, the mocks are in
   **Run the TUI and verify the header renders:**
 
   ```bash
-  agent-tui run --cwd . bun -- run adler
+  agent-tui run --cwd . bun -- run adlr
   ```
 
-  Wait for the TUI to appear — the header line (`adler ·`) must be visible:
+  Wait for the TUI to appear — the header line (`adlr ·`) must be visible:
 
   ```bash
-  agent-tui wait "adler" --assert
+  agent-tui wait "adlr" --assert
   ```
 
   Expected: exits 0. Failure here means the renderer did not paint or crashed on startup.
@@ -963,4 +963,4 @@ The current `index.ts` exports `_resetAltScreenForTesting()` for test isolation.
 
 ### On node compatibility
 
-OpenTUI requires Node.js ≥ 26.3.0 with `--experimental-ffi` for native rendering, OR Bun (which has FFI built in). This project uses Bun, so no changes are needed to `adler` launch scripts. If you see "Cannot find native module" errors, ensure you are running with `bun`, not `node`.
+OpenTUI requires Node.js ≥ 26.3.0 with `--experimental-ffi` for native rendering, OR Bun (which has FFI built in). This project uses Bun, so no changes are needed to `adlr` launch scripts. If you see "Cannot find native module" errors, ensure you are running with `bun`, not `node`.

@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Build `@adler/sdk` — shared types, Storage interface, SQLite implementation, and typed IPC client. This is the foundation all other packages depend on.
+**Goal:** Build `@adlr/sdk` — shared types, Storage interface, SQLite implementation, and typed IPC client. This is the foundation all other packages depend on.
 
 **Architecture:** Pure TypeScript with Bun built-ins only. No runtime dependencies. Types are exported as-is. `Storage` is an interface with a `SQLiteStorage` implementation using `bun:sqlite`. The IPC client (`createClient`) wraps Unix socket communication with auto-start logic.
 
@@ -41,7 +41,7 @@ packages/sdk/
 
 ```json
 {
-  "name": "@adler/sdk",
+  "name": "@adlr/sdk",
   "version": "0.1.0",
   "type": "module",
   "main": "src/index.ts",
@@ -191,7 +191,7 @@ export type ContextFilter = {
   label?: string
 }
 
-export interface AdlerConfig {
+export interface AdlrConfig {
   agent?: {
     agents?: Record<string, AgentConfig>
     attach?: AttachConfig
@@ -646,10 +646,10 @@ git commit -m "feat(sdk): add SQLite storage implementation and tests"
 import { homedir } from "os"
 import { join } from "path"
 
-export const ADLER_DIR = join(homedir(), ".local/share/adler")
-export const SOCKET_PATH = join(ADLER_DIR, "adler.sock")
-export const DB_PATH = join(ADLER_DIR, "adler.db")
-export const PID_FILE = join(ADLER_DIR, "adler.pid")
+export const ADLR_DIR = join(homedir(), ".local/share/adlr")
+export const SOCKET_PATH = join(ADLR_DIR, "adlr.sock")
+export const DB_PATH = join(ADLR_DIR, "adlr.db")
+export const PID_FILE = join(ADLR_DIR, "adlr.pid")
 ```
 
 - [ ] **Step 2: Commit**
@@ -780,9 +780,9 @@ export function createClient(socketPath: string = SOCKET_PATH): Client {
   const client: Client = {
     env() {
       return {
-        sessionId: process.env.ADLER_SESSION,
-        spanId: process.env.ADLER_SPAN_ID,
-        socketPath: process.env.ADLER_SOCKET ?? SOCKET_PATH,
+        sessionId: process.env.ADLR_SESSION,
+        spanId: process.env.ADLR_SPAN_ID,
+        socketPath: process.env.ADLR_SOCKET ?? SOCKET_PATH,
       }
     },
     session: {
@@ -835,19 +835,19 @@ import { test, expect, describe } from "bun:test"
 import { createClient } from "../src/client"
 
 describe("Client", () => {
-  test("env reads ADLER_SESSION and ADLER_SPAN_ID", () => {
-    const oldSession = process.env.ADLER_SESSION
-    const oldSpan = process.env.ADLER_SPAN_ID
-    process.env.ADLER_SESSION = "sess-123"
-    process.env.ADLER_SPAN_ID = "span-456"
+  test("env reads ADLR_SESSION and ADLR_SPAN_ID", () => {
+    const oldSession = process.env.ADLR_SESSION
+    const oldSpan = process.env.ADLR_SPAN_ID
+    process.env.ADLR_SESSION = "sess-123"
+    process.env.ADLR_SPAN_ID = "span-456"
 
     const client = createClient("/tmp/fake.sock")
     const env = client.env()
     expect(env.sessionId).toBe("sess-123")
     expect(env.spanId).toBe("span-456")
 
-    process.env.ADLER_SESSION = oldSession
-    process.env.ADLER_SPAN_ID = oldSpan
+    process.env.ADLR_SESSION = oldSession
+    process.env.ADLR_SPAN_ID = oldSpan
     client.close()
   })
 

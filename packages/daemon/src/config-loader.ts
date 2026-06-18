@@ -1,26 +1,26 @@
 import { existsSync, type FSWatcher, watch } from "node:fs";
 import { homedir } from "node:os";
 import { join, resolve } from "node:path";
-import type { AdlerConfig } from "@adler/sdk";
+import type { AdlrConfig } from "@adlr/sdk";
 import type { DaemonLogger } from "./logger";
 
-const GLOBAL_CONFIG_STEMS = [join(homedir(), ".config/adler/adler.ts")];
+const GLOBAL_CONFIG_STEMS = [join(homedir(), ".config/adlr/adlr.ts")];
 
 function findConfigFile(candidates: string[]): string | null {
 	return candidates.find(existsSync) ?? null;
 }
 
 function projectConfigCandidates(dir: string): string[] {
-	return [join(dir, ".adler/adler.ts")];
+	return [join(dir, ".adlr/adlr.ts")];
 }
 
 export class ConfigLoader {
-	private cache = new Map<string, AdlerConfig>();
+	private cache = new Map<string, AdlrConfig>();
 	private watchers = new Map<string, FSWatcher>();
 
 	constructor(private logger?: DaemonLogger) {}
 
-	async loadConfig(dir: string): Promise<AdlerConfig> {
+	async loadConfig(dir: string): Promise<AdlrConfig> {
 		const absDir = resolve(dir);
 		const cached = this.cache.get(absDir);
 		if (cached) {
@@ -40,9 +40,9 @@ export class ConfigLoader {
 		return config;
 	}
 
-	private async resolveConfig(dir: string): Promise<AdlerConfig> {
-		let globalConfig: AdlerConfig = {};
-		let projectConfig: AdlerConfig = {};
+	private async resolveConfig(dir: string): Promise<AdlrConfig> {
+		let globalConfig: AdlrConfig = {};
+		let projectConfig: AdlrConfig = {};
 		const globalPath = findConfigFile(GLOBAL_CONFIG_STEMS);
 		const projectPath = findConfigFile(projectConfigCandidates(dir));
 
@@ -127,8 +127,8 @@ export class ConfigLoader {
 	}
 }
 
-function mergeConfig(base: AdlerConfig, override: AdlerConfig): AdlerConfig {
-	const merged: AdlerConfig = {
+function mergeConfig(base: AdlrConfig, override: AdlrConfig): AdlrConfig {
+	const merged: AdlrConfig = {
 		...base,
 		...override,
 	};

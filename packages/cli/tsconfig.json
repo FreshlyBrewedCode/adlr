@@ -8,8 +8,8 @@
 		"allowImportingTsExtensions": true,
 		"noEmit": true,
 		"paths": {
-			"@adler/sdk": ["../../packages/sdk/src/index.ts"],
-			"@adler/tui": ["../../packages/tui/src/index.ts"]
+			"@adlr/sdk": ["../../packages/sdk/src/index.ts"],
+			"@adlr/tui": ["../../packages/tui/src/index.ts"]
 		}
 	},
 	"include": ["src/**/*", "test/**/*"],

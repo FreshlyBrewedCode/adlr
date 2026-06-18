@@ -42,8 +42,8 @@ describe("runTui", () => {
   let originalWrite: typeof process.stdout.write
 
   beforeEach(() => {
-    originalEnv = process.env.ADLER_SESSION
-    process.env.ADLER_SESSION = "test-session-123"
+    originalEnv = process.env.ADLR_SESSION
+    process.env.ADLR_SESSION = "test-session-123"
     writtenBytes = []
     originalWrite = process.stdout.write.bind(process.stdout)
     // Capture writes without actually writing to stdout
@@ -58,9 +58,9 @@ describe("runTui", () => {
   afterEach(() => {
     process.stdout.write = originalWrite
     if (originalEnv !== undefined) {
-      process.env.ADLER_SESSION = originalEnv
+      process.env.ADLR_SESSION = originalEnv
     } else {
-      delete process.env.ADLER_SESSION
+      delete process.env.ADLR_SESSION
     }
   })
 
@@ -127,8 +127,8 @@ const ENTER_ALT_SCREEN = "\x1b[?1049h"
 const LEAVE_ALT_SCREEN = "\x1b[?1049l"
 
 function resolveSessionId(): string | undefined {
-  if (process.env.ADLER_SESSION) return process.env.ADLER_SESSION
-  const localFile = join(process.cwd(), ".adler", ".session")
+  if (process.env.ADLR_SESSION) return process.env.ADLR_SESSION
+  const localFile = join(process.cwd(), ".adlr", ".session")
   if (existsSync(localFile)) {
     return readFileSync(localFile, "utf-8").trim()
   }
@@ -138,7 +138,7 @@ function resolveSessionId(): string | undefined {
 export async function runTui(): Promise<void> {
   const sessionId = resolveSessionId()
   if (!sessionId) {
-    console.error("No active session. Run `adler new` first.")
+    console.error("No active session. Run `adlr new` first.")
     process.exit(1)
   }
 

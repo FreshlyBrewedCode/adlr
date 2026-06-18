@@ -31,17 +31,17 @@ When `agent-tui run` returns JSON, it includes both a `session_id` and a `pid`. 
 
 If the daemon crashes (`os error 61`), the pseudo-terminal is destroyed. Even if the child `pid` survives as an orphan, you cannot reconnect to it. You must restart the daemon using the workaround above and start a completely new session.
 
-### Testing the adler cli 
+### Testing the adlr cli 
 
-you can run the adler cli from the project root using `bun run adler`
-adler needs an active session to launch the tui
-- check existing session with `bun run adler session list`
-- you can also check if there is a session file at `.adler/.session` which contains the active session id
-- create new session with `bun run adler new` if needed
+you can run the adlr cli from the project root using `bun run adlr`
+adlr needs an active session to launch the tui
+- check existing session with `bun run adlr session list`
+- you can also check if there is a session file at `.adlr/.session` which contains the active session id
+- create new session with `bun run adlr new` if needed
 
-you can run adler with agent-tui by running:
+you can run adlr with agent-tui by running:
 ```bash
-agent-tui run --cwd . bun -- run adler 
+agent-tui run --cwd . bun -- run adlr 
 ```
 
 # Terminal Automation Mastery

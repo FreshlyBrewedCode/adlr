@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, test } from "bun:test";
-import { DAEMON_SESSION_ID, SQLiteStorage } from "@adler/sdk";
+import { DAEMON_SESSION_ID, SQLiteStorage } from "@adlr/sdk";
 import { createLogger } from "../src/logger";
 
 describe("createLogger", () => {

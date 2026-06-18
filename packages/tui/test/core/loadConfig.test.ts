@@ -13,13 +13,13 @@ const { loadConfig } = (await import("../../src/loadConfig.ts?fresh=1")) as {
 
 const tmpDir = join(
 	tmpdir(),
-	`adler-loadconfig-test-${process.pid}-${Date.now()}`,
+	`adlr-loadconfig-test-${process.pid}-${Date.now()}`,
 );
-const adlerDir = join(tmpDir, ".adler");
-const configFile = join(adlerDir, "adler.ts");
+const adlrDir = join(tmpDir, ".adlr");
+const configFile = join(adlrDir, "adlr.ts");
 
 beforeAll(() => {
-	mkdirSync(adlerDir, { recursive: true });
+	mkdirSync(adlrDir, { recursive: true });
 	writeFileSync(
 		configFile,
 		`export default { tui: { layout: { layout: "split", ratio: 0.6, content: ["agents", "logs"] } } }\n`,
@@ -39,7 +39,7 @@ describe("loadConfig", () => {
 	});
 
 	test("returns empty config for non-existent directory", async () => {
-		const config = await loadConfig("/tmp/non-existent-adler-project");
+		const config = await loadConfig("/tmp/non-existent-adlr-project");
 		expect(config.tui).toBeUndefined();
 	});
 });

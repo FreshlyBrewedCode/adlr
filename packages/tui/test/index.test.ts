@@ -1,7 +1,7 @@
 import { afterAll, afterEach, beforeEach, expect, mock, test } from "bun:test";
 
 // Set session env before any module is imported
-process.env.ADLER_SESSION = "test-session";
+process.env.ADLR_SESSION = "test-session";
 
 // Capture real implementations before mocking so we can restore them in afterAll.
 // mock.module() replacements are permanent in Bun (mock.restore() does not undo them),
@@ -44,13 +44,13 @@ mock.module("../src/app.tsx", () => ({
 }));
 
 beforeEach(() => {
-	process.env.ADLER_SESSION = "test-session";
+	process.env.ADLR_SESSION = "test-session";
 	mockRenderer.destroy.mockClear();
 	mockRoot.render.mockClear();
 });
 
 afterEach(() => {
-	delete process.env.ADLER_SESSION;
+	delete process.env.ADLR_SESSION;
 });
 
 // Restore real module implementations so subsequent test files see the real modules.

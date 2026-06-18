@@ -7,7 +7,7 @@ import { ConfigLoader } from "../src/config-loader";
 function createTestDir(): string {
 	const dir = join(
 		tmpdir(),
-		`adler-test-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+		`adlr-test-${Date.now()}-${Math.random().toString(36).slice(2)}`,
 	);
 	mkdirSync(dir, { recursive: true });
 	return dir;
@@ -35,10 +35,10 @@ describe("ConfigLoader", () => {
 	});
 
 	test("loads project config", async () => {
-		const adlerDir = join(testDir, ".adler");
-		mkdirSync(adlerDir, { recursive: true });
+		const adlrDir = join(testDir, ".adlr");
+		mkdirSync(adlrDir, { recursive: true });
 		writeFileSync(
-			join(adlerDir, "adler.ts"),
+			join(adlrDir, "adlr.ts"),
 			`export default { agent: { agents: { test: { interactive: true } } } }`,
 			"utf-8",
 		);
@@ -48,10 +48,10 @@ describe("ConfigLoader", () => {
 	});
 
 	test("caches config on second load", async () => {
-		const adlerDir = join(testDir, ".adler");
-		mkdirSync(adlerDir, { recursive: true });
+		const adlrDir = join(testDir, ".adlr");
+		mkdirSync(adlrDir, { recursive: true });
 		writeFileSync(
-			join(adlerDir, "adler.ts"),
+			join(adlrDir, "adlr.ts"),
 			`export default { agent: { agents: { test: { interactive: true } } } }`,
 			"utf-8",
 		);
@@ -62,10 +62,10 @@ describe("ConfigLoader", () => {
 	});
 
 	test("invalidates cache and reloads on file change", async () => {
-		const adlerDir = join(testDir, ".adler");
-		mkdirSync(adlerDir, { recursive: true });
+		const adlrDir = join(testDir, ".adlr");
+		mkdirSync(adlrDir, { recursive: true });
 		writeFileSync(
-			join(adlerDir, "adler.ts"),
+			join(adlrDir, "adlr.ts"),
 			`export default { agent: { agents: { test: { interactive: true } } } }`,
 			"utf-8",
 		);
@@ -77,7 +77,7 @@ describe("ConfigLoader", () => {
 		loader.invalidate(testDir);
 
 		writeFileSync(
-			join(adlerDir, "adler.ts"),
+			join(adlrDir, "adlr.ts"),
 			`export default { agent: { agents: { test: { interactive: false } } } }`,
 			"utf-8",
 		);
@@ -89,10 +89,10 @@ describe("ConfigLoader", () => {
 	});
 
 	test("close clears all watchers and cache", async () => {
-		const adlerDir = join(testDir, ".adler");
-		mkdirSync(adlerDir, { recursive: true });
+		const adlrDir = join(testDir, ".adlr");
+		mkdirSync(adlrDir, { recursive: true });
 		writeFileSync(
-			join(adlerDir, "adler.ts"),
+			join(adlrDir, "adlr.ts"),
 			`export default { agent: { agents: { test: { interactive: true } } } }`,
 			"utf-8",
 		);
