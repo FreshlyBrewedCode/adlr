@@ -161,7 +161,18 @@ export async function handleCommand(
 
 		case "span.create": {
 			const data = payload as CreateSpanInput;
-			return ctx.storage.createSpan(data);
+			const span = await ctx.storage.createSpan(data);
+			ctx.broadcast(span.session_id, {
+				type: "span.created",
+				payload: {
+					session_id: span.session_id,
+					span_id: span.id,
+					kind: span.kind,
+					name: span.name,
+					parent_id: span.parent_id,
+				},
+			});
+			return span;
 		}
 
 		case "span.finish": {

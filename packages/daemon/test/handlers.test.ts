@@ -29,7 +29,7 @@ describe("Daemon handlers - span", () => {
 		storage.close();
 	});
 
-	test("span.create creates a span with the right fields", async () => {
+	test("span.create creates a span with the right fields and broadcasts", async () => {
 		const session = await storage.createSession({ working_dir: "/tmp" });
 
 		const result = await handleCommand(ctx, "span.create", {
@@ -49,6 +49,17 @@ describe("Daemon handlers - span", () => {
 		expect(span.data).toEqual({ key: "value" });
 		expect(span.id).toBeString();
 		expect(span.started_at).toBeNumber();
+
+		expect(broadcasts).toHaveLength(1);
+		expect(broadcasts[0].sessionId).toBe(session.id);
+		expect(broadcasts[0].event.type).toBe("span.created");
+		expect(broadcasts[0].event.payload).toEqual({
+			session_id: session.id,
+			span_id: span.id,
+			kind: "step",
+			name: "my-step",
+			parent_id: null,
+		});
 	});
 
 	test("span.finish updates status, finished_at, merges data, and broadcasts", async () => {

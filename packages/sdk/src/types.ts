@@ -64,6 +64,7 @@ export type CreateSpanInput<K extends SpanKind = SpanKind> = {
 };
 
 export type EventType =
+	| "span.created"
 	| "span.started"
 	| "span.finished"
 	| "span.failed"

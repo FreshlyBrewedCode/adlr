@@ -45,7 +45,7 @@ export function reducer(state: AppState, action: AppAction): AppState {
 			};
 		case "event": {
 			const ev = action.payload;
-			if (ev.type === "span.started") {
+			if (ev.type === "span.created" || ev.type === "span.started") {
 				const d = ev.data as {
 					span_id: string;
 					kind: string;
@@ -58,7 +58,7 @@ export function reducer(state: AppState, action: AppAction): AppState {
 					parent_id: d.parent_id ?? null,
 					kind: d.kind as Span["kind"],
 					name: d.name,
-					status: "running",
+					status: ev.type === "span.started" ? "running" : "pending",
 					started_at: ev.timestamp,
 					finished_at: null,
 					data: {},
