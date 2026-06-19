@@ -1,5 +1,5 @@
 import type { Span, SpanStatus, Storage } from "@adlr/sdk";
-import { SOCKET_PATH } from "@adlr/sdk";
+import { getSocketPath } from "@adlr/sdk";
 import type { ConfigLoader } from "./config-loader";
 import type { InactivityTimer } from "./lifecycle";
 import type { DaemonLogger } from "./logger";
@@ -74,7 +74,7 @@ export class ProcessManager {
 			...process.env,
 			ADLR_SESSION: data.sessionId,
 			ADLR_SPAN_ID: span.id,
-			ADLR_SOCKET: SOCKET_PATH,
+			ADLR_SOCKET: getSocketPath(),
 			ADLR_AGENT_PROMPT: data.prompt,
 			ADLR_CONTEXT: JSON.stringify(contextItems),
 		};

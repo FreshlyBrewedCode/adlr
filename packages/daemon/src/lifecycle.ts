@@ -5,25 +5,27 @@ import {
 	unlinkSync,
 	writeFileSync,
 } from "node:fs";
-import { ADLR_DIR, PID_FILE, SOCKET_PATH } from "@adlr/sdk";
+import { getAdlrDir, getPidFile, getSocketPath } from "@adlr/sdk";
 
 const INACTIVITY_TIMEOUT_MS = 10 * 60 * 1000; // 10 minutes
 
 export function ensureAdlerDir(): void {
-	if (!existsSync(ADLR_DIR)) {
-		mkdirSync(ADLR_DIR, { recursive: true });
+	const dir = getAdlrDir();
+	if (!existsSync(dir)) {
+		mkdirSync(dir, { recursive: true });
 	}
 }
 
 export function writePid(): void {
 	ensureAdlerDir();
-	writeFileSync(PID_FILE, String(process.pid), "utf-8");
+	writeFileSync(getPidFile(), String(process.pid), "utf-8");
 }
 
 export function readPid(): number | null {
-	if (!existsSync(PID_FILE)) return null;
+	const pidFile = getPidFile();
+	if (!existsSync(pidFile)) return null;
 	try {
-		return parseInt(readFileSync(PID_FILE, "utf-8").trim(), 10);
+		return parseInt(readFileSync(pidFile, "utf-8").trim(), 10);
 	} catch {
 		return null;
 	}
@@ -31,13 +33,13 @@ export function readPid(): number | null {
 
 export function removePid(): void {
 	try {
-		unlinkSync(PID_FILE);
+		unlinkSync(getPidFile());
 	} catch {}
 }
 
 export function removeSocket(): void {
 	try {
-		unlinkSync(SOCKET_PATH);
+		unlinkSync(getSocketPath());
 	} catch {}
 }
 
