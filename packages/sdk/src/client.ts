@@ -4,9 +4,12 @@ import type {
 	AddContextItemInput,
 	ContextItem,
 	CreateSessionInput,
+	CreateSpanInput,
 	Event,
 	Session,
 	Span,
+	SpanKind,
+	SpanOf,
 	SpanStatus,
 } from "./types";
 
@@ -53,11 +56,15 @@ export interface Client {
 		attach(nameOrId: string): Promise<void>;
 	};
 	span: {
-		get(id: string): Promise<Span>;
+		create<K extends SpanKind = SpanKind>(
+			input: CreateSpanInput<K>,
+		): Promise<SpanOf<K>>;
+		finish(id: string, data?: Record<string, unknown>): Promise<void>;
+		get<K extends SpanKind = SpanKind>(id: string): Promise<SpanOf<K>>;
 		list(sessionId: string): Promise<Span[]>;
-		update(
+		update<K extends SpanKind = SpanKind>(
 			id: string,
-			data: Record<string, unknown>,
+			data: SpanOf<K>["data"],
 			options?: { merge?: boolean },
 		): Promise<void>;
 	};
@@ -206,6 +213,8 @@ export function createClient(socketPath: string = getSocketPath()): Client {
 			attach: (nameOrId) => send("agent.attach", { span_id: nameOrId }),
 		},
 		span: {
+			create: (input) => send("span.create", input),
+			finish: (id, data) => send("span.finish", { id, data }),
 			get: (id) => send("span.get", { id }),
 			list: (sessionId) => send("span.list", { session_id: sessionId }),
 			update: (id, data, options) => send("span.update", { id, data, options }),

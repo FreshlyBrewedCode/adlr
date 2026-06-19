@@ -242,6 +242,78 @@ describe("Client", () => {
 		client.close();
 	});
 
+	test("client has span.create and span.finish methods", () => {
+		const client = createClient(FAKE_SOCK);
+		expect(client.span.create).toBeFunction();
+		expect(client.span.finish).toBeFunction();
+		expect(client.span.get).toBeFunction();
+		expect(client.span.list).toBeFunction();
+		expect(client.span.update).toBeFunction();
+		client.close();
+	});
+
+	test("span.create sends create command and returns span", async () => {
+		const client = createClient(FAKE_SOCK);
+		const socket = await waitForSocket();
+
+		let receivedPayload: unknown;
+		const originalOnData = socket.listeners("data")[0] as (
+			data: Buffer,
+		) => void;
+		socket.removeListener("data", originalOnData);
+		socket.on("data", (data) => {
+			const text = data.toString();
+			for (const line of text.trim().split("\n")) {
+				if (!line) continue;
+				try {
+					const msg = JSON.parse(line);
+					if (msg.type === "span.create") {
+						receivedPayload = msg.payload;
+						socket.write(
+							`${JSON.stringify({
+								type: "response",
+								id: msg.id,
+								payload: {
+									id: "span-new",
+									session_id: msg.payload.session_id,
+									name: msg.payload.name,
+									kind: msg.payload.kind,
+									status: "pending",
+									parent_id: msg.payload.parent_id ?? null,
+									started_at: 0,
+									finished_at: null,
+									data: msg.payload.data ?? {},
+								},
+							})}\n`,
+						);
+						return;
+					}
+				} catch {
+					// ignore
+				}
+			}
+			originalOnData(data);
+		});
+
+		const result = await client.span.create({
+			session_id: "sess-1",
+			kind: "step",
+			name: "my-step",
+			data: { key: "value" },
+		});
+
+		expect(result.id).toBe("span-new");
+		expect(result.kind).toBe("step");
+		expect(receivedPayload).toEqual({
+			session_id: "sess-1",
+			kind: "step",
+			name: "my-step",
+			data: { key: "value" },
+		});
+
+		client.close();
+	});
+
 	test("agent.run converts camelCase keys to snake_case", async () => {
 		const client = createClient(FAKE_SOCK);
 		const socket = await waitForSocket();
