@@ -1,17 +1,23 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
-import { mkdtempSync, existsSync, mkdirSync, unlinkSync } from "node:fs";
+import {
+	existsSync,
+	mkdirSync,
+	mkdtempSync,
+	rmSync,
+	unlinkSync,
+} from "node:fs";
 import { connect } from "node:net";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
-import { getSocketPath, SQLiteStorage } from "@adlr/sdk";
+import { SQLiteStorage } from "@adlr/sdk";
 import { ConfigLoader } from "../src/config-loader";
 import { InactivityTimer } from "../src/lifecycle";
 import { ProcessManager } from "../src/process-manager";
 import { startServer } from "../src/server";
 
-function createTestSocketPath(): string {
+function createTestSocketPath(): { socketPath: string; tmpDir: string } {
 	const tmpDir = mkdtempSync(join(tmpdir(), "adlr-daemon-test-"));
-	return join(tmpDir, "adlr.sock");
+	return { socketPath: join(tmpDir, "adlr.sock"), tmpDir };
 }
 
 interface DaemonResponse {
@@ -26,9 +32,12 @@ describe("Daemon server", () => {
 	let server: ReturnType<typeof startServer>;
 	let inactivity: InactivityTimer;
 	let testSocketPath: string;
+	let tmpDir: string;
 
 	beforeEach(async () => {
-		testSocketPath = createTestSocketPath();
+		const socketPaths = createTestSocketPath();
+		testSocketPath = socketPaths.socketPath;
+		tmpDir = socketPaths.tmpDir;
 		process.env.ADLR_SOCKET = testSocketPath;
 
 		if (existsSync(testSocketPath)) unlinkSync(testSocketPath);
@@ -38,7 +47,13 @@ describe("Daemon server", () => {
 		storage = new SQLiteStorage(":memory:");
 		pm = new ProcessManager(storage, new ConfigLoader(), () => {});
 		inactivity = new InactivityTimer(() => {});
-		server = startServer(storage, () => pm, inactivity, undefined, testSocketPath);
+		server = startServer(
+			storage,
+			() => pm,
+			inactivity,
+			undefined,
+			testSocketPath,
+		);
 		await new Promise((r) => setTimeout(r, 100));
 	});
 
@@ -48,6 +63,7 @@ describe("Daemon server", () => {
 		inactivity.stop();
 		storage.close();
 		if (existsSync(testSocketPath)) unlinkSync(testSocketPath);
+		rmSync(tmpDir, { recursive: true, force: true });
 		delete process.env.ADLR_SOCKET;
 	});
 
