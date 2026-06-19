@@ -1,12 +1,24 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
-import { existsSync, mkdirSync, unlinkSync } from "node:fs";
+import {
+	existsSync,
+	mkdirSync,
+	mkdtempSync,
+	rmSync,
+	unlinkSync,
+} from "node:fs";
 import { connect } from "node:net";
-import { dirname } from "node:path";
-import { SOCKET_PATH, SQLiteStorage } from "@adlr/sdk";
+import { tmpdir } from "node:os";
+import { dirname, join } from "node:path";
+import { SQLiteStorage } from "@adlr/sdk";
 import { ConfigLoader } from "../src/config-loader";
 import { InactivityTimer } from "../src/lifecycle";
 import { ProcessManager } from "../src/process-manager";
 import { startServer } from "../src/server";
+
+function createTestSocketPath(): { socketPath: string; tmpDir: string } {
+	const tmpDir = mkdtempSync(join(tmpdir(), "adlr-daemon-test-"));
+	return { socketPath: join(tmpDir, "adlr.sock"), tmpDir };
+}
 
 interface DaemonResponse {
 	type: string;
@@ -19,16 +31,29 @@ describe("Daemon server", () => {
 	let pm: ProcessManager;
 	let server: ReturnType<typeof startServer>;
 	let inactivity: InactivityTimer;
+	let testSocketPath: string;
+	let tmpDir: string;
 
 	beforeEach(async () => {
-		if (existsSync(SOCKET_PATH)) unlinkSync(SOCKET_PATH);
-		const socketDir = dirname(SOCKET_PATH);
+		const socketPaths = createTestSocketPath();
+		testSocketPath = socketPaths.socketPath;
+		tmpDir = socketPaths.tmpDir;
+		process.env.ADLR_SOCKET = testSocketPath;
+
+		if (existsSync(testSocketPath)) unlinkSync(testSocketPath);
+		const socketDir = dirname(testSocketPath);
 		if (!existsSync(socketDir)) mkdirSync(socketDir, { recursive: true });
+
 		storage = new SQLiteStorage(":memory:");
 		pm = new ProcessManager(storage, new ConfigLoader(), () => {});
 		inactivity = new InactivityTimer(() => {});
-		server = startServer(storage, () => pm, inactivity);
-		// Wait for socket to be ready
+		server = startServer(
+			storage,
+			() => pm,
+			inactivity,
+			undefined,
+			testSocketPath,
+		);
 		await new Promise((r) => setTimeout(r, 100));
 	});
 
@@ -37,11 +62,13 @@ describe("Daemon server", () => {
 		pm.stop();
 		inactivity.stop();
 		storage.close();
-		if (existsSync(SOCKET_PATH)) unlinkSync(SOCKET_PATH);
+		if (existsSync(testSocketPath)) unlinkSync(testSocketPath);
+		rmSync(tmpDir, { recursive: true, force: true });
+		delete process.env.ADLR_SOCKET;
 	});
 
 	test("session.create returns a session", async () => {
-		const client = connect(SOCKET_PATH);
+		const client = connect(testSocketPath);
 		await new Promise<void>((resolve, reject) => {
 			client.once("connect", resolve);
 			client.once("error", reject);
@@ -83,7 +110,7 @@ describe("Daemon server", () => {
 		storage.upsertDaemonSession();
 
 		// Create a normal session
-		const client = connect(SOCKET_PATH);
+		const client = connect(testSocketPath);
 		await new Promise<void>((resolve, reject) => {
 			client.once("connect", resolve);
 			client.once("error", reject);

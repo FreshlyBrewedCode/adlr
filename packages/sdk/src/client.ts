@@ -1,5 +1,5 @@
 import { connect } from "node:net";
-import { SOCKET_PATH } from "./paths";
+import { getSocketPath } from "./paths";
 import type {
 	AddContextItemInput,
 	ContextItem,
@@ -73,7 +73,7 @@ export interface Client {
 	close(): void;
 }
 
-export function createClient(socketPath: string = SOCKET_PATH): Client {
+export function createClient(socketPath: string = getSocketPath()): Client {
 	const socket = connect(socketPath);
 	const pending = new Map<string, PendingRequest>();
 	let eventHandlers: Array<{
@@ -191,7 +191,7 @@ export function createClient(socketPath: string = SOCKET_PATH): Client {
 			return {
 				sessionId: process.env.ADLR_SESSION,
 				spanId: process.env.ADLR_SPAN_ID,
-				socketPath: process.env.ADLR_SOCKET ?? SOCKET_PATH,
+				socketPath: process.env.ADLR_SOCKET ?? getSocketPath(),
 			};
 		},
 		session: {

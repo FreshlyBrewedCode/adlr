@@ -1,4 +1,4 @@
-import { DB_PATH, SQLiteStorage } from "@adlr/sdk";
+import { getDbPath, SQLiteStorage } from "@adlr/sdk";
 import { ConfigLoader } from "./config-loader";
 import {
 	ensureAdlerDir,
@@ -20,7 +20,7 @@ async function main() {
 
 	ensureAdlerDir();
 
-	const storage = new SQLiteStorage(DB_PATH);
+	const storage = new SQLiteStorage(getDbPath());
 	const logger = createLogger(storage);
 	const configLoader = new ConfigLoader(logger);
 

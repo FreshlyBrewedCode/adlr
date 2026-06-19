@@ -1,8 +1,16 @@
 import { spawn } from "node:child_process";
-import { existsSync, unlinkSync } from "node:fs";
+import {
+	closeSync,
+	existsSync,
+	mkdirSync,
+	openSync,
+	readFileSync,
+	unlinkSync,
+} from "node:fs";
 import { connect } from "node:net";
+import { join } from "node:path";
 import { setTimeout } from "node:timers/promises";
-import { SOCKET_PATH } from "@adlr/sdk";
+import { getAdlrDir, getSocketPath } from "@adlr/sdk";
 
 const DAEMON_START_TIMEOUT_MS = 5000;
 const DAEMON_POLL_INTERVAL_MS = 100;
@@ -20,30 +28,41 @@ async function canConnect(socketPath: string): Promise<boolean> {
 	});
 }
 
+function getDaemonLogDetail(logPath: string): string {
+	try {
+		return readFileSync(logPath, "utf-8").trim();
+	} catch {
+		return "";
+	}
+}
+
 export async function ensureDaemon(): Promise<void> {
-	if (existsSync(SOCKET_PATH)) {
-		if (await canConnect(SOCKET_PATH)) {
+	const socketPath = getSocketPath();
+
+	if (existsSync(socketPath)) {
+		if (await canConnect(socketPath)) {
 			return;
 		}
-		unlinkSync(SOCKET_PATH);
+		unlinkSync(socketPath);
 	}
+
+	const adlrDir = getAdlrDir();
+	mkdirSync(adlrDir, { recursive: true });
+	const logPath = join(adlrDir, "daemon.stderr.log");
+	const logFd = openSync(logPath, "w");
 
 	const daemonPath = new URL("../../daemon/src/index.ts", import.meta.url)
 		.pathname;
 	const proc = spawn(process.execPath, [daemonPath], {
 		detached: true,
-		stdio: ["ignore", "ignore", "pipe"],
+		stdio: ["ignore", "ignore", logFd],
 	});
 	proc.unref();
+	closeSync(logFd);
 
 	let spawnError: Error | null = null;
 	let exitCode: number | null = null;
 	let exitSignal: string | null = null;
-	let stderrOutput = "";
-
-	proc.stderr?.on("data", (chunk: Buffer) => {
-		stderrOutput += chunk.toString();
-	});
 
 	proc.on("error", (err) => {
 		spawnError = err;
@@ -65,24 +84,24 @@ export async function ensureDaemon(): Promise<void> {
 			throw spawnError;
 		}
 		if (exitCode !== null) {
-			const detail = stderrOutput.trim();
+			const detail = getDaemonLogDetail(logPath);
 			const msg = detail
 				? `Daemon exited with code ${exitCode}:\n${detail}`
 				: `Daemon exited with code ${exitCode}`;
 			throw new Error(msg);
 		}
 		if (exitSignal !== null) {
-			const detail = stderrOutput.trim();
+			const detail = getDaemonLogDetail(logPath);
 			const msg = detail
 				? `Daemon was killed by signal ${exitSignal}:\n${detail}`
 				: `Daemon was killed by signal ${exitSignal}`;
 			throw new Error(msg);
 		}
-		if (await canConnect(SOCKET_PATH)) {
+		if (await canConnect(socketPath)) {
 			return;
 		}
 	}
-	const detail = stderrOutput.trim();
+	const detail = getDaemonLogDetail(logPath);
 	const msg = detail
 		? `Daemon failed to start within 5 seconds:\n${detail}`
 		: "Daemon failed to start within 5 seconds";

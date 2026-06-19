@@ -41,10 +41,23 @@ Workspace: `packages/*` and `packages/plugins/*` (plugins dir does not yet exist
 - Agent config lives in `.adlr/adlr.ts` (project-level) or `~/.config/adlr/adlr.ts` (global).
 - `__daemon__` is a sentinel session ID filtered out of `session.list` — do not use it.
 
+## Environment-based configuration
+
+Runtime paths can be overridden via environment variables. This is used by the test harness to keep tests isolated from the user's live daemon.
+
+| Env var | Fallback | Controls |
+|---|---|---|
+| `ADLR_DIR` | `~/.local/share/adlr` | Base directory for socket, DB, and PID file |
+| `ADLR_SOCKET` | `$ADLR_DIR/adlr.sock` | Unix socket path |
+| `ADLR_DB` | `$ADLR_DIR/adlr.db` | SQLite database path |
+| `ADLR_PID_FILE` | `$ADLR_DIR/adlr.pid` | Daemon PID file path |
+
+The CLI, daemon, SDK client, and spawned agents all read these values through `@adlr/sdk` path getters so a single `ADLR_DIR` override is sufficient for full isolation.
+
 ## Testing quirks
 
 - Test runner: `bun:test` (not Jest/Vitest).
-- Daemon tests bind to the real socket path (`~/.local/share/adlr/adlr.sock`). Running tests while a live daemon is using the socket can cause conflicts; tests clean up with `unlinkSync` before/after.
+- Tests never bind to the default socket path. Daemon server tests create a temp socket per test, and CLI integration tests spawn the real binary inside a temp `HOME`/`ADLR_DIR` so each test gets its own daemon.
 - No mocking framework — tests use real implementations with in-memory SQLite (`:memory:`).
 - end2end TUI tests using the `agent-tui` tool (check skill for further info)
 

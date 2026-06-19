@@ -1,6 +1,6 @@
 import { createServer, type Socket } from "node:net";
 import type { Storage } from "@adlr/sdk";
-import { SOCKET_PATH } from "@adlr/sdk";
+import { getSocketPath } from "@adlr/sdk";
 import { handleCommand } from "./handlers";
 import type { InactivityTimer } from "./lifecycle";
 import type { DaemonLogger } from "./logger";
@@ -11,6 +11,7 @@ export function startServer(
 	getProcessManager: () => ProcessManager,
 	inactivity: InactivityTimer,
 	logger?: DaemonLogger,
+	socketPath: string = getSocketPath(),
 ): {
 	close: () => void;
 	broadcast: (
@@ -183,7 +184,7 @@ export function startServer(
 		});
 	});
 
-	server.listen(SOCKET_PATH);
+	server.listen(socketPath);
 
 	return {
 		close() {
