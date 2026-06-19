@@ -39,7 +39,8 @@ jobs:
                   "*": "deny",
                   "/tmp/**": "allow"
                 }
-              }
+              },
+              "instructions": [".github/workflows/opencode-instructions.md"]
             }
 
       - name: Run opencode
