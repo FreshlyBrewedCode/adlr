@@ -219,21 +219,21 @@ export class ProcessManager {
 		const agent = this.agents.get(spanId);
 		if (!agent || agent.exited) return;
 
-		const span = await this.storage.getSpan(spanId);
+		const span = (await this.storage.getSpan(spanId)) as AgentSpan | null;
 		if (!span) return;
 
 		const session = await this.storage.getSession(span.session_id);
 		if (!session) return;
 
 		const config = await this.configLoader.loadConfig(session.working_dir);
-		const agentDef = config.agent?.agents?.[span.data.agent_type as string];
+		const agentDef = config.agent?.agents?.[span.data.agent_type ?? ""];
 		if (!agentDef?.status) return;
 
 		const timeout = agentDef?.interactiveTimeout ?? 3000;
 		agent.stdoutIdle = Date.now() - agent.lastStdoutTime > timeout;
 
 		const result = await agentDef.status({
-			span: span as AgentSpan,
+			span,
 			currentStatus: agent.status,
 			proc: { stdoutIdle: agent.stdoutIdle, lastStdout: agent.stdoutBuffer },
 			$: {} as unknown,
@@ -268,20 +268,20 @@ export class ProcessManager {
 			this.statusIntervals.delete(spanId);
 		}
 
-		const span = await this.storage.getSpan(spanId);
+		const span = (await this.storage.getSpan(spanId)) as AgentSpan | null;
 		if (!span) return;
 
 		const session = await this.storage.getSession(span.session_id);
 		if (!session) return;
 
 		const config = await this.configLoader.loadConfig(session.working_dir);
-		const agentDef = config.agent?.agents?.[span.data.agent_type as string];
+		const agentDef = config.agent?.agents?.[span.data.agent_type ?? ""];
 		let outputData: Record<string, unknown> | null = null;
 
 		if (agentDef?.output) {
 			try {
 				const output = await agentDef.output({
-					span: span as AgentSpan,
+					span,
 					proc: {
 						stdoutIdle: agent.stdoutIdle,
 						lastStdout: agent.stdoutBuffer,

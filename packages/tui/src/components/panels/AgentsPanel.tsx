@@ -1,4 +1,4 @@
-import type { Span } from "@adlr/sdk";
+import type { AgentSpan, Span } from "@adlr/sdk";
 import { useBindings } from "@opentui/keymap/react";
 import { useState } from "react";
 import type { PanelProps } from "../../core/types";
@@ -52,8 +52,11 @@ export function AgentsPanel({ state, width, height }: PanelProps) {
 				selectedIndex={selectedIndex}
 				renderItem={(span, _i, isSelected) => (
 					<Card
-						title={String(span.data?.agent_type ?? span.name)}
-						description={String(span.data?.prompt ?? "").slice(0, 40)}
+						title={String((span as AgentSpan).data?.agent_type ?? span.name)}
+						description={String((span as AgentSpan).data?.prompt ?? "").slice(
+							0,
+							40,
+						)}
 						status={span.status}
 						hint={
 							span.status === "running"

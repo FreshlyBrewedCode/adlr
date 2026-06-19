@@ -1,3 +1,4 @@
+import type { Span } from "@adlr/sdk";
 import { createClient } from "@adlr/sdk";
 import { Command } from "commander";
 import { ensureDaemon } from "../../auto-start";
@@ -10,7 +11,7 @@ export const spanGetCmd = new Command("get")
 		await ensureDaemon();
 		const client = createClient();
 		try {
-			const span = await client.span.get(id);
+			const span: Span = await client.span.get(id);
 			if (options.json) {
 				console.log(JSON.stringify(span, null, 2));
 			} else {
