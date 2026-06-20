@@ -83,12 +83,11 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          is_pr=${{ github.event.issue.pull_request && 'true' || 'false' }}
+          is_pr=${{ (github.event.issue.pull_request || github.event.pull_request) && 'true' || 'false' }}
           number=${{ github.event.issue.number || github.event.pull_request.number }}
-          body="$(cat "$RUNNER_TEMP/opencode-response.md")"
 
           if [ "$is_pr" = "true" ]; then
-            gh pr comment "$number" --body "$body"
+            gh pr comment "$number" --body-file "$RUNNER_TEMP/opencode-response.md"
           else
-            gh issue comment "$number" --body "$body"
+            gh issue comment "$number" --body-file "$RUNNER_TEMP/opencode-response.md"
           fi
