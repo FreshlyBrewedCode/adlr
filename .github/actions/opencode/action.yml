@@ -1,0 +1,154 @@
+name: opencode
+description: Run opencode on a GitHub issue/PR comment and post a Markdown reply
+
+inputs:
+  model:
+    description: Model to use for opencode
+    default: opencode-go/kimi-k2.7-code
+  api-key:
+    description: OpenCode API key
+    required: true
+  github-token:
+    description: GitHub token for posting comments
+    required: true
+  instructions-path:
+    description: Path to the opencode instructions file
+    default: .github/workflows/opencode-instructions.md
+  config:
+    description: JSON string with opencode configuration (overrides the default)
+    required: false
+  comment-body:
+    description: Raw comment body containing the user prompt
+    required: true
+  issue-number:
+    description: Issue or pull request number
+    required: true
+  is-pull-request:
+    description: Set to 'true' if the comment is on a pull request
+    default: "false"
+  post-comment:
+    description: Whether to post the response as a comment
+    default: "true"
+
+outputs:
+  response:
+    description: The generated Markdown response
+    value: ${{ steps.log2md.outputs.response }}
+  cost:
+    description: Total cost of the opencode run
+    value: ${{ steps.log2md.outputs.cost }}
+  duration:
+    description: Duration of the opencode run in milliseconds
+    value: ${{ steps.log2md.outputs.duration }}
+
+runs:
+  using: composite
+  steps:
+    - name: Ensure GitHub CLI is available
+      shell: bash
+      run: gh --version
+      env:
+        GH_TOKEN: ${{ inputs.github-token }}
+
+    - name: Install opencode
+      shell: bash
+      run: npm install -g opencode-ai
+
+    - name: Build prompt
+      id: prompt
+      shell: bash
+      env:
+        COMMENT_BODY: ${{ inputs.comment-body }}
+        IS_PULL_REQUEST: ${{ inputs.is-pull-request }}
+        ISSUE_NUMBER: ${{ inputs.issue-number }}
+      run: |
+        user_prompt=$(printf '%s' "$COMMENT_BODY" | sed -E 's/(^|[[:space:]])(\/oc|\/opencode)([[:space:]]|$)/ /gi' | tr -s ' ' | sed -E 's/^ +| +$//g')
+        if [ "$IS_PULL_REQUEST" = "true" ]; then
+          instructions="<context>You are responding to a comment on pull request #${ISSUE_NUMBER}</context>"
+        else
+          instructions="<context>You are responding to a comment on issue #${ISSUE_NUMBER}</context>"
+        fi
+        delimiter=$(openssl rand -hex 16)
+        echo "prompt<<${delimiter}" >> "$GITHUB_OUTPUT"
+        printf '%s\n\n%s\n' "$instructions" "$user_prompt" >> "$GITHUB_OUTPUT"
+        echo "${delimiter}" >> "$GITHUB_OUTPUT"
+
+    - name: Build opencode config
+      id: config
+      shell: bash
+      env:
+        INSTRUCTIONS_PATH: ${{ inputs.instructions-path }}
+        USER_CONFIG: ${{ inputs.config }}
+      run: |
+        if [ -n "$USER_CONFIG" ]; then
+          config="$USER_CONFIG"
+        else
+          config=$(jq -n --arg path "$INSTRUCTIONS_PATH" '{"permission":{"external_directory":{"*":"deny","/tmp/**":"allow"}},"instructions":[$path]}')
+        fi
+        delimiter=$(openssl rand -hex 16)
+        echo "config<<${delimiter}" >> "$GITHUB_OUTPUT"
+        echo "$config" >> "$GITHUB_OUTPUT"
+        echo "${delimiter}" >> "$GITHUB_OUTPUT"
+
+    - name: Run opencode
+      id: opencode
+      shell: bash
+      env:
+        OPENCODE_API_KEY: ${{ inputs.api-key }}
+        GH_TOKEN: ${{ inputs.github-token }}
+        OPENCODE_CONFIG_CONTENT: ${{ steps.config.outputs.config }}
+        PROMPT: ${{ steps.prompt.outputs.prompt }}
+        MODEL: ${{ inputs.model }}
+      run: |
+        log=$(opencode run --model "$MODEL" --format json "$PROMPT" | tee /dev/fd/2)
+        delimiter=$(openssl rand -hex 16)
+        echo "log<<${delimiter}" >> "$GITHUB_OUTPUT"
+        echo "$log" >> "$GITHUB_OUTPUT"
+        echo "${delimiter}" >> "$GITHUB_OUTPUT"
+
+    - name: Convert log to Markdown
+      id: log2md
+      shell: bash
+      env:
+        LOG: ${{ steps.opencode.outputs.log }}
+        MODEL: ${{ inputs.model }}
+      run: |
+        tmpfile=$(mktemp)
+        printf '%s\n' "$LOG" > "$tmpfile"
+        response=$(node "${{ github.action_path }}/log2md.mjs" "$tmpfile" "$MODEL" opencode)
+        delimiter=$(openssl rand -hex 16)
+        echo "response<<${delimiter}" >> "$GITHUB_OUTPUT"
+        echo "$response" >> "$GITHUB_OUTPUT"
+        echo "${delimiter}" >> "$GITHUB_OUTPUT"
+        cost=$(node -e '
+          const fs = require("fs");
+          const lines = fs.readFileSync(process.argv[1], "utf8").split("\n").filter(Boolean).map(JSON.parse);
+          const total = lines.filter((r) => r.type === "step_finish").reduce((s, r) => s + (r.part?.cost || 0), 0);
+          console.log(total.toFixed(2));
+        ' "$tmpfile")
+        duration=$(node -e '
+          const fs = require("fs");
+          const lines = fs.readFileSync(process.argv[1], "utf8").split("\n").filter(Boolean).map(JSON.parse);
+          const first = lines[0]?.timestamp || 0;
+          const last = lines[lines.length - 1]?.timestamp || first;
+          console.log(last - first);
+        ' "$tmpfile")
+        echo "cost=$cost" >> "$GITHUB_OUTPUT"
+        echo "duration=$duration" >> "$GITHUB_OUTPUT"
+        rm -f "$tmpfile"
+
+    - name: Post response
+      if: inputs.post-comment == 'true'
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.github-token }}
+        RESPONSE: ${{ steps.log2md.outputs.response }}
+        IS_PULL_REQUEST: ${{ inputs.is-pull-request }}
+        ISSUE_NUMBER: ${{ inputs.issue-number }}
+      run: |
+        if [ "$IS_PULL_REQUEST" = "true" ]; then
+          target="pr"
+        else
+          target="issue"
+        fi
+        printf '%s\n' "$RESPONSE" | gh "$target" comment "$ISSUE_NUMBER" --body-file -
