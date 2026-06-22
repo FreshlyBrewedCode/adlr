@@ -21,6 +21,7 @@ jobs:
       contents: write
       pull-requests: write
       issues: write
+      actions: write
     env:
       OPENCODE_MODEL: opencode-go/kimi-k2.7-code
     steps:
