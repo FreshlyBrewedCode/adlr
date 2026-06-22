@@ -21,18 +21,14 @@ jobs:
       contents: write
       pull-requests: write
       issues: write
+      workflows: write
     env:
       OPENCODE_MODEL: opencode-go/kimi-k2.7-code
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
         with:
-          persist-credentials: false
-
-      - name: Ensure GitHub CLI is available
-        run: gh --version
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          persist-credentials: true
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
