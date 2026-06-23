@@ -191,7 +191,10 @@ export async function handleCommand(
 		}
 
 		case "span.finish": {
-			const { id, status } = payload as { id: string; status?: "done" | "failed" };
+			const { id, status } = payload as {
+				id: string;
+				status?: "done" | "failed";
+			};
 			const span = await ctx.storage.getSpan(id);
 			if (!span) throw new Error(`Span not found: ${id}`);
 			const finalStatus: SpanStatus = status ?? "done";
