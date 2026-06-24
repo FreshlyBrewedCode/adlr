@@ -1,10 +1,13 @@
+import type { SpanUsage } from "@adlr/sdk";
 import { Theme } from "../theme";
+import { formatUsageSummary } from "../utils/formatUsage";
 
 export function Card({
 	title,
 	description,
 	status,
 	hint,
+	usage,
 	isSelected: _isSelected,
 	width,
 	children,
@@ -13,6 +16,7 @@ export function Card({
 	description?: string;
 	status: "done" | "failed" | "blocked" | "running" | "pending";
 	hint?: string;
+	usage?: SpanUsage;
 	isSelected?: boolean;
 	width?: number;
 	children?: React.ReactNode;
@@ -46,6 +50,7 @@ export function Card({
 				<b>{title}</b>
 			</text>
 			{description && <text fg="#666">{description}</text>}
+			{usage && <text fg={Theme.muted}>{formatUsageSummary(usage)}</text>}
 			{children}
 			{hint && <text fg="#666"> {hint}</text>}
 		</box>
