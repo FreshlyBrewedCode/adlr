@@ -49,13 +49,21 @@ export async function handleEvent(
 		case "session.idle": {
 			const evt = event as SessionIdleEvent;
 			const { sessionID } = evt.properties;
-			if (!spanMap.has(sessionID)) return;
 
-			const spanId = spanMap.get(sessionID);
-			if (spanId === undefined) return;
+			if (spanMap.has(sessionID)) {
+				// Subagent session going idle — finish the subagent span.
+				const spanId = spanMap.get(sessionID);
+				if (spanId === undefined) return;
 
-			await client.span.finish(spanId, "done");
-			spanMap.markFinished(sessionID);
+				await client.span.finish(spanId, "done");
+				spanMap.markFinished(sessionID);
+				return;
+			}
+
+			// Root opencode session going idle — finish the root span if one was
+			// created. In session-attached / managed mode this is the span that
+			// tracks the top-level opencode process.
+			await rootResolver.finish("done");
 			return;
 		}
 

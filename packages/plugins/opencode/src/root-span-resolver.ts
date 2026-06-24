@@ -3,6 +3,7 @@ import type { AdlrClient } from "./types";
 export class RootSpanResolver {
 	private spanId: string | undefined;
 	private creating: Promise<string> | undefined;
+	private finished = false;
 
 	constructor(
 		private readonly sessionId: string,
@@ -10,6 +11,16 @@ export class RootSpanResolver {
 		managedSpanId?: string,
 	) {
 		this.spanId = managedSpanId;
+	}
+
+	/** Returns the span ID only if the root span has already been resolved/created. */
+	get currentSpanId(): string | undefined {
+		return this.spanId;
+	}
+
+	/** Returns true if the root span has already been finished. */
+	get isFinished(): boolean {
+		return this.finished;
 	}
 
 	async resolve(): Promise<string> {
@@ -27,5 +38,13 @@ export class RootSpanResolver {
 				return span.id;
 			});
 		return this.creating;
+	}
+
+	async finish(status: "done" | "failed" = "done"): Promise<void> {
+		if (this.finished) return;
+		const id = this.currentSpanId;
+		if (!id) return;
+		this.finished = true;
+		await this.client.span.finish(id, status);
 	}
 }

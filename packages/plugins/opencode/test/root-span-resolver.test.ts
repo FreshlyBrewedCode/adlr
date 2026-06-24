@@ -5,8 +5,10 @@ import type { AdlrClient } from "../src/types";
 function makeMockClient(spanId = "root-span-1"): {
 	client: AdlrClient;
 	createCalls: Array<Parameters<AdlrClient["span"]["create"]>[0]>;
+	finishCalls: Array<{ id: string; status?: "done" | "failed" }>;
 } {
 	const createCalls: Array<Parameters<AdlrClient["span"]["create"]>[0]> = [];
+	const finishCalls: Array<{ id: string; status?: "done" | "failed" }> = [];
 
 	const client: AdlrClient = {
 		span: {
@@ -24,12 +26,14 @@ function makeMockClient(spanId = "root-span-1"): {
 					data: {},
 				};
 			},
-			finish: async () => {},
+			finish: async (id, status) => {
+				finishCalls.push({ id, status });
+			},
 			update: async () => {},
 		},
 	};
 
-	return { client, createCalls };
+	return { client, createCalls, finishCalls };
 }
 
 describe("RootSpanResolver", () => {
@@ -89,5 +93,55 @@ describe("RootSpanResolver", () => {
 
 		expect(id).toBe("existing-span-id");
 		expect(createCalls).toHaveLength(0);
+	});
+
+	test("currentSpanId returns undefined before resolve() is called", () => {
+		const { client } = makeMockClient();
+		const resolver = new RootSpanResolver("adlr-sess-5", client);
+		expect(resolver.currentSpanId).toBeUndefined();
+	});
+
+	test("currentSpanId returns the span ID after resolve()", async () => {
+		const { client } = makeMockClient("root-span-5");
+		const resolver = new RootSpanResolver("adlr-sess-6", client);
+		await resolver.resolve();
+		expect(resolver.currentSpanId).toBe("root-span-5");
+	});
+
+	test("currentSpanId returns the managed span ID immediately", () => {
+		const { client } = makeMockClient();
+		const resolver = new RootSpanResolver("adlr-sess-7", client, "managed-id");
+		expect(resolver.currentSpanId).toBe("managed-id");
+	});
+
+	test("finish() calls span.finish with the current span ID", async () => {
+		const { client, finishCalls } = makeMockClient("root-span-6");
+		const resolver = new RootSpanResolver("adlr-sess-8", client);
+		await resolver.resolve();
+		await resolver.finish("done");
+
+		expect(finishCalls).toHaveLength(1);
+		expect(finishCalls[0]).toEqual({ id: "root-span-6", status: "done" });
+		expect(resolver.isFinished).toBe(true);
+	});
+
+	test("finish() is idempotent — double-finish only calls span.finish once", async () => {
+		const { client, finishCalls } = makeMockClient("root-span-7");
+		const resolver = new RootSpanResolver("adlr-sess-9", client);
+		await resolver.resolve();
+		await resolver.finish("done");
+		await resolver.finish("done");
+
+		expect(finishCalls).toHaveLength(1);
+	});
+
+	test("finish() is a no-op when no span has been created", async () => {
+		const { client, finishCalls } = makeMockClient();
+		const resolver = new RootSpanResolver("adlr-sess-10", client);
+		// Do NOT call resolve().
+		await resolver.finish("done");
+
+		expect(finishCalls).toHaveLength(0);
+		expect(resolver.isFinished).toBe(false);
 	});
 });

@@ -6,7 +6,7 @@ import type { AdlrClient } from "../src/types";
 
 let spanCounter = 0;
 
-function makeMock(rootSpanId = "root-span") {
+function makeMock(rootSpanId: string | null = "root-span") {
 	spanCounter = 0;
 	const createCalls: Array<Parameters<AdlrClient["span"]["create"]>[0]> = [];
 	const finishCalls: Array<{ id: string; status?: "done" | "failed" }> = [];
@@ -49,7 +49,7 @@ function makeMock(rootSpanId = "root-span") {
 	const rootResolver = new RootSpanResolver(
 		"adlr-session-1",
 		client,
-		rootSpanId,
+		rootSpanId ?? undefined,
 	);
 
 	const ctx: PluginContext = {
@@ -158,8 +158,26 @@ describe("handleEvent — session.idle", () => {
 		expect(spanMap.isFinished("oc-sub-3")).toBe(true);
 	});
 
-	test("does nothing when sessionID is not in spanMap", async () => {
-		const { ctx, finishCalls } = makeMock();
+	test("finishes root span when sessionID is not a tracked subagent (root session going idle)", async () => {
+		const { ctx, finishCalls } = makeMock("root-span");
+		// Trigger resolve() so that a root span is in place before idle fires.
+		await ctx.rootResolver.resolve();
+
+		await handleEvent(
+			{
+				type: "session.idle",
+				properties: { sessionID: "unknown-session" },
+			},
+			ctx,
+		);
+
+		expect(finishCalls).toHaveLength(1);
+		expect(finishCalls[0]).toEqual({ id: "root-span", status: "done" });
+	});
+
+	test("does nothing when sessionID is not in spanMap and no root span was ever created", async () => {
+		// Pass null so no managedSpanId is pre-set; resolve() is never called.
+		const { ctx, finishCalls } = makeMock(null);
 		await handleEvent(
 			{
 				type: "session.idle",
