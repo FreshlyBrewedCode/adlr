@@ -67,8 +67,8 @@ runs:
           const number = core.getInput('issue-number');
 
           const instructions = isPR
-            ? `<context>You are responding to a comment on pull request #${number}</context>`
-            : `<context>You are responding to a comment on issue #${number}</context>`;
+            ? `<context>You are responding to a comment on pull request #${number}. If you make any changes you need to push them to the PR branch.</context>`
+            : `<context>You are responding to a comment on issue #${number}. If you make any changes you need to open a PR.</context>`;
 
           const fullPrompt = `${instructions}\n\n${userPrompt}`;
           core.setOutput('prompt', fullPrompt);
