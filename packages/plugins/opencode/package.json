@@ -1,23 +1,23 @@
 {
-	"name": "adlr-cli",
+	"name": "@adlr/plugin-opencode",
 	"version": "0.1.0",
 	"type": "module",
 	"main": "src/index.ts",
-	"bin": {
-		"adlr": "src/index.ts"
+	"types": "src/index.ts",
+	"exports": {
+		".": "./src/index.ts"
 	},
 	"scripts": {
 		"test": "bun test",
-		"lint": "biome check --fix .",
+		"lint": "biome check .",
 		"typecheck": "tsgo --noEmit"
 	},
-	"dependencies": {
+	"peerDependencies": {
 		"@adlr/sdk": "workspace:*",
-		"@adlr/tui": "workspace:*",
-		"adlrd": "workspace:*",
-		"commander": "^13.0.0"
+		"@opencode-ai/plugin": ">=1.17.0"
 	},
 	"devDependencies": {
+		"@adlr/sdk": "workspace:*",
 		"@adlr/test-utils": "workspace:*",
 		"@types/node": "^20.0.0",
 		"@typescript/native-preview": "catalog:",

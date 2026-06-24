@@ -22,7 +22,7 @@ export class CliProcess {
 	private proc: Bun.Subprocess<"ignore", "pipe", "pipe"> | null = null;
 
 	constructor() {
-		this.repoRoot = resolve(import.meta.dir, "../../../../");
+		this.repoRoot = resolve(import.meta.dir, "../../../");
 		this.tmpDir = mkdtempSync(join(tmpdir(), "adlr-cli-test-"));
 		this.adlrDir = join(this.tmpDir, "adlr");
 		mkdirSync(this.adlrDir, { recursive: true });

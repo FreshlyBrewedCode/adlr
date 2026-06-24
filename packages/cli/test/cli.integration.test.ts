@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { existsSync, mkdirSync, mkdtempSync } from "node:fs";
 import { join } from "node:path";
-import { CliProcess, expectExit } from "./lib/cli-process";
+import { CliProcess, expectExit } from "@adlr/test-utils";
 
 describe("CLI integration", () => {
 	let cli: CliProcess;
