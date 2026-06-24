@@ -118,14 +118,21 @@ Then: Cleanup worktree (Step 6), then delete branch:
 git branch -d <feature-branch>
 ```
 
+If a plan issue number is known, close it after merge:
+```bash
+gh issue close <plan-issue-number> --comment "Merged to <base-branch>."
+```
+
 #### Option 2: Push and Create PR
 
 ```bash
 # Push branch
 git push -u origin <feature-branch>
 
-# Create PR
+# Create PR — include plan issue reference if known
 gh pr create --title "<title>" --body "$(cat <<'EOF'
+Implements plan #<plan-issue-number>
+
 ## Summary
 <2-3 bullets of what changed>
 
@@ -134,6 +141,8 @@ gh pr create --title "<title>" --body "$(cat <<'EOF'
 EOF
 )"
 ```
+
+If no plan issue exists, omit the `Implements plan #N` line.
 
 **Do NOT clean up worktree** — user needs it alive to iterate on PR feedback.
 

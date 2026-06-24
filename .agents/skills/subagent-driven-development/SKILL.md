@@ -60,12 +60,12 @@ digraph process {
         "Mark task complete in TodoWrite" [shape=box];
     }
 
-    "Read plan, extract all tasks with full text, note context, create TodoWrite" [shape=box];
+    "Fetch plan issue + task sub-issues, extract full text, create TodoWrite" [shape=box];
     "More tasks remain?" [shape=diamond];
     "Dispatch final code reviewer subagent for entire implementation" [shape=box];
     "Use superpowers:finishing-a-development-branch" [shape=box style=filled fillcolor=lightgreen];
 
-    "Read plan, extract all tasks with full text, note context, create TodoWrite" -> "Dispatch implementer subagent (./implementer-prompt.md)";
+    "Fetch plan issue + task sub-issues, extract full text, create TodoWrite" -> "Dispatch implementer subagent (./implementer-prompt.md)";
     "Dispatch implementer subagent (./implementer-prompt.md)" -> "Implementer subagent asks questions?";
     "Implementer subagent asks questions?" -> "Answer questions, provide context" [label="yes"];
     "Answer questions, provide context" -> "Dispatch implementer subagent (./implementer-prompt.md)";
@@ -78,12 +78,49 @@ digraph process {
     "Dispatch code quality reviewer subagent (./code-quality-reviewer-prompt.md)" -> "Code quality reviewer subagent approves?";
     "Code quality reviewer subagent approves?" -> "Implementer subagent fixes quality issues" [label="no"];
     "Implementer subagent fixes quality issues" -> "Dispatch code quality reviewer subagent (./code-quality-reviewer-prompt.md)" [label="re-review"];
-    "Code quality reviewer subagent approves?" -> "Mark task complete in TodoWrite" [label="yes"];
-    "Mark task complete in TodoWrite" -> "More tasks remain?";
+    "Code quality reviewer subagent approves?" -> "Close task sub-issue + mark complete in TodoWrite" [label="yes"];
+    "Close task sub-issue + mark complete in TodoWrite" -> "More tasks remain?";
     "More tasks remain?" -> "Dispatch implementer subagent (./implementer-prompt.md)" [label="yes"];
     "More tasks remain?" -> "Dispatch final code reviewer subagent for entire implementation" [label="no"];
     "Dispatch final code reviewer subagent for entire implementation" -> "Use superpowers:finishing-a-development-branch";
 }
+```
+
+## Loading the Plan
+
+**Fetch from GitHub — never read a plan file.** At the start, before dispatching any subagents:
+
+```bash
+# Get plan issue (goal, architecture, task list with sub-issue numbers)
+gh issue view <plan-issue-number> --json number,title,body
+
+# Fetch each task sub-issue body (contains files + checkbox steps)
+gh issue view <sub-issue-number> --json number,title,body
+# Repeat for each sub-issue listed in the plan's task list
+```
+
+Extract all task sub-issues with their full body text before dispatching any subagents. The controller holds this text and passes it directly to implementer subagents — subagents never fetch it themselves.
+
+## Closing Task Sub-Issues on Completion
+
+When both reviews pass for a task (spec compliance ✅ and code quality ✅):
+
+```bash
+# Close the task sub-issue
+gh issue close <sub-issue-number> --comment "All steps complete."
+
+# Update plan issue task list: mark the checkbox for this sub-issue
+PLAN_BODY=$(gh issue view <plan-issue-number> --json body --jq '.body')
+# Edit PLAN_BODY: replace "- [ ] #<sub-issue-number>" with "- [x] #<sub-issue-number>"
+gh issue edit <plan-issue-number> --body "$PLAN_BODY"
+```
+
+Mark the TodoWrite item as `completed` after closing the sub-issue.
+
+When all sub-issues are closed (all tasks done), close the plan issue before invoking finishing-a-development-branch:
+
+```bash
+gh issue close <plan-issue-number> --comment "All tasks complete."
 ```
 
 ## Model Selection
@@ -130,13 +167,13 @@ Implementer subagents report one of four statuses. Handle each appropriately:
 ```
 You: I'm using Subagent-Driven Development to execute this plan.
 
-[Read plan file once: docs/superpowers/plans/feature-plan.md]
-[Extract all 5 tasks with full text and context]
-[Create TodoWrite with all tasks]
+[Fetch plan issue #42: goal, architecture, task list with sub-issue numbers]
+[Fetch task sub-issues #43, #44, #45, #46, #47 — extract full body text for each]
+[Create TodoWrite with all 5 tasks]
 
-Task 1: Hook installation script
+Task 1: Hook installation script (sub-issue #43)
 
-[Get Task 1 text and context (already extracted)]
+[Get Task 1 text and context (already extracted from sub-issue #43)]
 [Dispatch implementation subagent with full task text + context]
 
 Implementer: "Before I begin - should the hook be installed at user or system level?"
@@ -156,11 +193,12 @@ Spec reviewer: ✅ Spec compliant - all requirements met, nothing extra
 [Get git SHAs, dispatch code quality reviewer]
 Code reviewer: Strengths: Good test coverage, clean. Issues: None. Approved.
 
+[Close sub-issue #43, update plan issue #42 task list checkbox]
 [Mark Task 1 complete]
 
-Task 2: Recovery modes
+Task 2: Recovery modes (sub-issue #44)
 
-[Get Task 2 text and context (already extracted)]
+[Get Task 2 text and context (already extracted from sub-issue #44)]
 [Dispatch implementation subagent with full task text + context]
 
 Implementer: [No questions, proceeds]
@@ -190,11 +228,13 @@ Implementer: Extracted PROGRESS_INTERVAL constant
 [Code reviewer reviews again]
 Code reviewer: ✅ Approved
 
+[Close sub-issue #44, update plan issue #42 task list checkbox]
 [Mark Task 2 complete]
 
 ...
 
 [After all tasks]
+[Close plan issue #42]
 [Dispatch final code-reviewer]
 Final reviewer: All requirements met, ready to merge
 
@@ -240,7 +280,7 @@ Done!
 - Skip reviews (spec compliance OR code quality)
 - Proceed with unfixed issues
 - Dispatch multiple implementation subagents in parallel (conflicts)
-- Make subagent read plan file (provide full text instead)
+- Make subagent fetch the plan issue (provide full task text instead)
 - Skip scene-setting context (subagent needs to understand where task fits)
 - Ignore subagent questions (answer before letting them proceed)
 - Accept "close enough" on spec compliance (spec reviewer found issues = not done)

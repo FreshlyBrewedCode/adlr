@@ -15,9 +15,6 @@ Assume they are a skilled developer, but know almost nothing about our toolset o
 
 **Context:** If working in an isolated worktree, it should have been created via the `superpowers:using-git-worktrees` skill at execution time.
 
-**Save plans to:** `docs/superpowers/plans/YYYY-MM-DD-<feature-name>.md`
-- (User preferences for plan location override this default)
-
 ## Scope Check
 
 If the spec covers multiple independent subsystems, it should have been broken into sub-project specs during brainstorming. If it wasn't, suggest breaking this into separate plans — one per subsystem. Each plan should produce working, testable software on its own.
@@ -42,63 +39,47 @@ This structure informs the task decomposition. Each task should produce self-con
 - "Run the tests and make sure they pass" - step
 - "Commit" - step
 
-## Plan Document Header
-
-**Every plan MUST start with this header:**
-
-```markdown
-# [Feature Name] Implementation Plan
-
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
-
-**Goal:** [One sentence describing what this builds]
-
-**Architecture:** [2-3 sentences about approach]
-
-**Tech Stack:** [Key technologies/libraries]
-
----
-```
-
 ## Task Structure
 
-````markdown
-### Task N: [Component Name]
+Each top-level task becomes its own GitHub sub-issue (see Publishing below). The task content format is:
 
+````markdown
 **Files:**
-- Create: `exact/path/to/file.py`
-- Modify: `exact/path/to/existing.py:123-145`
-- Test: `tests/exact/path/to/test.py`
+- Create: `exact/path/to/file.ts`
+- Modify: `exact/path/to/existing.ts:123-145`
+- Test: `tests/exact/path/to/test.ts`
 
 - [ ] **Step 1: Write the failing test**
 
-```python
-def test_specific_behavior():
-    result = function(input)
-    assert result == expected
+```typescript
+test("specific behavior", () => {
+  const result = fn(input);
+  expect(result).toBe(expected);
+});
 ```
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `pytest tests/path/test.py::test_name -v`
-Expected: FAIL with "function not defined"
+Run: `bun test tests/path/test.ts`
+Expected: FAIL with "fn not defined"
 
 - [ ] **Step 3: Write minimal implementation**
 
-```python
-def function(input):
-    return expected
+```typescript
+export function fn(input: T): R {
+  return expected;
+}
 ```
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `pytest tests/path/test.py::test_name -v`
+Run: `bun test tests/path/test.ts`
 Expected: PASS
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add tests/path/test.py src/path/file.py
+git add tests/path/test.ts src/path/file.ts
 git commit -m "feat: add specific feature"
 ```
 ````
@@ -121,7 +102,7 @@ Every step must contain the actual content an engineer needs. These are **plan f
 
 ## Self-Review
 
-After writing the complete plan, look at the spec with fresh eyes and check the plan against it. This is a checklist you run yourself — not a subagent dispatch.
+After drafting the complete plan, look at the spec with fresh eyes and check the plan against it. Run this yourself — not a subagent dispatch. Do this **before** publishing to GitHub.
 
 **1. Spec coverage:** Skim each section/requirement in the spec. Can you point to a task that implements it? List any gaps.
 
@@ -131,15 +112,90 @@ After writing the complete plan, look at the spec with fresh eyes and check the 
 
 If you find issues, fix them inline. No need to re-review — just fix and move on. If you find a spec requirement with no task, add the task.
 
+## Publishing to GitHub
+
+After self-review passes, publish the plan as GitHub issues. Do NOT write a markdown file.
+
+### Step 1: Create the plan issue
+
+```bash
+gh issue create \
+  --title "Plan: <feature name>" \
+  --label plan \
+  --body "$(cat <<'EOF'
+> Spec: #<spec-issue-number>
+
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task.
+
+**Goal:** <one sentence>
+
+**Architecture:** <2-3 sentences>
+
+**Tech Stack:** <key libraries/tools>
+
+**File Structure:**
+- `path/to/file.ts` — responsibility
+- ...
+
+**Tasks:**
+(sub-issues listed here after creation)
+EOF
+)"
+```
+
+Note the plan issue number (e.g. `#42`).
+
+### Step 2: Create task sub-issues
+
+Create one sub-issue per top-level task. Each sub-issue body contains the full task content (files + checkbox steps).
+
+```bash
+gh issue create \
+  --title "[Plan #<plan-number>] Task <N>: <Component Name>" \
+  --label task \
+  --body "$(cat <<'EOF'
+Part of #<plan-number>
+
+**Files:**
+- ...
+
+- [ ] Step 1: ...
+- [ ] Step 2: ...
+...
+EOF
+)"
+```
+
+If your `gh` version supports native sub-issues, add `--parent <plan-number>`. Otherwise `Part of #<plan-number>` in the body is sufficient — link them via the GitHub UI if needed.
+
+Repeat for every top-level task. Note each sub-issue number.
+
+### Step 3: Update plan issue with task list
+
+Edit the plan issue body to replace `(sub-issues listed here after creation)` with the actual task list:
+
+```bash
+# Build updated body with task list, then:
+gh issue edit <plan-number> --body "<updated body with task list>"
+```
+
+Task list format in the plan issue body:
+```markdown
+**Tasks:**
+- [ ] #<A> Task 1: <name>
+- [ ] #<B> Task 2: <name>
+- [ ] #<C> Task 3: <name>
+```
+
 ## Execution Handoff
 
-After saving the plan, offer execution choice:
+After the plan issue and sub-issues are created, offer execution choice:
 
-**"Plan complete and saved to `docs/superpowers/plans/<filename>.md`. Two execution options:**
+**"Plan issue #N created with task sub-issues #A–#Z. Two execution options:**
 
-**1. Subagent-Driven (recommended)** - I dispatch a fresh subagent per task, review between tasks, fast iteration
+**1. Subagent-Driven (recommended)** — fresh subagent per task, two-stage review, fast iteration
 
-**2. Inline Execution** - Execute tasks in this session using executing-plans, batch execution with checkpoints
+**2. Inline Execution** — execute tasks in this session using executing-plans, batch execution with checkpoints
 
 **Which approach?"**
 
