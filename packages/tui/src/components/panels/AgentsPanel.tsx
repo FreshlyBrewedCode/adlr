@@ -1,4 +1,4 @@
-import type { AgentSpan, Span } from "@adlr/sdk";
+import type { AgentSpan } from "@adlr/sdk";
 import { useBindings } from "@opentui/keymap/react";
 import { useState } from "react";
 import type { PanelProps } from "../../core/types";
@@ -7,7 +7,7 @@ import { SelectList } from "../SelectList";
 
 export function AgentsPanel({ state, width, height }: PanelProps) {
 	const [selectedIndex, setSelectedIndex] = useState(0);
-	const agents = state.spans.filter((s) => s.kind === "agent");
+	const agents = state.spans.filter((s): s is AgentSpan => s.kind === "agent");
 
 	useBindings(
 		() => ({
@@ -47,17 +47,15 @@ export function AgentsPanel({ state, width, height }: PanelProps) {
 
 	return (
 		<box style={{ flexDirection: "column", width, height }}>
-			<SelectList<Span>
+			<SelectList<AgentSpan>
 				items={agents}
 				selectedIndex={selectedIndex}
 				renderItem={(span, _i, isSelected) => (
 					<Card
-						title={String((span as AgentSpan).data?.agent_type ?? span.name)}
-						description={String((span as AgentSpan).data?.prompt ?? "").slice(
-							0,
-							40,
-						)}
+						title={String(span.data?.agent_type ?? span.name)}
+						description={String(span.data?.prompt ?? "").slice(0, 40)}
 						status={span.status}
+						usage={span.data?.usage}
 						hint={
 							span.status === "running"
 								? "enter → suspend TUI, stream live PTY"
