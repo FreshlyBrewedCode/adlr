@@ -19,21 +19,20 @@ Every project goes through this process. A todo list, a single-function utility,
 
 ## Mode Detection
 
-**Run this before anything else.** Brainstorming has two modes. The mode shapes the entire flow.
+Brainstorming has two modes. The mode shapes the entire flow.
 
-```
-Is GITHUB_ACTIONS == 'true'?
-  yes → Issue-based mode
-  no  → Interactive mode (default)
-```
+- **Interactive mode (default)** — normal terminal Q&A flow. Assume this unless the session was explicitly invoked from a GitHub Actions comment workflow.
+- **Issue-based mode** — used when the agent is invoked from a GitHub Actions workflow responding to a comment on a `brainstorming`-labeled issue.
 
-### Interactive mode (default)
+Do not rely solely on `GITHUB_ACTIONS=true` to pick the mode; use it only when the context is unclear or contradictory. The default assumption is interactive mode.
+
+### Interactive mode
 
 The normal terminal Q&A flow. The spec is published as a GitHub spec issue at the end. No brainstorming issue is created unless the user explicitly asks (e.g. "create a GitHub issue for this" or "hand this off to async").
 
-### Issue-based mode (GitHub Actions)
+### Issue-based mode
 
-Triggered when `GITHUB_ACTIONS=true`. The agent is responding to a comment on a brainstorming issue. Read the full conversation, assess the stage, respond as a comment (your response is automatically posted — do not post manually to the triggering issue). When consensus is reached, create the spec issue.
+The agent is responding to a comment on a brainstorming issue. Read the full conversation, assess the stage, and respond as a comment (your response is automatically posted — do not post manually to the triggering issue). When consensus is reached, create the spec issue and mention its number in your auto-posted response.
 
 ---
 
@@ -130,8 +129,8 @@ The agent is invoked from a GitHub Actions workflow responding to a comment on a
 2. **Assess conversation stage** — where is this conversation? (early exploring / narrowing down / ready to spec?)
 3. **Respond** — post a response that moves the conversation forward (your response is auto-posted as a comment on the triggering issue; do not call `gh issue comment` for it)
 4. **Check for consensus** — is there enough agreement to write a spec?
-5. **If not ready:** ask the next clarifying question or propose approaches (same principles as interactive mode, one question at a time)
-6. **If ready:** run spec self-review inline, create spec issue, post a cross-reference comment on the brainstorming issue
+5. **If not ready:** ask the next clarifying question or propose approaches. In this async workflow, batch related questions into a single comment rather than asking one at a time.
+6. **If ready:** run spec self-review inline, create spec issue, and mention its number in your auto-posted response on the brainstorming issue
 
 ### Reading the conversation
 
@@ -144,19 +143,13 @@ Read everything before responding. Do not re-ask questions already answered in t
 
 ### Assessing conversation stage
 
-- **Early:** Problem is stated but requirements unclear — ask clarifying questions.
+- **Early:** Problem is stated but requirements unclear — ask clarifying questions. Batch them into a single comment so the user can answer all at once in the async workflow.
 - **Narrowing:** Some questions answered, approaches being explored — propose 2-3 options if not yet done.
 - **Consensus:** Approach agreed, requirements clear — write the spec.
 
-### Posting cross-reference comments
+### Mentioning the new spec issue
 
-When creating the spec issue, post a comment on the **brainstorming issue** (different issue = manual post is correct here):
-
-```bash
-gh issue comment <brainstorming-issue-number> \
-  --body "Spec written in #<spec-issue-number> — please review and reply here when you're happy to proceed." \
-  --repo <GITHUB_REPOSITORY>
-```
+When creating the spec issue, include its number in your auto-posted response on the brainstorming issue. Do not post a separate manual cross-reference comment.
 
 ---
 
