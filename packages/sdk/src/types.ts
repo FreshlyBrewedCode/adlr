@@ -16,9 +16,16 @@ export type SpanKind = "agent" | "workflow" | "step" | "hook";
 export type SpanStatus = "pending" | "running" | "done" | "failed" | "blocked";
 
 export interface SpanUsage {
-	prompt_tokens?: number;
-	completion_tokens?: number;
-	total_tokens?: number;
+	tokens: {
+		input: number;
+		output: number;
+		total?: number;
+		cache_read?: number;
+		cache_write?: number;
+	};
+	cost_usd: number;
+	model_id?: string;
+	provider_id?: string;
 }
 
 export interface AgentSpanData {
